@@ -283,39 +283,26 @@
       </div>
     </div>
 
-    <!-- Tumor Markers -->
+    <!-- Extended Lab -->
     <div class="card">
-      <div class="card-title"><span class="tm-label">Tumor Markers</span> ผลการตรวจสารบ่งชี้มะเร็ง</div>
+      <div class="card-title"><span class="lab-label">LAB เพิ่มเติม</span> ผลการตรวจเลือดเพิ่มเติม</div>
       <div class="form-grid cols3">
-        <div class="field">
-          <label>AFP <span class="unit">ng/mL</span></label>
-          <input type="number" id="afp" placeholder="0.0" step="0.1">
-          <span class="ref-hint">ปกติ &lt; 7.0 — ตับ / ถุงน้ำดี</span>
-        </div>
-        <div class="field">
-          <label>CEA <span class="unit">ng/mL</span></label>
-          <input type="number" id="cea" placeholder="0.0" step="0.1">
-          <span class="ref-hint">ปกติ &lt; 5.0 — ลำไส้ใหญ่ / ปอด</span>
-        </div>
-        <div class="field">
-          <label>CA 19-9 <span class="unit">U/mL</span></label>
-          <input type="number" id="ca199" placeholder="0.0" step="0.1">
-          <span class="ref-hint">ปกติ &lt; 37.0 — ตับอ่อน / ท่อน้ำดี</span>
-        </div>
+        <div class="sec-sep span3" style="margin-top:0">ไขมันในเลือด (Lipid Profile)</div>
+        <div class="field"><label>Total Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="tc" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;200</span></div>
+        <div class="field"><label>HDL Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="hdl" placeholder="0" step="1"><span class="ref-hint">ชาย &gt;40 / หญิง &gt;50</span></div>
+        <div class="field"><label>Triglyceride (TG) <span class="unit">mg/dL</span></label><input type="number" id="tg" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;150</span></div>
+        <div class="sec-sep span3">ไต / ปัสสาวะ</div>
+        <div class="field"><label>UPCr (Urine PCR) <span class="unit">mg/g</span></label><input type="number" id="upcr" placeholder="0.0" step="0.1"><span class="ref-hint">ปกติ &lt;150 / เสี่ยง &gt;300</span></div>
+        <div class="sec-sep span3">ต่อมไทรอยด์ / โปรตีน</div>
+        <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step="0.01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
+        <div class="field"><label>Albumin <span class="unit">g/dL</span></label><input type="number" id="albumin" placeholder="0.0" step="0.1"><span class="ref-hint">ปกติ 3.5–5.0</span></div>
+        <div class="sec-sep span3">มะเร็ง (Tumor Marker)</div>
         <div class="field" id="psa-field">
           <label>PSA <span class="unit">ng/mL</span> <span style="font-size:10px;color:var(--teal-dark);font-weight:600">(ชาย)</span></label>
           <input type="number" id="psa" placeholder="0.0" step="0.01">
-          <span class="ref-hint">ปกติ &lt; 4.0 — ต่อมลูกหมาก</span>
+          <span class="ref-hint">ปกติ &lt;4.0 / เฝ้าระวัง 4–10 — ต่อมลูกหมาก</span>
         </div>
-        <div class="field" id="ca125-field">
-          <label>CA 125 <span class="unit">U/mL</span> <span style="font-size:10px;color:#6B3FA0;font-weight:600">(หญิง)</span></label>
-          <input type="number" id="ca125" placeholder="0.0" step="0.1">
-          <span class="ref-hint">ปกติ &lt; 35.0 — รังไข่ / มดลูก</span>
-        </div>
-        <div class="field">
-          <label>หมายเหตุ Tumor Marker</label>
-          <input type="text" id="tmNote" placeholder="เช่น ติดตามผล นัด CT scan...">
-        </div>
+        <div class="field"><label>หมายเหตุ Lab เพิ่มเติม</label><input type="text" id="tmNote" placeholder="เช่น ติดตามผล นัด ultrasound..."></div>
       </div>
     </div>
 
@@ -519,7 +506,7 @@ const BASE_FIELDS = ['hn','visitDate','fullName','dob','gender','doctor','note',
   'height','weight','bmi','smm','bfm','pbf','vfl','bmr','whr',
   'bodyType','muscle','inbodyScore','bodyBalance',
   'fbs','a1c','ldl','cr','ast','alt',
-  'afp','cea','ca199','psa','ca125','tmNote',
+  'tc','hdl','tg','upcr','tsh','albumin','psa','tmNote',
   'sbp','dbp','bpTarget','smoker',
   'dietAdvice','exerciseAdvice','nextVisit','recorder'];
 
@@ -544,11 +531,9 @@ function autoBMI() {
 
 function calcIdeal() {
   const h=parseFloat(val('height')), g=val('gender'), hm=h/100;
-  // Show/hide PSA (male) and CA125 (female)
+  // Show/hide PSA (male only)
   const psaField=document.getElementById('psa-field');
-  const ca125Field=document.getElementById('ca125-field');
-  if(psaField)  psaField.style.display  = (!g||g==='ชาย')  ? '' : 'none';
-  if(ca125Field)ca125Field.style.display = (!g||g==='หญิง') ? '' : 'none';
+  if(psaField) psaField.style.display = (!g||g==='ชาย') ? '' : 'none';
   if(h>0){
     const wL=(18.5*hm*hm).toFixed(1), wH=(22.9*hm*hm).toFixed(1), wM=((18.5+22.9)/2*hm*hm).toFixed(1);
     document.getElementById('idealWeightVal').textContent=wM+' kg';

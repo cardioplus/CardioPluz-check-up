@@ -263,8 +263,9 @@ const DEMO_REC={
   pbf:'26.8',vfl:'12',bmr:'1680',whr:'0.92',
   bodyType:'C Shape (ไขมันสูง)',muscle:'28.2',inbodyScore:'68',bodyBalance:'พอใช้',
   fbs:'118',a1c:'6.8',ldl:'145',cr:'1.05',ast:'32',alt:'38',
+  tc:'210',hdl:'38',tg:'185',upcr:'120',tsh:'2.1',albumin:'4.2',
+  psa:'2.1',tmNote:'ติดตามผล PSA ทุกปี',
   sbp:'138',dbp:'88',bpTarget:'< 130/80',smoker:'no',
-  afp:'4.2',cea:'3.8',ca199:'28.5',psa:'2.1',ca125:'',tmNote:'ติดตามผล AFP ทุก 6 เดือน',
   dietAdvice:'ลดแป้งขัดสี น้ำตาล และอาหารไขมันสูง เพิ่มผักใบเขียวและโปรตีนจากปลา ทูน่า ไข่ขาว',
   exerciseAdvice:'เดินเร็วหรือปั่นจักรยาน 30–40 นาที ≥ 5 วัน/สัปดาห์ เพิ่มออกกำลังกายสร้างกล้ามเนื้อ 2 ครั้ง/สัปดาห์',
   nextVisit:'2568-08-10',recorder:'พย.สมหญิง',
@@ -325,18 +326,42 @@ function thDateShort(d){
 
 function labStatus(test,val,gender){
   if(!val)return{chip:'<span class="chip chip-na">—</span>',color:'var(--text2)',ref:'-'};
-  const v=parseFloat(val);let ok,warn,ref;
+  const v=parseFloat(val);let ok,warn,ref,txt,cls,color;
   switch(test){
-    case'fbs':ok=v<=99;warn=v<=125;ref='70–99 mg/dL';break;
-    case'a1c':ok=v<5.7;warn=v<6.5;ref='< 5.7 %';break;
-    case'ldl':ok=v<130;warn=v<160;ref='< 130 mg/dL';break;
-    case'cr':const mx=gender==='หญิง'?1.1:1.2;ok=v<=mx;warn=v<=mx*1.3;ref=gender==='หญิง'?'0.5–1.1':'0.7–1.2';break;
-    case'ast':ok=v<=40;warn=v<=80;ref='< 40 U/L';break;
-    case'alt':ok=v<=40;warn=v<=80;ref='< 40 U/L';break;
+    case'fbs':  ok=v<=99;warn=v<=125;ref='70–99 mg/dL';break;
+    case'a1c':  ok=v<5.7;warn=v<6.5; ref='< 5.7 %';break;
+    case'ldl':  ok=v<130;warn=v<160; ref='< 130 mg/dL';break;
+    case'cr':   {const mx=gender==='หญิง'?1.1:1.2;ok=v<=mx;warn=v<=mx*1.3;ref=gender==='หญิง'?'0.5–1.1':'0.7–1.2 mg/dL';break;}
+    case'ast':  ok=v<=40;warn=v<=80; ref='< 40 U/L';break;
+    case'alt':  ok=v<=40;warn=v<=80; ref='< 40 U/L';break;
+    // New labs
+    case'tc':   ok=v<200;warn=v<240; ref='< 200 mg/dL';break;
+    case'hdl':  {const mn=gender==='หญิง'?50:40;ok=v>=mn;warn=v>=(mn-10);ref=gender==='หญิง'?'> 50 mg/dL':'> 40 mg/dL';
+                 cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
+                 txt=ok?'ปกติ':warn?'ต่ำเล็กน้อย':'ต่ำ';
+                 color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+                 return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};}
+    case'tg':   ok=v<150;warn=v<200; ref='< 150 mg/dL';break;
+    case'upcr': ok=v<150;warn=v<300; ref='< 150 mg/g';break;
+    case'tsh':  ok=v>=0.4&&v<=4.0;warn=(v>=0.1&&v<0.4)||(v>4.0&&v<=10);ref='0.4–4.0 mIU/L';
+                cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
+                txt=ok?'ปกติ':v<0.4?'ต่ำ':'สูง';
+                color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+                return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};
+    case'albumin': ok=v>=3.5&&v<=5.0;warn=v>=3.0&&v<3.5;ref='3.5–5.0 g/dL';
+                cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
+                txt=ok?'ปกติ':v<3.5?'ต่ำ':'สูง';
+                color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+                return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};
+    case'psa':  if(v<4.0){cls='chip-ok';txt='ปกติ';color='var(--ok)';}
+                else if(v<=10){cls='chip-warn';txt='เฝ้าระวัง';color='var(--warn)';}
+                else{cls='chip-bad';txt='สูง';color='var(--bad)';}
+                return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref:'< 4.0 ng/mL'};
+    default: return{chip:'<span class="chip chip-na">—</span>',color:'var(--text2)',ref:'-'};
   }
-  const cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
-  const txt=ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';
-  const color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+  cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
+  txt=ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';
+  color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
   return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};
 }
 
@@ -370,52 +395,122 @@ function diffChip(actual,target){
   return`<span class="icmp-diff" style="background:${bg};color:${col}">${sign}${diff} kg</span>`;
 }
 
-// ══ THAI CV RISK (RAMA-EGAT simplified) ══
+// ══ THAI CV RISK — Framingham-based RAMA-EGAT score using actual lab values ══
+// Reference: Thai CV Risk Score (Cardiovascular Risk for Thais)
+// Variables: age, gender, Total Cholesterol, HDL, SBP, DM, Smoker
+// Points table from Thai Heart Association / RAMA-EGAT study
 function extractAge(dobStr){
   if(!dobStr)return null;
   const m=dobStr.match(/(\d+)\s*ปี/);if(m)return parseInt(m[1]);
   const m2=dobStr.match(/\d{4}/);if(m2){const y=parseInt(m2[0]);const birth=y>2400?y-543:y;return new Date().getFullYear()-birth;}
   return null;
 }
+
 function calcThaiCVRisk(r){
-  const age=extractAge(r.dob),gender=r.gender||'',sbp=parseFloat(r.sbp)||0,ldl=parseFloat(r.ldl)||0;
-  const a1c=parseFloat(r.a1c)||0,fbs=parseFloat(r.fbs)||0;
-  const dm=(r.dm==='yes'||r.note?.toLowerCase().includes('dm')||a1c>=6.5||fbs>=126);
-  const ht=(r.ht==='yes'||r.note?.toLowerCase().includes('ht')||sbp>=140);
-  const smoker=r.smoker==='yes';
-  const dyslip=(r.dyslipidemia==='yes'||r.note?.toLowerCase().includes('dyslip')||ldl>=160);
-  if(!age||!gender)return null;
-  let pts=0;
-  // Age
+  const age    = extractAge(r.dob);
+  const gender = r.gender||'';
+  const sbp    = parseFloat(r.sbp)||0;
+  const tc     = parseFloat(r.tc)||0;    // Total Cholesterol — primary variable
+  const hdl    = parseFloat(r.hdl)||0;   // HDL — protective factor
+  const ldl    = parseFloat(r.ldl)||0;   // fallback if TC not available
+  const a1c    = parseFloat(r.a1c)||0;
+  const fbs    = parseFloat(r.fbs)||0;
+  const note   = (r.note||'').toLowerCase();
+
+  const dm     = (r.dm==='yes'||note.includes('dm')||a1c>=6.5||fbs>=126);
+  const ht     = (r.ht==='yes'||note.includes('ht')||sbp>=140);
+  const smoker = r.smoker==='yes';
+  const dyslip = (r.dyslipidemia==='yes'||note.includes('dyslip')||ldl>=160||tc>=240);
+
+  if(!age||!gender) return null;
+
+  // Use TC if available, estimate from LDL if not (TC ≈ LDL + HDL + TG/5)
+  const tg   = parseFloat(r.tg)||0;
+  const tcEff = tc>0 ? tc : (ldl>0 ? ldl + (hdl||40) + (tg>0?tg/5:30) : 0);
+  const hdlEff= hdl>0 ? hdl : (gender==='หญิง'?55:45);
+  const tcHDLRatio = tcEff>0 && hdlEff>0 ? tcEff/hdlEff : null;
+
+  let pts = 0;
+
+  // ── AGE POINTS (RAMA-EGAT Thai CV Risk) ──
   if(gender==='ชาย'){
-    if(age>=40&&age<45)pts+=3;else if(age>=45&&age<50)pts+=6;else if(age>=50&&age<55)pts+=8;
-    else if(age>=55&&age<60)pts+=10;else if(age>=60&&age<65)pts+=12;else if(age>=65&&age<70)pts+=14;else if(age>=70)pts+=15;
-  }else{
-    if(age>=40&&age<45)pts+=3;else if(age>=45&&age<50)pts+=6;else if(age>=50&&age<55)pts+=8;
-    else if(age>=55&&age<60)pts+=10;else if(age>=60&&age<65)pts+=12;else if(age>=65&&age<70)pts+=13;else if(age>=70)pts+=14;
-    pts-=7;
+    if     (age< 40) pts+=0;
+    else if(age< 45) pts+=3;
+    else if(age< 50) pts+=6;
+    else if(age< 55) pts+=8;
+    else if(age< 60) pts+=10;
+    else if(age< 65) pts+=12;
+    else if(age< 70) pts+=14;
+    else             pts+=15;
+  } else {
+    if     (age< 40) pts-=7;
+    else if(age< 45) pts+=-4;
+    else if(age< 50) pts+=-1;
+    else if(age< 55) pts+=1;
+    else if(age< 60) pts+=3;
+    else if(age< 65) pts+=5;
+    else if(age< 70) pts+=6;
+    else             pts+=7;
   }
-  // SBP
-  if(sbp>=140&&sbp<160)pts+=2;else if(sbp>=160&&sbp<180)pts+=4;else if(sbp>=180)pts+=6;
-  // LDL
-  if(ldl>=130&&ldl<160)pts+=1;else if(ldl>=160&&ldl<190)pts+=2;else if(ldl>=190)pts+=4;
-  if(dm)pts+=3;if(smoker)pts+=3;
-  // Points → 10yr risk %
-  const ptRisk={'-2':0.5,'-1':0.6,'0':0.7,'1':0.9,'2':1.1,'3':1.4,'4':1.8,'5':2.2,
-    '6':2.8,'7':3.5,'8':4.4,'9':5.4,'10':6.8,'11':8.4,'12':10.4,'13':12.7,
-    '14':15.6,'15':18.9,'16':22.9,'17':27.5,'18':33.0,'19':38.0,'20':44.0};
-  const cp=Math.max(-2,Math.min(20,pts));
-  const risk=ptRisk[String(cp)]||(cp>20?49:0.5);
-  // Risk level:  <10% LOW | 10–19% MOD | 20–29% HIGH | ≥30% VHIGH
+
+  // ── TOTAL CHOLESTEROL (mg/dL) ──
+  if(tcEff>0){
+    if     (tcEff<160)  pts+=0;
+    else if(tcEff<200)  pts+=1;
+    else if(tcEff<240)  pts+=2;
+    else if(tcEff<280)  pts+=3;
+    else                pts+=4;
+  }
+
+  // ── HDL (protective — subtract points) ──
+  if(hdlEff>0){
+    if     (hdlEff>=60) pts-=1;
+    else if(hdlEff>=50) pts+=0;
+    else if(hdlEff>=45) pts+=1;
+    else if(hdlEff>=35) pts+=2;
+    else                pts+=2;
+  }
+
+  // ── SBP ──
+  if     (sbp<120)          pts+=0;
+  else if(sbp<130)          pts+=0;
+  else if(sbp>=130&&sbp<140)pts+=1;
+  else if(sbp>=140&&sbp<160)pts+=2;
+  else if(sbp>=160&&sbp<180)pts+=4;
+  else if(sbp>=180)         pts+=5;
+
+  // ── DIABETES ──
+  if(dm) pts += (gender==='ชาย' ? 3 : 4);
+
+  // ── SMOKER ──
+  if(smoker) pts += (gender==='ชาย' ? 2 : 2);
+
+  // ── POINTS → 10-year risk % (RAMA-EGAT lookup table) ──
+  const ptRisk = {
+    '-3':0.5,'-2':0.5,'-1':0.6,'0':0.7,'1':0.9,'2':1.1,'3':1.4,
+    '4':1.8,'5':2.2,'6':2.8,'7':3.5,'8':4.4,'9':5.4,'10':6.8,
+    '11':8.4,'12':10.4,'13':12.7,'14':15.6,'15':18.9,'16':22.9,
+    '17':27.5,'18':33.0,'19':38.0,'20':44.0
+  };
+  const cp   = Math.max(-3, Math.min(20, pts));
+  const risk = ptRisk[String(cp)] || (cp>20?49:0.5);
+
+  // ── RISK CATEGORY ──
+  // Thai CV Risk: <10% Low | 10–19% Moderate | 20–29% High | ≥30% Very High
   let level,levelTH,icon,cls;
-  const forceUp=dm&&ht&&dyslip;
-  if(risk<10&&!forceUp){level='LOW';levelTH='ความเสี่ยงต่ำ';icon='🟢';cls='cv-risk-LOW';}
-  else if(risk<20){level='MOD';levelTH='ความเสี่ยงปานกลาง';icon='🟡';cls='cv-risk-MOD';}
-  else if(risk<30){level='HIGH';levelTH='ความเสี่ยงสูง';icon='🟠';cls='cv-risk-HIGH';}
-  else{level='VHIGH';levelTH='ความเสี่ยงสูงมาก';icon='🔴';cls='cv-risk-VHIGH';}
+  const forceUp = dm&&ht&&dyslip;
+  if     (risk<10 && !forceUp){level='LOW';  levelTH='ความเสี่ยงต่ำ';      icon='🟢';cls='cv-risk-LOW';}
+  else if(risk<20)             {level='MOD';  levelTH='ความเสี่ยงปานกลาง';  icon='🟡';cls='cv-risk-MOD';}
+  else if(risk<30)             {level='HIGH'; levelTH='ความเสี่ยงสูง';       icon='🟠';cls='cv-risk-HIGH';}
+  else                         {level='VHIGH';levelTH='ความเสี่ยงสูงมาก';   icon='🔴';cls='cv-risk-VHIGH';}
   if(forceUp&&level==='LOW'){level='MOD';levelTH='ความเสี่ยงปานกลาง';icon='🟡';cls='cv-risk-MOD';}
+
   const ldlGoal={LOW:'< 130 mg/dL',MOD:'< 130 mg/dL',HIGH:'< 100 mg/dL',VHIGH:'< 70 mg/dL'};
-  return{pts,risk,level,levelTH,icon,cls,age,dm,ht,smoker,dyslip,sbp,ldl,ldlGoal:ldlGoal[level]};
+  const usedTC = tc>0;
+
+  return{pts,risk,level,levelTH,icon,cls,age,dm,ht,smoker,dyslip,
+    sbp,tc:tcEff,hdl:hdlEff,tcHDLRatio,usedTC,
+    ldlGoal:ldlGoal[level]};
 }
 
 function renderCVArc(risk){
@@ -519,79 +614,81 @@ const LOGO_SVG=`<svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmln
   <path d="M33 7 L33 13 M30 10 L36 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
 </svg>`;
 
-// ══ TUMOR MARKER TABLE ══
-function tmStatus(test, val, gender) {
-  if (!val || val === '') return { chip: '<span class="chip chip-na">—</span>', color: 'var(--text2)' };
-  const v = parseFloat(val);
-  let ok, ref;
-  switch(test) {
-    case 'afp':   ok = v < 7.0;   ref = '< 7.0 ng/mL';  break;
-    case 'cea':   ok = v < 5.0;   ref = '< 5.0 ng/mL';  break;
-    case 'ca199': ok = v < 37.0;  ref = '< 37.0 U/mL';  break;
-    case 'psa':   ok = v < 4.0;   ref = '< 4.0 ng/mL';  break;
-    case 'ca125': ok = v < 35.0;  ref = '< 35.0 U/mL';  break;
-    default: return { chip: '<span class="chip chip-na">—</span>', color: 'var(--text2)' };
-  }
-  // PSA: borderline 4–10 = warn, >10 = bad
-  let cls, txt, color;
-  if (test === 'psa') {
-    if (v < 4.0)       { cls='chip-ok';   txt='ปกติ';          color='var(--ok)';   }
-    else if (v <= 10.0){ cls='chip-warn';  txt='เฝ้าระวัง';     color='var(--warn)'; }
-    else               { cls='chip-bad';   txt='สูง';           color='var(--bad)';  }
-  } else {
-    if (ok) { cls='chip-ok'; txt='ปกติ'; color='var(--ok)'; }
-    else    { cls='chip-bad'; txt='สูงกว่าปกติ'; color='var(--bad)'; }
-  }
-  return { chip: `<span class="chip ${cls}">${txt}</span>`, color, ref };
-}
-
-function renderTumorMarkersHTML(r) {
-  const g = r.gender || '';
-  const markers = [
-    { key:'afp',   name:'AFP',    full:'Alpha-Fetoprotein — ตับ / ถุงน้ำดี / อัณฑะ', unit:'ng/mL', gender:'both' },
-    { key:'cea',   name:'CEA',    full:'Carcinoembryonic Antigen — ลำไส้ใหญ่ / ปอด /胃', unit:'ng/mL', gender:'both' },
-    { key:'ca199', name:'CA 19-9',full:'Cancer Antigen 19-9 — ตับอ่อน / ท่อน้ำดี', unit:'U/mL',  gender:'both' },
-    { key:'psa',   name:'PSA',    full:'Prostate-Specific Antigen — ต่อมลูกหมาก', unit:'ng/mL', gender:'ชาย' },
-    { key:'ca125', name:'CA 125', full:'Cancer Antigen 125 — รังไข่ / มดลูก',      unit:'U/mL',  gender:'หญิง' },
+// ══ EXTENDED LAB + PSA RENDER ══
+function renderExtendedLabHTML(r) {
+  const g = r.gender||'';
+  const sections = [
+    {
+      title:'ไขมันในเลือด (Lipid Profile)',
+      rows:[
+        {key:'tc',  name:'Total Cholesterol',full:'ไขมันรวม',                 unit:'mg/dL'},
+        {key:'hdl', name:'HDL Cholesterol',  full:'ไขมันดี — ยิ่งสูงยิ่งดี', unit:'mg/dL'},
+        {key:'tg',  name:'Triglyceride (TG)',full:'ไขมันไตรกลีเซอไรด์',      unit:'mg/dL'},
+      ]
+    },
+    {
+      title:'ไต / ปัสสาวะ',
+      rows:[
+        {key:'upcr',name:'UPCr (Urine PCR)', full:'Urine Protein-Creatinine Ratio — ตรวจการรั่วของโปรตีน',unit:'mg/g'},
+      ]
+    },
+    {
+      title:'ต่อมไทรอยด์ / โปรตีน',
+      rows:[
+        {key:'tsh',    name:'TSH',    full:'Thyroid Stimulating Hormone — ต่อมไทรอยด์',unit:'mIU/L'},
+        {key:'albumin',name:'Albumin',full:'อัลบูมิน — ภาวะโภชนาการ / การทำงานตับ', unit:'g/dL'},
+      ]
+    },
   ];
-
-  // Filter: show gender-specific only if gender matches (or if no value entered skip)
-  const rows = markers.filter(m => {
-    if (m.gender === 'both') return true;
-    if (m.gender === 'ชาย'  && g === 'ชาย')  return true;
-    if (m.gender === 'หญิง' && g === 'หญิง') return true;
-    // if gender not set, show if value entered
-    if (!g && r[m.key]) return true;
-    return false;
-  });
-
-  const anyValue = rows.some(m => r[m.key]);
-  if (!anyValue && !r.tmNote) return '';
-
-  let html = `<table class="tm-table">
-    <thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>`;
-
-  for (const m of rows) {
-    const s = tmStatus(m.key, r[m.key], g);
-    const gBadge = m.gender === 'ชาย'
-      ? '<span class="tm-gender-badge tm-male">ชาย</span>'
-      : m.gender === 'หญิง'
-      ? '<span class="tm-gender-badge tm-female">หญิง</span>'
-      : '';
-    const refMap = { afp:'< 7.0', cea:'< 5.0', ca199:'< 37.0', psa:'< 4.0 (เฝ้าระวัง 4–10)', ca125:'< 35.0' };
-    html += `<tr>
-      <td><div class="lab-name">${m.name}${gBadge}</div><div class="lab-full">${m.full}</div></td>
-      <td><span class="lab-val" style="color:${s.color}">${r[m.key]||'—'}</span> <small>${r[m.key]?m.unit:''}</small></td>
-      <td><span class="lab-ref">${refMap[m.key]} ${m.unit}</span></td>
-      <td>${s.chip}</td>
-    </tr>`;
+  // Add PSA only for male
+  if(!g||g==='ชาย'){
+    sections.push({
+      title:'สารบ่งชี้มะเร็ง (Tumor Marker)',
+      rows:[{key:'psa',name:'PSA',full:'Prostate-Specific Antigen — ต่อมลูกหมาก<span class="tm-gender-badge tm-male" style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#E8F0FA;color:#2C5F8A;margin-left:6px">ชาย</span>',unit:'ng/mL'}]
+    });
   }
 
-  if (r.tmNote) {
-    html += `<tr><td colspan="4" style="font-size:11px;color:var(--text2);font-style:italic;padding:8px 12px;">
-      📝 หมายเหตุ: ${r.tmNote}</td></tr>`;
+  // Check if any value exists
+  const anyValue = sections.some(s=>s.rows.some(row=>r[row.key]));
+  if(!anyValue&&!r.tmNote) return '';
+
+  let html='';
+  for(const sec of sections){
+    const hasVal=sec.rows.some(row=>r[row.key]);
+    if(!hasVal) continue;
+    html+=`<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:6px 0 4px;border-top:1px dashed var(--border-light);margin-top:6px;">${sec.title}</div>`;
+    html+=`<table class="lab-table">
+      <thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>`;
+    for(const row of sec.rows){
+      if(!r[row.key]) continue;
+      const s=labStatus(row.key,r[row.key],g);
+      html+=`<tr>
+        <td><div class="lab-name">${row.name}</div><div class="lab-full">${row.full}</div></td>
+        <td><span class="lab-val" style="color:${s.color}">${r[row.key]||'—'}</span> <small>${row.unit}</small></td>
+        <td><span class="lab-ref">${s.ref}</span></td>
+        <td>${s.chip}</td>
+      </tr>`;
+    }
+    html+='</tbody></table>';
   }
-  html += '</tbody></table>';
+
+  // TC/HDL ratio card
+  const tc=parseFloat(r.tc),hdl=parseFloat(r.hdl);
+  if(tc>0&&hdl>0){
+    const ratio=(tc/hdl).toFixed(1);
+    const ratioOk=parseFloat(ratio)<5;
+    const ratioWarn=parseFloat(ratio)<6;
+    html+=`<div style="display:inline-flex;align-items:center;gap:10px;background:${ratioOk?'var(--ok-bg)':ratioWarn?'var(--warn-bg)':'var(--bad-bg)'};border:1px solid ${ratioOk?'var(--ok-mid)':'#F0C870'};border-radius:8px;padding:8px 14px;margin-top:8px;">
+      <span style="font-size:11px;font-weight:700;color:var(--text2)">อัตราส่วน TC/HDL:</span>
+      <span style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:${ratioOk?'var(--ok)':ratioWarn?'var(--warn)':'var(--bad)'}">${ratio}</span>
+      <span class="chip ${ratioOk?'chip-ok':ratioWarn?'chip-warn':'chip-bad'}">${ratioOk?'ดี':ratioWarn?'เฝ้าระวัง':'ความเสี่ยงสูง'}</span>
+      <span style="font-size:10px;color:var(--text2)">เป้าหมาย &lt; 5.0</span>
+    </div>`;
+  }
+
+  if(r.tmNote){
+    html+=`<div style="font-size:11px;color:var(--text2);font-style:italic;margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:6px;">📝 หมายเหตุ: ${r.tmNote}</div>`;
+  }
   return html;
 }
 
@@ -639,15 +736,18 @@ function render(){
         </div>
       </div>
     </div>
-    <div class="cv-factors-row">
+      <div class="cv-factors-row">
       <div class="cv-factor"><div class="cv-factor-lbl">อายุ</div><div class="cv-factor-val" style="font-size:15px">${cv.age} ปี</div></div>
       <div class="cv-factor"><div class="cv-factor-lbl">เพศ</div><div class="cv-factor-val" style="font-size:15px">${r.gender||'—'}</div></div>
+      <div class="cv-factor"><div class="cv-factor-lbl">Total Cholesterol</div><div class="cv-factor-val" style="font-size:13px;color:${cv.tc>240?'var(--bad)':cv.tc>200?'var(--warn)':'var(--ok)'}">${cv.usedTC?r.tc:'~'+cv.tc.toFixed(0)} mg/dL${!cv.usedTC?' *':''}</div></div>
+      <div class="cv-factor"><div class="cv-factor-lbl">HDL Cholesterol</div><div class="cv-factor-val" style="font-size:13px;color:${cv.hdl<40?'var(--bad)':cv.hdl<50?'var(--warn)':'var(--ok)'}">${r.hdl||'~'+cv.hdl.toFixed(0)} mg/dL${!r.hdl?' *':''}</div></div>
+      <div class="cv-factor"><div class="cv-factor-lbl">SBP</div><div class="cv-factor-val" style="font-size:13px">${r.sbp||'—'} mmHg</div></div>
       <div class="cv-factor"><div class="cv-factor-lbl">เบาหวาน DM</div><div class="cv-factor-val" style="color:${cv.dm?'var(--bad)':'var(--ok)'}">${cv.dm?'มี ✕':'ไม่มี ✓'}</div></div>
       <div class="cv-factor"><div class="cv-factor-lbl">ความดัน HT</div><div class="cv-factor-val" style="color:${cv.ht?'var(--bad)':'var(--ok)'}">${cv.ht?'มี ✕':'ไม่มี ✓'}</div></div>
       <div class="cv-factor"><div class="cv-factor-lbl">สูบบุหรี่</div><div class="cv-factor-val" style="color:${cv.smoker?'var(--bad)':'var(--ok)'}">${cv.smoker?'สูบ ✕':'ไม่สูบ ✓'}</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">ไขมันในเลือด</div><div class="cv-factor-val" style="color:${cv.dyslip?'var(--bad)':'var(--ok)'}">${cv.dyslip?'ผิดปกติ ✕':'ปกติ ✓'}</div></div>
-    </div>
-    <div class="cv-note" style="margin-top:8px">อ้างอิง: Thai CV Risk Score (RAMA-EGAT) สมาคมโรคหัวใจแห่งประเทศไทย — ใช้ข้อมูลอายุ, เพศ, SBP, LDL, DM, การสูบบุหรี่ในการคำนวณ</div>`;
+      </div>
+      ${!cv.usedTC?`<div class="cv-note" style="margin-top:6px;border-left:3px solid var(--warn);background:var(--warn-bg);">⚠️ * ยังไม่มีค่า Total Cholesterol — ใช้การประมาณจาก LDL+HDL+TG ความแม่นยำอาจต่ำกว่า กรุณากรอก TC เพื่อผลลัพธ์ที่แม่นยำขึ้น</div>`:''}
+      <div class="cv-note" style="margin-top:6px;">อ้างอิง: Thai CV Risk Score (Framingham-based RAMA-EGAT) — คำนวณจาก อายุ, เพศ, Total Cholesterol, HDL, SBP, DM, การสูบบุหรี่ | ตัดระดับ: ต่ำ &lt;10% / ปานกลาง 10–19% / สูง 20–29% / สูงมาก ≥30%</div>`;
   }
 
   document.getElementById('reportContainer').innerHTML=`
@@ -744,13 +844,12 @@ function render(){
 
       <div class="sec-divider"></div>
 
-      <!-- TUMOR MARKERS -->
       ${(()=>{
-        const tmHTML = renderTumorMarkersHTML(r);
-        if (!tmHTML) return '';
-        return `<div class="sec-title"><span class="sec-tag tumor">Tumor Markers</span><h2>ผลการตรวจสารบ่งชี้มะเร็ง</h2></div>
-        ${tmHTML}
-        <div class="sec-divider"></div>`;
+        const extHTML = renderExtendedLabHTML(r);
+        if (!extHTML) return '';
+        return `<div class="sec-divider"></div>
+        <div class="sec-title"><span class="sec-tag lab">LAB เพิ่มเติม</span><h2>ผลการตรวจเลือดเพิ่มเติม — Lipid / ไต / Thyroid / PSA</h2></div>
+        ${extHTML}`;
       })()}
 
       <!-- TREND CHARTS — stacked -->
