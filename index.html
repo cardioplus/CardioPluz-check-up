@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="refresh" content="2;url=clinic_database.html">
+<title>CardioPluz Clinic</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Sarabun',sans-serif;
+    background:linear-gradient(135deg,#147A6E 0%,#1A9B8C 100%);
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card{
+    background:white;border-radius:20px;padding:48px 40px;
+    text-align:center;max-width:420px;width:90%;
+    box-shadow:0 20px 60px rgba(0,0,0,0.2);
+  }
+  .logo{margin-bottom:24px;}
+  .logo svg{filter:drop-shadow(0 4px 8px rgba(26,155,140,0.3));}
+  .clinic-name{font-size:28px;font-weight:700;color:#147A6E;margin-bottom:4px;}
+  .clinic-sub{font-size:15px;color:#6B6057;margin-bottom:32px;}
+  .btn{
+    display:block;width:100%;padding:14px 24px;
+    background:linear-gradient(135deg,#147A6E,#1A9B8C);
+    color:white;text-decoration:none;border-radius:10px;
+    font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;
+    margin-bottom:12px;transition:opacity .2s;
+  }
+  .btn:hover{opacity:.88;}
+  .btn.secondary{
+    background:white;color:#147A6E;
+    border:2px solid #A8DDD8;
+  }
+  .redirect-note{
+    font-size:13px;color:#aaa;margin-top:20px;
+  }
+  .dot{
+    display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:#1A9B8C;margin:0 3px;
+    animation:bounce .8s infinite alternate;
+  }
+  .dot:nth-child(2){animation-delay:.2s;}
+  .dot:nth-child(3){animation-delay:.4s;}
+  @keyframes bounce{from{opacity:.3;transform:scale(.8);}to{opacity:1;transform:scale(1.2);}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <svg width="72" height="72" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="24" r="24" fill="#E6F6F4"/>
+      <path d="M24 38C24 38 10 29 10 19C10 14.582 13.582 11 18 11C20.7 11 23.1 12.4 24 14.5C24.9 12.4 27.3 11 30 11C34.418 11 38 14.582 38 19C38 29 24 38 24 38Z" stroke="#1A9B8C" stroke-width="2.2" fill="none"/>
+      <polyline points="12,21 16,21 19,15 23,27 27,19 30,23 33,21 37,21" stroke="#1A9B8C" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M31 10 L31 15 M28.5 12.5 L33.5 12.5" stroke="#1A9B8C" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="clinic-name">CardioPluz Clinic</div>
+  <div class="clinic-sub">คลินิกอายุรกรรมโรคหัวใจ<br>พญ.ณัฏฐา อานนทวีศิลป์ &amp; พญ.พรอนงค์ คุรุเสถียร</div>
+
+  <a href="clinic_database.html" class="btn">
+    🏥 Staff Portal — กรอกข้อมูลผู้ป่วย
+  </a>
+  <a href="clinic_report.html" class="btn secondary">
+    📋 Report Viewer — ดูรายงาน
+  </a>
+
+  <div class="redirect-note">
+    กำลังนำไปยังหน้าหลักอัตโนมัติ
+    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+  </div>
+</div>
+</body>
+</html>
