@@ -254,19 +254,64 @@
         </div>
 
         <div class="sec-sep">ส่วนประกอบร่างกาย</div>
-        <div class="field"><label>มวลกล้ามเนื้อ (Muscle Mass) <span class="unit">kg</span></label><input type="number" id="muscle" placeholder="0.0" step="0.1"><span class="ref-hint">กล้ามเนื้อล้วน</span></div>
-        <div class="field"><label>มวลกล้ามเนื้อ-กระดูก (SMM) <span class="unit">kg</span></label><input type="number" id="smm" placeholder="0.0" step="0.1"><span class="ref-hint">Skeletal Muscle Mass</span></div>
+        <div class="field"><label>Skeletal Muscle Mass (SMM) <span class="unit">kg</span></label><input type="number" id="smm" placeholder="0.0" step="0.1"><span class="ref-hint">กล้ามเนื้อโครงร่าง</span></div>
+        <div class="field"><label>Soft Lean Mass <span class="unit">kg</span></label><input type="number" id="slm" placeholder="0.0" step="0.1"><span class="ref-hint">SLM = SMM + น้ำในร่างกาย</span></div>
+        <div class="field"><label>Muscle Mass <span class="unit">kg</span></label><input type="number" id="muscle" placeholder="0.0" step="0.1"><span class="ref-hint">มวลกล้ามเนื้อรวม</span></div>
+        <div class="field"><label>มวลกระดูก (Bone Mass) <span class="unit">kg</span></label><input type="number" id="boneMass" placeholder="0.0" step="0.1"><span class="ref-hint">ชาย ~3.0 / หญิง ~2.5 kg</span></div>
         <div class="field"><label>มวลไขมัน (BFM) <span class="unit">kg</span></label><input type="number" id="bfm" placeholder="0.0" step="0.1"></div>
         <div class="field"><label>ไขมันช่องท้อง (VFL) <span class="unit">level</span></label><input type="number" id="vfl" placeholder="0" step="1"><span class="ref-hint">ปกติ ≤10</span></div>
         <div class="field"><label>อัตราเผาผลาญ (BMR) <span class="unit">kcal</span></label><input type="number" id="bmr" placeholder="0" step="1"></div>
         <div class="field"><label>อัตราส่วนเอว/สะโพก (WHR)</label><input type="number" id="whr" placeholder="0.00" step="0.01"><span class="ref-hint">ชาย &lt;0.90 / หญิง &lt;0.85</span></div>
-        <div class="field"><label>ลักษณะรูปร่าง</label>
-          <select id="bodyType"><option value="">-- เลือก --</option><option>C Shape (ไขมันสูง)</option><option>I Shape (สมดุล)</option><option>D Shape (กล้ามเนื้อสูง)</option></select>
+
+        <div class="sec-sep">การวิเคราะห์เพิ่มเติม (จากเครื่อง InBody)</div>
+        <div class="field">
+          <label>CID — ประเภทร่างกาย</label>
+          <select id="cid">
+            <option value="">-- เลือก --</option>
+            <option value="I-Type">I-Type (สมดุล)</option>
+            <option value="C-Type Weak">C-Type Weak (น้ำหนักสูง/กล้ามเนื้อน้อย)</option>
+            <option value="Above Avg Weak C-Type">Above Average Weak C-Type</option>
+            <option value="D-Type">D-Type (กล้ามเนื้อสูง)</option>
+            <option value="Slim">Slim (ผอมบาง)</option>
+            <option value="Sarcopenic Obesity">Sarcopenic Obesity</option>
+          </select>
         </div>
-        <div class="field"><label>InBody Score <span class="unit">0–100</span></label><input type="number" id="inbodyScore" placeholder="0–100" step="1" min="0" max="100"><span class="ref-hint">ดี ≥ 70 คะแนน</span></div>
-        <div class="field"><label>ประเมินสมดุลร่างกาย</label>
-          <select id="bodyBalance"><option value="">-- เลือก --</option><option>ดี</option><option>พอใช้</option><option>ควรปรับปรุง</option></select>
+        <div class="field">
+          <label>Body Type (Obesity Grid)</label>
+          <select id="bodyTypeGrid">
+            <option value="">-- เลือก --</option>
+            <option value="Athletic">Athletic</option>
+            <option value="Overweight">Overweight</option>
+            <option value="Obesity">Obesity</option>
+            <option value="Muscular">Muscular</option>
+            <option value="Average">Average</option>
+            <option value="Mild Obesity">Mild Obesity</option>
+            <option value="Slim Muscular">Slim Muscular</option>
+            <option value="Slim">Slim</option>
+            <option value="Sarcopenic Obesity">Sarcopenic Obesity</option>
+            <option value="Thin">Thin</option>
+            <option value="Slightly Thin">Slightly Thin</option>
+          </select>
         </div>
+        <div class="field">
+          <label>Body Balance (Upper-Lower)</label>
+          <select id="bodyBalance">
+            <option value="">-- เลือก --</option>
+            <option value="Balanced">Balanced (สมดุล)</option>
+            <option value="Upper Heavy">Upper Heavy</option>
+            <option value="Lower Heavy">Lower Heavy</option>
+          </select>
+        </div>
+        <div class="field"><label>InBody Score <span class="unit">0–100</span></label><input type="number" id="inbodyScore" placeholder="0–100" step="1" min="0" max="100"><span class="ref-hint">ดี ≥ 70</span></div>
+        <div class="field"><label>InBody Score เปลี่ยนแปลง <span class="unit">จากครั้งก่อน</span></label><input type="number" id="inbodyScoreDelta" placeholder="เช่น -9 หรือ +5" step="1"><span class="ref-hint">ใส่ค่า + หรือ − จากเครื่อง</span></div>
+
+        <div class="sec-sep">ค่าเปลี่ยนแปลงจากครั้งก่อน (Δ Delta — ใส่จากเครื่อง InBody)</div>
+        <div class="field"><label>Δ น้ำหนัก <span class="unit">kg</span></label><input type="number" id="dWeight" placeholder="+3.1" step="0.1"></div>
+        <div class="field"><label>Δ SMM <span class="unit">kg</span></label><input type="number" id="dSmm" placeholder="-2.3" step="0.1"></div>
+        <div class="field"><label>Δ BFM <span class="unit">kg</span></label><input type="number" id="dBfm" placeholder="+6.9" step="0.1"></div>
+        <div class="field"><label>Δ % ไขมัน</label><input type="number" id="dPbf" placeholder="+10.1" step="0.1"></div>
+        <div class="field"><label>Δ BMR <span class="unit">kcal</span></label><input type="number" id="dBmr" placeholder="-82" step="1"></div>
+        <div class="field"><label>Δ VFL <span class="unit">level</span></label><input type="number" id="dVfl" placeholder="+3" step="1"></div>
       </div>
     </div>
 
@@ -347,10 +392,18 @@
           <div class="ap-section-title">🏃 การออกกำลังกาย</div>
           <div class="ap-text" id="previewExercise"></div>
         </div>
+        <div class="ap-section" id="smokeSec" style="display:none;background:#FFF0F0;border-left:3px solid #B01D1D;padding:8px 12px;border-radius:0 6px 6px 0;">
+          <div class="ap-section-title" style="color:#B01D1D">🚭 การเลิกบุหรี่</div>
+          <div class="ap-text" id="previewSmoke"></div>
+        </div>
+        <div class="ap-section" style="background:var(--teal-light);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;">
+          <div class="ap-section-title" style="color:var(--teal-dark)">💉 วัคซีนที่แนะนำ</div>
+          <div class="ap-text" id="previewVax"></div>
+        </div>
         <div class="ap-actions">
           <button class="ap-use-btn ap-use-both" onclick="useAdvice('both')">ใช้ทั้งหมด</button>
-          <button class="ap-use-btn ap-use-diet" onclick="useAdvice('diet')">ใช้เฉพาะโภชนาการ</button>
-          <button class="ap-use-btn ap-use-exercise" onclick="useAdvice('exercise')">ใช้เฉพาะออกกำลังกาย</button>
+          <button class="ap-use-btn ap-use-diet" onclick="useAdvice('diet')">โภชนาการ</button>
+          <button class="ap-use-btn ap-use-exercise" onclick="useAdvice('exercise')">ออกกำลังกาย</button>
           <button class="ap-use-btn ap-discard" onclick="document.getElementById('advicePreview').classList.remove('show')">ยกเลิก</button>
         </div>
       </div>
@@ -358,6 +411,7 @@
       <div class="form-grid">
         <div class="field span2"><label>คำแนะนำด้านโภชนาการ</label><textarea id="dietAdvice" rows="3" style="resize:vertical;" placeholder="เช่น ลดแป้ง น้ำตาล เพิ่มโปรตีน..."></textarea></div>
         <div class="field span2"><label>คำแนะนำด้านการออกกำลังกาย</label><textarea id="exerciseAdvice" rows="3" style="resize:vertical;" placeholder="เช่น เดินเร็ว 30 นาที/วัน..."></textarea></div>
+        <div class="field span2"><label>คำแนะนำวัคซีน <span class="unit">(จะถูกสร้างอัตโนมัติเมื่อกด ✨ สร้างคำแนะนำ)</span></label><textarea id="vaxAdvice" rows="3" style="resize:vertical;" placeholder="เช่น แนะนำฉีดวัคซีนไข้หวัดใหญ่ทุกปี ลดโอกาสนอน รพ. ได้ 40%..."></textarea></div>
         <div class="field"><label>นัดครั้งถัดไป</label><input type="date" id="nextVisit"></div>
         <div class="field"><label>ผู้บันทึก</label><input type="text" id="recorder" placeholder="ชื่อผู้บันทึก"></div>
       </div>
@@ -503,12 +557,14 @@ function switchTab(name, btn) {
 }
 
 const BASE_FIELDS = ['hn','visitDate','fullName','dob','gender','doctor','note',
-  'height','weight','bmi','smm','bfm','pbf','vfl','bmr','whr',
-  'bodyType','muscle','inbodyScore','bodyBalance',
+  'height','weight','bmi','smm','slm','bfm','pbf','vfl','bmr','whr',
+  'muscle','boneMass','cid','bodyTypeGrid','bodyBalance',
+  'inbodyScore','inbodyScoreDelta',
+  'dWeight','dSmm','dBfm','dPbf','dBmr','dVfl',
   'fbs','a1c','ldl','cr','ast','alt',
   'tc','hdl','tg','upcr','tsh','albumin','psa','tmNote',
   'sbp','dbp','bpTarget','smoker',
-  'dietAdvice','exerciseAdvice','nextVisit','recorder'];
+  'dietAdvice','exerciseAdvice','vaxAdvice','nextVisit','recorder'];
 
 function val(id) { return document.getElementById(id)?.value?.trim()||''; }
 function setVal(id,v) { if(document.getElementById(id)) document.getElementById(id).value=v||''; }
@@ -714,11 +770,54 @@ function generateAdvice() {
   // Sedentary
   ex.push('ลดพฤติกรรมเนือยนิ่ง ไม่นั่งต่อเนื่องเกิน 60 นาที ลุกขึ้นเดินหรือยืดเส้นยืดสายทุกชั่วโมง');
 
+  // ── SMOKING CESSATION ──
+  const smoke = [];
+  if(val('smoker')==='yes'){
+    smoke.push('🚭 หยุดสูบบุหรี่ — การสูบบุหรี่เพิ่มความเสี่ยงโรคหัวใจและหลอดเลือดถึง 2–4 เท่า และเพิ่มความเสี่ยงมะเร็งปอด 15–30 เท่า');
+    smoke.push('การหยุดสูบบุหรี่ภายใน 1 ปี ลดความเสี่ยงโรคหัวใจได้ถึง 50% และภายใน 15 ปี ความเสี่ยงใกล้เคียงกับผู้ที่ไม่เคยสูบ');
+    smoke.push('ปรึกษาแพทย์เรื่องยาช่วยเลิกบุหรี่ (Varenicline, NRT) หรือโปรแกรมเลิกบุหรี่ที่คลินิก เพิ่มโอกาสสำเร็จ 2–3 เท่า');
+  }
+
+  // ── VACCINE RECOMMENDATIONS ──
+  const age = extractAgeFromDob(val('dob'));
+  const hasDM2 = val('note').toLowerCase().includes('dm') || parseFloat(val('a1c'))>=6.5 || parseFloat(val('fbs'))>=126;
+  const hasHT2 = val('note').toLowerCase().includes('ht') || parseFloat(val('sbp'))>=140;
+  const gender2 = val('gender');
+  const vax = [];
+
+  vax.push('💉 คำแนะนำวัคซีนสำหรับผู้ป่วยรายนี้:');
+  vax.push('• ไข้หวัดใหญ่ (Influenza) — ฉีดทุกปี ลดโอกาสนอนโรงพยาบาลได้ 40% และลดโอกาสเกิดภาวะหัวใจวายเฉียบพลัน 30–40% ในผู้ป่วยโรคหัวใจ');
+  vax.push('• COVID-19 Booster — ฉีดกระตุ้นทุก 6–12 เดือน ลดความรุนแรงของโรคและการนอนโรงพยาบาลได้ 70–90%');
+
+  if(hasDM2||hasHT2||age>=65){
+    vax.push('• ปอดอักเสบ (Pneumococcal) — แนะนำเป็นพิเศษในผู้ป่วย DM, HT หรืออายุ ≥65 ปี ลดโอกาสปอดบวมรุนแรงและการเสียชีวิตได้ 45–75%');
+  }
+  if(age>=50){
+    vax.push('• งูสวัด (Shingrix) — แนะนำในผู้มีอายุ ≥50 ปี ประสิทธิภาพ 90% ป้องกัน Postherpetic Neuralgia ซึ่งเป็นอาการปวดเรื้อรังที่รักษายาก');
+  }
+  if(age>=60||hasDM2){
+    vax.push('• RSV — แนะนำในผู้มีอายุ ≥60 ปี หรือมีโรคหัวใจ/ปอด ลดการนอนโรงพยาบาลจาก RSV ได้ 83%');
+  }
+  vax.push('• บาดทะยัก (Td/Tdap) — ฉีดกระตุ้นทุก 10 ปี');
+
   // Fill preview
   document.getElementById('previewDiet').textContent=diet.map((d,i)=>`${i+1}. ${d}`).join('\n');
   document.getElementById('previewExercise').textContent=ex.map((e,i)=>`${i+1}. ${e}`).join('\n');
+  const smokeTxt = smoke.length ? smoke.join('\n') : '';
+  const previewSmoke = document.getElementById('previewSmoke');
+  const smokeSection = document.getElementById('smokeSec');
+  if(previewSmoke) previewSmoke.textContent = smokeTxt;
+  if(smokeSection) smokeSection.style.display = smoke.length?'block':'none';
+  document.getElementById('previewVax').textContent=vax.join('\n');
   document.getElementById('advicePreview').classList.add('show');
   document.getElementById('genAdviceBtn').textContent='🔄 สร้างใหม่';
+}
+
+function extractAgeFromDob(dobStr){
+  if(!dobStr)return 0;
+  const m=dobStr.match(/(\d+)\s*ปี/);if(m)return parseInt(m[1]);
+  const m2=dobStr.match(/\d{4}/);if(m2){const y=parseInt(m2[0]);const birth=y>2400?y-543:y;return new Date().getFullYear()-birth;}
+  return 0;
 }
 
 function useAdvice(type) {
@@ -726,6 +825,7 @@ function useAdvice(type) {
   const ex=document.getElementById('previewExercise').textContent;
   if(type==='both'||type==='diet') setVal('dietAdvice',diet);
   if(type==='both'||type==='exercise') setVal('exerciseAdvice',ex);
+  if(type==='both') setVal('vaxAdvice', document.getElementById('previewVax')?.textContent||'');
   document.getElementById('advicePreview').classList.remove('show');
   showToast('✅ นำคำแนะนำไปใส่ในช่องแล้ว — แพทย์สามารถปรับแก้ได้');
 }

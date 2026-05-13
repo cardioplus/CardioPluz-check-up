@@ -5,224 +5,253 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CardioPluz — รายงานผลสุขภาพ</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-/* ══════════════════════════════════════
-   VARIABLES & RESET
-══════════════════════════════════════ */
 :root{
-  --teal:#1A9B8C; --teal-dark:#147A6E; --teal-light:#E6F6F4; --teal-mid:#A8DDD8;
-  --cream:#F7F4EE; --cream2:#EDE9E0; --cream3:#E2DDD3;
-  --surface:#FFFFFF; --border:#D4CFC4; --border-light:#EAE6DE;
-  --text:#2C2820; --text2:#6B6057;
-  --ok:#1A7A4A; --ok-bg:#EDF7F2; --ok-mid:#A8D5BC;
-  --warn:#C67B00; --warn-bg:#FFF8EC;
-  --bad:#B01D1D; --bad-bg:#FFF2F2;
-  --accent:#2C5F8A;
-  --gold:#8A6A1A;
-  --cv-low:#1A7A4A; --cv-mod:#C67B00; --cv-high:#B05000; --cv-vhigh:#8B1A1A;
-  --purple:#6B3FA0; --purple-bg:#F3EEF9;
+  --teal:#1A9B8C;--teal-dark:#147A6E;--teal-light:#E6F6F4;--teal-mid:#A8DDD8;
+  --cream:#F7F4EE;--cream2:#EDE9E0;--border:#D4CFC4;--border-light:#EAE6DE;
+  --text:#2C2820;--text2:#7A7268;--text3:#B0A89E;
+  --ok:#1A7A4A;--ok-bg:#EDF7F2;--ok-mid:#A8D5BC;
+  --warn:#C67B00;--warn-bg:#FFF8EC;
+  --bad:#B01D1D;--bad-bg:#FFF2F2;
+  --accent:#2C5F8A;--accent-bg:#EEF4FB;
+  --gold:#8A6A1A;--gold-light:#FFF8EC;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Sarabun',sans-serif;background:#DDD9D0;color:var(--text);padding:20px;min-height:100vh;}
-
-/* ── SCREEN CONTROLS ── */
-.print-controls{max-width:960px;margin:0 auto 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.print-controls .info{flex:1;font-size:14px;color:#555;}
+body{font-family:'Sarabun',sans-serif;background:#D5D0C8;color:var(--text);padding:20px;min-height:100vh;}
+.print-controls{max-width:980px;margin:0 auto 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.print-controls .info{flex:1;font-size:13px;color:#666;}
 .btn-print{background:var(--teal);color:white;border:none;padding:11px 26px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 .btn-print:hover{background:var(--teal-dark);}
 .btn-back{background:white;color:var(--text);border:1.5px solid var(--border);padding:11px 18px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;}
+.report{max-width:980px;margin:0 auto;background:white;box-shadow:0 8px 50px rgba(0,0,0,0.18);border-radius:4px;overflow:hidden;}
 
-/* ══════════════════════════════════════
-   REPORT WRAPPER  — A4 print target
-══════════════════════════════════════ */
-.report{
-  max-width:960px;margin:0 auto;background:var(--surface);
-  box-shadow:0 4px 40px rgba(0,0,0,0.15);
-}
-
-/* ── HEADER ── */
-.report-header{
-  background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 100%);
-  padding:20px 32px 18px;color:white;position:relative;overflow:hidden;
-}
-.report-header::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.06);}
-.report-header::after{content:'';position:absolute;bottom:-20px;right:120px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.04);}
+/* HEADER */
+.rpt-header{background:linear-gradient(135deg,#0E6B5E,var(--teal) 60%,#22B5A4);padding:22px 36px 20px;color:white;position:relative;overflow:hidden;}
+.rpt-header::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.05);}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .hdr-brand{display:flex;align-items:center;gap:14px;}
-.hdr-brand svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,0.2));}
-.clinic-name{font-size:20px;font-weight:700;letter-spacing:.5px;}
-.clinic-sub{font-size:12px;opacity:.8;margin-top:2px;}
-.hdr-meta{text-align:right;font-size:12px;opacity:.8;line-height:1.7;font-family:'IBM Plex Mono',monospace;}
-
-.patient-strip{
-  background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);
-  border-radius:8px;padding:13px 18px;
-  display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px;
-}
-.ps-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.7;margin-bottom:2px;}
+.clinic-name{font-size:19px;font-weight:700;letter-spacing:.5px;}
+.clinic-sub{font-size:11px;opacity:.75;margin-top:2px;}
+.hdr-meta{text-align:right;font-size:11px;opacity:.8;line-height:1.8;font-family:'IBM Plex Mono',monospace;}
+.patient-strip{background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.25);border-radius:10px;padding:13px 18px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:10px;}
+.ps-label{font-size:9px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;opacity:.65;margin-bottom:2px;}
 .ps-val{font-size:13px;font-weight:600;}
-.ps-val.mono{font-family:'IBM Plex Mono',monospace;}
+.ps-mono{font-family:'IBM Plex Mono',monospace;}
 
-/* ── BODY ── */
-.report-body{padding:20px 32px;background:var(--cream);}
-.sec-divider{height:1px;background:var(--border-light);margin:18px 0;}
-.sec-title{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-.sec-tag{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:white;padding:2px 8px;border-radius:4px;}
-.sec-tag.inbody{background:var(--teal);}
-.sec-tag.lab{background:var(--accent);}
-.sec-tag.trend{background:#6B3FA0;}
-.sec-tag.cvrisk{background:#7A4A00;}
-.sec-tag.tumor{background:#6B3FA0;}
-.sec-tag.vax{background:#3D7A5F;}
-.sec-tag.advice{background:#3D7A5F;}
-.sec-title h2{font-size:14px;font-weight:700;}
+/* BODY */
+.rpt-body{padding:22px 36px;background:var(--cream);}
+.sec{margin-bottom:18px;}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--teal-light);}
+.sec-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.si-teal{background:var(--teal);color:white;}
+.si-blue{background:var(--accent);color:white;}
+.si-orange{background:#D4720A;color:white;}
+.si-green{background:var(--ok);color:white;}
+.si-purple{background:#6B3FA0;color:white;}
+.si-red{background:var(--bad);color:white;}
+.sec-hdr h2{font-size:14px;font-weight:700;color:var(--text);}
+.sec-hdr p{font-size:11px;color:var(--text2);margin-top:1px;}
+.sec-div{height:1px;background:linear-gradient(90deg,var(--teal-mid),transparent);margin:20px 0;}
 
-/* ── TUMOR MARKER TABLE ── */
-.tm-table{width:100%;border-collapse:collapse;margin-top:2px;}
-.tm-table th{background:var(--purple-bg);padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--purple);border-bottom:2px solid #D4C8E8;}
-.tm-table td{padding:10px 12px;border-bottom:1px solid var(--border-light);font-size:13px;vertical-align:middle;}
-.tm-table tr:last-child td{border-bottom:none;}
-.tm-gender-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:6px;}
-.tm-male{background:#E8F0FA;color:#2C5F8A;}
-.tm-female{background:#F3EEF9;color:#6B3FA0;}
+/* INBODY-STYLE GAUGE (matches InBody app) */
+.ib-sec{background:white;border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;margin-bottom:8px;}
+.ib-sec-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border-light);}
+.ibg{margin-bottom:12px;}
+.ibg:last-child{margin-bottom:0;}
+.ibg-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
+.ibg-name{font-size:12px;color:var(--text2);flex:1;}
+.ibg-val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);}
+.ibg-unit{font-size:12px;color:var(--text2);}
+.ibg-delta{font-size:11px;font-weight:700;padding:1px 6px;border-radius:8px;font-family:'IBM Plex Mono',monospace;}
+.d-pos-bad{background:var(--bad-bg);color:var(--bad);}
+.d-neg-good{background:var(--ok-bg);color:var(--ok);}
+.d-pos-good{background:var(--ok-bg);color:var(--ok);}
+.d-neg-bad{background:var(--bad-bg);color:var(--bad);}
+.d-neutral{background:var(--cream2);color:var(--text2);}
+/* Track */
+.ibg-track{position:relative;height:10px;border-radius:5px;overflow:hidden;background:#ECEAE6;margin-bottom:3px;}
+.ibg-under{position:absolute;top:0;left:0;height:100%;background:#ECEAE6;}
+.ibg-normal{position:absolute;top:0;height:100%;background:#6EC6A0;}
+.ibg-over{position:absolute;top:0;right:0;height:100%;background:#ECEAE6;}
+.ibg-dot{position:absolute;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.25);}
+.dot-ok{background:var(--ok);}
+.dot-over{background:var(--bad);}
+.dot-under{background:var(--bad);}
+.ibg-lbls{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);}
 
-/* ── INBODY CARDS ── */
-.inbody-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;}
-.ic{border:1px solid var(--border-light);border-radius:8px;padding:10px 10px 8px;background:var(--surface);position:relative;}
-.ic-lbl{font-size:9px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
-.ic-val{font-size:19px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1;}
-.ic-unit{font-size:10px;color:var(--text2);margin-top:2px;}
-.ic-badge{position:absolute;top:7px;right:7px;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;}
-.b-ok{background:var(--ok-bg);color:var(--ok);}
-.b-warn{background:var(--warn-bg);color:var(--warn);}
-.b-bad{background:var(--bad-bg);color:var(--bad);}
+/* InBody Score gauge */
+.score-wrap{display:flex;align-items:center;gap:18px;background:white;border:1px solid var(--border-light);border-radius:12px;padding:16px 20px;margin-bottom:10px;}
+.score-right{flex:1;}
+.score-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.score-num-row{display:flex;align-items:baseline;gap:6px;}
+.score-num{font-size:30px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1;}
+.score-pts{font-size:14px;color:var(--text2);}
+.score-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.score-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;}
 
-/* IDEAL COMPARE */
-.ideal-compare{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
-.icmp{background:linear-gradient(135deg,var(--teal-light),#E8F4FF);border:1px solid var(--teal-mid);border-radius:8px;padding:10px 12px;}
-.icmp-lbl{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
-.icmp-target{font-size:12px;font-weight:700;color:var(--teal-dark);font-family:'IBM Plex Mono',monospace;}
-.icmp-actual{font-size:10px;color:var(--text2);margin-top:2px;}
-.icmp-diff{font-size:10px;font-weight:700;margin-top:3px;padding:1px 6px;border-radius:5px;display:inline-block;}
+/* CID */
+.cid-box{background:linear-gradient(135deg,var(--cream),#EEF4FF);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:8px;}
+.cid-label{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;}
+.cid-type{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.cid-bars{display:flex;flex-direction:column;gap:6px;margin-bottom:7px;}
+.cid-bar-row{display:grid;grid-template-columns:100px 1fr;gap:8px;align-items:center;}
+.cid-bar-name{font-size:10px;color:var(--text2);}
+.cid-bar-bg{height:8px;background:#ECEAE6;border-radius:4px;overflow:hidden;}
+.cid-bar-fill{height:100%;border-radius:4px;}
+.cid-desc{font-size:11px;color:var(--text2);line-height:1.5;font-style:italic;}
 
-/* GAUGE */
-.gauge-row{display:grid;grid-template-columns:140px 1fr 52px;align-items:center;gap:8px;margin-bottom:7px;}
-.gauge-name{font-size:11px;color:var(--text2);}
-.gauge-bg{height:7px;background:var(--border-light);border-radius:4px;overflow:hidden;}
-.gauge-fill{height:100%;border-radius:4px;}
-.gauge-val{font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;text-align:right;}
+/* Body Type Grid */
+.bt-wrap{background:var(--cream);border:1px solid var(--border-light);border-radius:10px;padding:13px 15px;margin-bottom:8px;}
+.bt-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.bt-label{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;}
+.bt-type-val{font-size:14px;font-weight:700;color:var(--text);}
+.bt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:4px;}
+.bt-cell{padding:7px 4px;background:white;color:var(--text2);text-align:center;font-size:10px;border:1px solid var(--border-light);border-radius:3px;}
+.bt-active{background:#FFE8E8;color:var(--bad);font-weight:700;border-color:#E88080;}
+.bt-axis{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);}
 
-/* SCORE */
-.score-box{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:12px 16px;margin-bottom:14px;}
-.score-circle{width:66px;height:66px;border-radius:50%;border:3px solid currentColor;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
-.sc-num{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1;}
-.sc-lbl{font-size:9px;font-weight:600;margin-top:1px;}
-.sc-ok{color:var(--ok);} .sc-warn{color:var(--warn);} .sc-bad{color:var(--bad);}
-.score-detail .sd-title{font-size:13px;font-weight:700;margin-bottom:3px;}
-.score-detail .sd-sub{font-size:11px;color:var(--text2);}
+/* Body Balance */
+.bb-row{display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--border-light);border-radius:8px;padding:9px 13px;margin-bottom:8px;}
+.bb-lbl{font-size:10px;color:var(--text2);}
+.bb-chip{font-size:12px;font-weight:700;padding:3px 12px;border-radius:12px;margin-left:auto;}
+.bb-balanced{background:var(--ok-bg);color:var(--ok);}
+.bb-unbalanced{background:var(--warn-bg);color:var(--warn);}
 
-/* LAB TABLE */
-.lab-table{width:100%;border-collapse:collapse;}
-.lab-table th{background:var(--cream);padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:2px solid var(--border);}
-.lab-table td{padding:9px 12px;border-bottom:1px solid var(--border-light);font-size:13px;vertical-align:middle;}
-.lab-name{font-weight:600;font-size:13px;}
-.lab-full{font-size:10px;color:var(--text2);}
-.lab-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;}
-.lab-ref{font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
-.chip{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;}
+/* Ideal boxes */
+.ideal-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
+.ideal-box{background:linear-gradient(135deg,var(--teal-light),#EBF4FF);border:1px solid var(--teal-mid);border-radius:9px;padding:10px 12px;}
+.ib-lbl{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.ib-target{font-size:13px;font-weight:700;color:var(--teal-dark);font-family:'IBM Plex Mono',monospace;}
+.ib-actual{font-size:10px;color:var(--text2);margin-top:2px;}
+.ib-diff{font-size:10px;font-weight:700;margin-top:4px;padding:1px 6px;border-radius:5px;display:inline-block;}
+
+/* LAB */
+.lab-wrap{background:white;border:1px solid var(--border-light);border-radius:10px;overflow:hidden;margin-bottom:8px;}
+.lab-sec-title{background:var(--cream);padding:7px 14px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border-light);}
+.lab-tbl{width:100%;border-collapse:collapse;}
+.lab-tbl th{padding:7px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);background:var(--cream);border-bottom:2px solid var(--border);}
+.lab-tbl td{padding:9px 14px;border-bottom:1px solid var(--border-light);font-size:13px;vertical-align:middle;}
+.lab-tbl tr:last-child td{border-bottom:none;}
+.lname{font-weight:700;font-size:13px;}
+.lfull{font-size:10px;color:var(--text2);margin-top:1px;}
+.lval{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;}
+.lref{font-size:10px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
+.chip{display:inline-block;padding:2px 9px;border-radius:9px;font-size:10px;font-weight:700;}
 .chip-ok{background:var(--ok-bg);color:var(--ok);}
 .chip-warn{background:var(--warn-bg);color:var(--warn);}
 .chip-bad{background:var(--bad-bg);color:var(--bad);}
-.chip-na{background:#f0f0f0;color:#aaa;}
+.chip-na{background:#F0EDE8;color:#bbb;}
 
-/* BP ROW */
-.bp-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border-light);border-radius:8px;padding:10px 14px;margin-bottom:10px;}
-.bp-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:var(--text);}
-.bp-label{font-size:10px;color:var(--text2);font-weight:600;margin-top:2px;}
+/* BP */
+.bp-card{display:flex;align-items:center;gap:14px;background:white;border:1px solid var(--border-light);border-radius:10px;padding:11px 16px;margin-bottom:8px;}
+.bp-nums{display:flex;align-items:baseline;gap:3px;}
+.bp-n{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;}
+.bp-u{font-size:11px;color:var(--text2);}
 
-/* CV RISK */
-.cv-main{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:start;margin-bottom:12px;}
-.cv-gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.cv-arc-label{font-size:11px;font-weight:700;color:var(--text2);}
-.cv-risk-box{border-radius:8px;padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
-.cv-risk-icon{font-size:24px;flex-shrink:0;}
-.cv-risk-level{font-size:16px;font-weight:800;}
-.cv-risk-sub{font-size:11px;margin-top:2px;opacity:.85;}
-.cv-risk-LOW{background:#E8F8EF;border:2px solid #A8D5BC;color:var(--cv-low);}
-.cv-risk-MOD{background:#FFF8EC;border:2px solid #F0C870;color:var(--cv-mod);}
-.cv-risk-HIGH{background:#FFF2E8;border:2px solid #E8A870;color:var(--cv-high);}
-.cv-risk-VHIGH{background:#FFF0F0;border:2px solid #D09090;color:var(--cv-vhigh);}
-.cv-details-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.cv-factor{background:var(--surface);border:1px solid var(--border-light);border-radius:7px;padding:8px 10px;}
-.cv-factor-lbl{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:3px;}
-.cv-factor-val{font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
-.cv-factor-sub{font-size:10px;color:var(--text2);margin-top:1px;}
-.cv-factors-row{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:10px;}
-.cv-note{font-size:10px;color:var(--text2);background:var(--surface);border:1px solid var(--border-light);border-radius:7px;padding:8px 12px;line-height:1.5;margin-top:8px;}
+/* CV Risk */
+.cv-card{background:white;border:1px solid var(--border-light);border-radius:12px;overflow:hidden;margin-bottom:8px;}
+.cv-top{display:grid;grid-template-columns:180px 1fr;}
+.cv-gauge-col{background:var(--cream);padding:16px;display:flex;flex-direction:column;align-items:center;gap:6px;border-right:1px solid var(--border-light);}
+.cv-pts{font-size:11px;font-weight:700;color:var(--text2);}
+.cv-banner{padding:14px 18px;display:flex;flex-direction:column;justify-content:center;}
+.cv-icon{font-size:20px;margin-bottom:3px;}
+.cv-level{font-size:17px;font-weight:800;}
+.cv-pct{font-size:12px;margin-top:2px;opacity:.85;}
+.cv-LOW{background:linear-gradient(135deg,#E8F8EF,#F0FBF5);border-left:4px solid var(--ok);}
+.cv-MOD{background:linear-gradient(135deg,#FFF8EC,#FFFBF0);border-left:4px solid var(--warn);}
+.cv-HIGH{background:linear-gradient(135deg,#FFF2E8,#FFF8F0);border-left:4px solid #B05000;}
+.cv-VHIGH{background:linear-gradient(135deg,#FFF0F0,#FFF5F5);border-left:4px solid var(--bad);}
+.cv-goals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px;border-top:1px solid var(--border-light);}
+.cv-goal{background:var(--cream);border-radius:7px;padding:8px 10px;}
+.cv-goal-lbl{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}
+.cv-goal-val{font-size:12px;font-weight:700;color:var(--teal-dark);font-family:'IBM Plex Mono',monospace;}
+.cv-goal-cur{font-size:10px;color:var(--text2);margin-top:1px;}
+.cv-factors{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 16px;border-top:1px solid var(--border-light);}
+.cv-fac{text-align:center;padding:6px;background:var(--cream);border-radius:7px;}
+.cv-fac-lbl{font-size:9px;color:var(--text2);font-weight:600;margin-bottom:2px;}
+.cv-fac-val{font-size:12px;font-weight:700;}
+.cv-note{padding:7px 16px;background:var(--cream);border-top:1px solid var(--border-light);font-size:10px;color:var(--text2);}
 
-/* ── CHARTS — stacked: Lab top, InBody below ── */
-.chart-section{margin-top:4px;}
-.chart-card{background:var(--surface);border:1px solid var(--border-light);border-radius:10px;padding:14px 14px 10px;margin-bottom:6px;}
-.chart-card-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
-.ct-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.chart-legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
-.cl-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);}
-.cl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+/* TC/HDL */
+.ratio-card{display:inline-flex;align-items:center;gap:12px;background:white;border:1px solid var(--border-light);border-radius:8px;padding:7px 14px;margin-top:7px;}
+.ratio-lbl{font-size:10px;font-weight:700;color:var(--text2);}
+.ratio-val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+
+/* Charts */
+.chart-card{background:white;border:1px solid var(--border-light);border-radius:10px;padding:13px 14px 10px;margin-bottom:6px;}
+.chart-title-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.cdot{width:9px;height:9px;border-radius:50%;}
+.chart-title{font-size:12px;font-weight:700;}
+.chart-sub{font-size:10px;color:var(--text2);margin-top:1px;}
 canvas{display:block;width:100%!important;}
+.clegend{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.cleg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);}
+.cleg-dot{width:8px;height:8px;border-radius:50%;}
 
-/* DATA TABLES */
-.data-table-wrap{background:white;border:1px solid var(--border-light);border-radius:8px;overflow:auto;margin-bottom:14px;}
-.data-table{width:100%;border-collapse:collapse;min-width:480px;}
-.data-table th{background:var(--cream);padding:6px 10px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;}
-.data-table th.row-head{text-align:left;}
-.data-table td{padding:6px 10px;border-bottom:1px solid var(--border-light);text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;}
-.data-table td.row-head{text-align:left;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:600;color:var(--text2);background:#FDFBF8;}
-.data-table tr:last-child td{border-bottom:none;font-weight:700;background:#F0F8F4;}
-.dt-ok{color:var(--ok);} .dt-warn{color:var(--warn);} .dt-bad{color:var(--bad);} .dt-na{color:#bbb;}
+/* Data tables */
+.dtbl-wrap{background:white;border:1px solid var(--border-light);border-radius:9px;overflow:auto;margin-bottom:10px;}
+.dtbl{width:100%;border-collapse:collapse;min-width:480px;}
+.dtbl th{background:var(--cream);padding:5px 9px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;}
+.dtbl th.rhd{text-align:left;}
+.dtbl td{padding:5px 9px;border-bottom:1px solid var(--border-light);text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.dtbl td.rhd{text-align:left;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:600;color:var(--text2);background:#FDFBF8;}
+.dtbl tr:last-child td{font-weight:700;background:var(--ok-bg);border-bottom:none;}
+.tok{color:var(--ok);font-weight:600;} .twarn{color:var(--warn);font-weight:600;} .tbad{color:var(--bad);font-weight:600;} .tna{color:#ccc;}
 
-/* VACCINE TABLE */
-.vax-table{width:100%;border-collapse:collapse;font-size:12px;}
-.vax-table th{background:var(--cream);padding:7px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);}
-.vax-table td{padding:7px 10px;border-bottom:1px solid var(--border-light);vertical-align:middle;}
-.vax-table tr:last-child td{border-bottom:none;}
-.vax-status{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;}
-.vs-done{background:var(--ok-bg);color:var(--ok);}
-.vs-partial{background:var(--warn-bg);color:var(--warn);}
-.vs-plan{background:#EEF4FB;color:var(--accent);}
-.vs-na{background:#f0f0f0;color:#888;}
-.vs-none{background:#f8f4f0;color:#bbb;}
+/* Vaccines */
+.vax-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.vax-item{background:white;border:1px solid var(--border-light);border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:9px;}
+.vax-ico{font-size:17px;flex-shrink:0;}
+.vax-name{font-size:12px;font-weight:700;}
+.vax-sub{font-size:10px;color:var(--text2);}
+.vax-date{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--teal-dark);margin-top:1px;}
+.vs-done{background:var(--ok-bg);}
+.vs-partial{background:var(--warn-bg);}
+.vs-plan{background:var(--accent-bg);}
 
-/* ADVICE */
-.advice-box{border-left:3px solid var(--teal);padding:10px 14px;background:var(--teal-light);border-radius:0 7px 7px 0;margin-bottom:9px;}
-.advice-box.exercise{border-left-color:var(--accent);background:#EEF4FB;}
-.ab-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px;}
-.ab-text{font-size:12px;line-height:1.5;}
-.next-box{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#FFF8F0,#FFF4E8);border:1px solid #F0D8B0;border-radius:8px;padding:11px 16px;margin-top:7px;}
-.nv-lbl{font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.nv-date{font-size:15px;font-weight:700;color:var(--gold);font-family:'IBM Plex Mono',monospace;}
+/* Advice */
+.adv-card{border-radius:10px;overflow:hidden;margin-bottom:9px;}
+.adv-hdr{padding:9px 14px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:white;}
+.adv-body{padding:10px 14px;font-size:12px;line-height:1.7;white-space:pre-wrap;}
+.adv-diet .adv-hdr{background:var(--teal);}
+.adv-diet .adv-body{background:var(--teal-light);border:1px solid var(--teal-mid);border-top:none;border-radius:0 0 10px 10px;}
+.adv-ex .adv-hdr{background:var(--accent);}
+.adv-ex .adv-body{background:var(--accent-bg);border:1px solid #B8CCE0;border-top:none;border-radius:0 0 10px 10px;}
+.adv-smoke .adv-hdr{background:var(--bad);}
+.adv-smoke .adv-body{background:var(--bad-bg);border:1px solid #DDB0B0;border-top:none;border-radius:0 0 10px 10px;}
+.adv-vax .adv-hdr{background:#2D7A5F;}
+.adv-vax .adv-body{background:var(--ok-bg);border:1px solid var(--ok-mid);border-top:none;border-radius:0 0 10px 10px;}
 
-/* FOOTER */
-.report-footer{border-top:2px solid var(--border-light);padding:13px 32px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);background:var(--cream2);}
-.sig-line{border-top:1px solid var(--border);width:150px;margin:20px 0 3px auto;}
+.next-card{display:flex;align-items:center;gap:13px;background:var(--gold-light);border:1px solid #E8D09A;border-radius:10px;padding:12px 16px;margin-top:8px;}
+.nv-lbl{font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.nv-date{font-size:16px;font-weight:700;color:var(--gold);font-family:'IBM Plex Mono',monospace;}
 
-/* ══════════════════════════════════════
-   PRINT — A4
-══════════════════════════════════════ */
+/* Footer */
+.rpt-footer{border-top:2px solid var(--border-light);padding:13px 36px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);background:var(--cream2);}
+.footer-name{font-weight:700;font-size:13px;color:var(--teal-dark);}
+.sig-line{border-top:1px solid var(--border);width:150px;margin:18px 0 4px auto;}
+.sig-name{font-weight:700;font-size:13px;}
+.sig-sub{font-size:10px;color:var(--text2);margin-top:1px;}
+
 @media print{
-  body{background:white;padding:0;font-size:11px;}
+  body{background:white;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .print-controls{display:none!important;}
-  .report{box-shadow:none;max-width:100%;}
-  .report-body{padding:14px 24px;}
-  .report-header{padding:14px 24px 12px;}
-  .report-footer{padding:10px 24px;}
-  @page{margin:6mm 8mm;size:A4 portrait;}
-  /* Keep charts from page-breaking mid-render */
-  .chart-card{page-break-inside:avoid;}
-  .data-table-wrap{page-break-inside:avoid;}
-  .cv-main{page-break-inside:avoid;}
+  .report{box-shadow:none;max-width:100%;border-radius:0;}
+  .rpt-body{padding:14px 26px;}
+  .rpt-header{padding:14px 26px 12px;}
+  .rpt-footer{padding:10px 26px;}
+  @page{margin:5mm 7mm;size:A4 portrait;}
+  .chart-card,.cv-card,.lab-wrap,.ib-sec,.cid-box,.bt-wrap{page-break-inside:avoid;}
+}
+@media screen and (max-width:700px){
+  .patient-strip{grid-template-columns:1fr 1fr;}
+  .ideal-row{grid-template-columns:1fr 1fr;}
+  .cv-top{grid-template-columns:1fr;}
+  .vax-grid{grid-template-columns:1fr 1fr;}
+  .rpt-body,.rpt-header,.rpt-footer{padding-left:14px;padding-right:14px;}
 }
 </style>
 </head>
@@ -231,748 +260,781 @@ canvas{display:block;width:100%!important;}
 <div class="print-controls">
   <div class="info">
     <strong>CardioPluz Clinic — รายงานผลสุขภาพ</strong><br>
-    <span style="font-size:12px;color:#777">ตรวจสอบข้อมูลก่อนพิมพ์ กดปุ่มพิมพ์เพื่อบันทึก PDF หรือพิมพ์ออกกระดาษ A4</span>
+    <span style="font-size:11px">กด Ctrl+P (Windows) หรือ Cmd+P (Mac) เพื่อพิมพ์ A4</span>
   </div>
   <button class="btn-back" onclick="window.close()">← กลับ</button>
   <button class="btn-print" onclick="window.print()">🖨 พิมพ์ / PDF (A4)</button>
 </div>
 
-<div id="reportContainer"></div>
+<div id="rpt"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// ══ VACCINE DEFINITIONS (must match database) ══
-const VACCINES=[
-  {id:'flu',      name:'ไข้หวัดใหญ่',        sub:'Influenza'},
-  {id:'covid',    name:'COVID-19',            sub:'โควิด Booster'},
-  {id:'pneumo23', name:'ปอดบวม PPSV23',      sub:'Pneumococcal 23'},
-  {id:'pneumo13', name:'ปอดบวม PCV13',        sub:'Pneumococcal 13'},
-  {id:'hepb',     name:'ตับอักเสบ บี',        sub:'Hepatitis B'},
-  {id:'rsv',      name:'RSV',                 sub:'Respiratory Syncytial Virus'},
-  {id:'shingles', name:'งูสวัด Shingrix',     sub:'Herpes Zoster'},
-  {id:'tetanus',  name:'บาดทะยัก Td/Tdap',   sub:'Tetanus'},
-  {id:'hpv',      name:'HPV',                 sub:'Human Papillomavirus'},
-];
+'use strict';
 
-// ══ DEMO DATA ══
-const DEMO_REC={
-  hn:'HN-2568-001',visitDate:'2568-05-10',fullName:'นาย สมชาย ใจดี',
-  dob:'1 ม.ค. 2510 (อายุ 58 ปี)',gender:'ชาย',
-  doctor:'พญ.ณัฏฐา อานนทวีศิลป์',note:'DM, HT, Dyslipidemia',
-  height:'168',weight:'82.5',bmi:'29.2',smm:'31.4',bfm:'22.1',
-  pbf:'26.8',vfl:'12',bmr:'1680',whr:'0.92',
-  bodyType:'C Shape (ไขมันสูง)',muscle:'28.2',inbodyScore:'68',bodyBalance:'พอใช้',
-  fbs:'118',a1c:'6.8',ldl:'145',cr:'1.05',ast:'32',alt:'38',
-  tc:'210',hdl:'38',tg:'185',upcr:'120',tsh:'2.1',albumin:'4.2',
-  psa:'2.1',tmNote:'ติดตามผล PSA ทุกปี',
-  sbp:'138',dbp:'88',bpTarget:'< 130/80',smoker:'no',
-  dietAdvice:'ลดแป้งขัดสี น้ำตาล และอาหารไขมันสูง เพิ่มผักใบเขียวและโปรตีนจากปลา ทูน่า ไข่ขาว',
-  exerciseAdvice:'เดินเร็วหรือปั่นจักรยาน 30–40 นาที ≥ 5 วัน/สัปดาห์ เพิ่มออกกำลังกายสร้างกล้ามเนื้อ 2 ครั้ง/สัปดาห์',
-  nextVisit:'2568-08-10',recorder:'พย.สมหญิง',
-  vaccines:{
-    flu:{status:'done',date:'2568-01-15'},
-    covid:{status:'done',date:'2567-12-01'},
-    pneumo23:{status:'plan',date:''},
-    pneumo13:{status:'na',date:''},
-    hepb:{status:'done',date:'2560-03-10'},
-    hepa:{status:'',date:''},
-    shingles:{status:'plan',date:''},
-    tetanus:{status:'partial',date:'2565-06-01'},
-    hpv:{status:'na',date:''},
-  }
-};
-const DEMO_HIST=[
-  {visitDate:'2567-05-10',weight:'88.0',bmi:'31.2',pbf:'29.5',vfl:'15',muscle:'26.5',smm:'30.0',inbodyScore:'58',fbs:'135',a1c:'7.5',ldl:'162',cr:'1.02',ast:'45',alt:'52'},
-  {visitDate:'2567-08-12',weight:'86.2',bmi:'30.6',pbf:'28.8',vfl:'14',muscle:'27.0',smm:'30.6',inbodyScore:'61',fbs:'128',a1c:'7.2',ldl:'155',cr:'1.04',ast:'40',alt:'46'},
-  {visitDate:'2567-11-15',weight:'85.0',bmi:'30.1',pbf:'28.0',vfl:'13',muscle:'27.5',smm:'31.0',inbodyScore:'64',fbs:'122',a1c:'7.0',ldl:'150',cr:'1.05',ast:'36',alt:'42'},
-  {visitDate:'2568-02-10',weight:'83.5',bmi:'29.6',pbf:'27.3',vfl:'12',muscle:'28.0',smm:'31.2',inbodyScore:'66',fbs:'120',a1c:'6.9',ldl:'148',cr:'1.05',ast:'34',alt:'40'},
-  {visitDate:'2568-05-10',weight:'82.5',bmi:'29.2',pbf:'26.8',vfl:'12',muscle:'28.2',smm:'31.4',inbodyScore:'68',fbs:'118',a1c:'6.8',ldl:'145',cr:'1.05',ast:'32',alt:'38'}
-];
-
-// ── Firebase config (same project) ──
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyD5bvjywkSfJhDOPywei401hJfFz7lgNf4",
-  authDomain: "cardiopluz-health-check-up.firebaseapp.com",
-  projectId: "cardiopluz-health-check-up",
-  storageBucket: "cardiopluz-health-check-up.firebasestorage.app",
-  messagingSenderId: "936833651637",
-  appId: "1:936833651637:web:b2f9b5136d0a997f3d7ffc",
-  measurementId: "G-5DW4RLVKF0"
-};
-let fbApp, fbDb;
+/* ════════════════════════════════
+   FIREBASE INIT
+════════════════════════════════ */
 try {
-  fbApp = firebase.initializeApp(FIREBASE_CONFIG);
-  fbDb  = firebase.firestore();
-} catch(e) { console.warn('Firebase init failed:', e); }
+  firebase.initializeApp({
+    apiKey:"AIzaSyD5bvjywkSfJhDOPywei401hJfFz7lgNf4",
+    authDomain:"cardiopluz-health-check-up.firebaseapp.com",
+    projectId:"cardiopluz-health-check-up",
+    storageBucket:"cardiopluz-health-check-up.firebasestorage.app",
+    messagingSenderId:"936833651637",
+    appId:"1:936833651637:web:b2f9b5136d0a997f3d7ffc"
+  });
+} catch(e) { /* already init */ }
 
-// ── Data: read from localStorage (set by clinic_database.html printReport) ──
-// Falls back to demo data if nothing found
-function getRec()  { try{const s=localStorage.getItem('cardio_print_rec'); if(s)return JSON.parse(s);}catch(e){} return DEMO_REC; }
-function getHist() { try{const s=localStorage.getItem('cardio_print_history'); if(s)return JSON.parse(s);}catch(e){} return DEMO_HIST; }
+/* ════════════════════════════════
+   DEMO / REAL DATA
+════════════════════════════════ */
+var VACCINES = [
+  {id:'flu',name:'ไข้หวัดใหญ่',sub:'Influenza'},
+  {id:'covid',name:'COVID-19',sub:'Booster'},
+  {id:'pneumo23',name:'ปอดบวม PPSV23',sub:'Pneumococcal 23'},
+  {id:'pneumo13',name:'ปอดบวม PCV13',sub:'Pneumococcal 13'},
+  {id:'hepb',name:'ตับอักเสบ บี',sub:'Hepatitis B'},
+  {id:'rsv',name:'RSV',sub:'Respiratory Syncytial Virus'},
+  {id:'shingles',name:'งูสวัด',sub:'Shingrix'},
+  {id:'tetanus',name:'บาดทะยัก',sub:'Td/Tdap'},
+  {id:'hpv',name:'HPV',sub:'Human Papillomavirus'}
+];
 
-// ══ UTILS ══
-function thDate(d){
-  if(!d)return'-';const p=d.split('-');
-  if(p.length===3){const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-    const y=parseInt(p[0])<2400?parseInt(p[0])+543:parseInt(p[0]);
-    return`${parseInt(p[2])} ${M[parseInt(p[1])-1]} ${y}`;}return d;
-}
-function thDateShort(d){
-  if(!d)return'-';const p=d.split('-');
-  if(p.length===3){const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-    const y=parseInt(p[0])<2400?parseInt(p[0])+543:parseInt(p[0]);
-    return`${parseInt(p[2])} ${M[parseInt(p[1])-1]} ${String(y).slice(-2)}`;}return d;
-}
-
-function labStatus(test,val,gender){
-  if(!val)return{chip:'<span class="chip chip-na">—</span>',color:'var(--text2)',ref:'-'};
-  const v=parseFloat(val);let ok,warn,ref,txt,cls,color;
-  switch(test){
-    case'fbs':  ok=v<=99;warn=v<=125;ref='70–99 mg/dL';break;
-    case'a1c':  ok=v<5.7;warn=v<6.5; ref='< 5.7 %';break;
-    case'ldl':  ok=v<130;warn=v<160; ref='< 130 mg/dL';break;
-    case'cr':   {const mx=gender==='หญิง'?1.1:1.2;ok=v<=mx;warn=v<=mx*1.3;ref=gender==='หญิง'?'0.5–1.1':'0.7–1.2 mg/dL';break;}
-    case'ast':  ok=v<=40;warn=v<=80; ref='< 40 U/L';break;
-    case'alt':  ok=v<=40;warn=v<=80; ref='< 40 U/L';break;
-    // New labs
-    case'tc':   ok=v<200;warn=v<240; ref='< 200 mg/dL';break;
-    case'hdl':  {const mn=gender==='หญิง'?50:40;ok=v>=mn;warn=v>=(mn-10);ref=gender==='หญิง'?'> 50 mg/dL':'> 40 mg/dL';
-                 cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
-                 txt=ok?'ปกติ':warn?'ต่ำเล็กน้อย':'ต่ำ';
-                 color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
-                 return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};}
-    case'tg':   ok=v<150;warn=v<200; ref='< 150 mg/dL';break;
-    case'upcr': ok=v<150;warn=v<300; ref='< 150 mg/g';break;
-    case'tsh':  ok=v>=0.4&&v<=4.0;warn=(v>=0.1&&v<0.4)||(v>4.0&&v<=10);ref='0.4–4.0 mIU/L';
-                cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
-                txt=ok?'ปกติ':v<0.4?'ต่ำ':'สูง';
-                color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
-                return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};
-    case'albumin': ok=v>=3.5&&v<=5.0;warn=v>=3.0&&v<3.5;ref='3.5–5.0 g/dL';
-                cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
-                txt=ok?'ปกติ':v<3.5?'ต่ำ':'สูง';
-                color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
-                return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};
-    case'psa':  if(v<4.0){cls='chip-ok';txt='ปกติ';color='var(--ok)';}
-                else if(v<=10){cls='chip-warn';txt='เฝ้าระวัง';color='var(--warn)';}
-                else{cls='chip-bad';txt='สูง';color='var(--bad)';}
-                return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref:'< 4.0 ng/mL'};
-    default: return{chip:'<span class="chip chip-na">—</span>',color:'var(--text2)',ref:'-'};
+var DEMO_REC = {
+  hn:'HN-2568-001', visitDate:'2568-05-10', fullName:'นาย สมชาย ใจดี',
+  dob:'1 ม.ค. 2510 (อายุ 58 ปี)', gender:'ชาย',
+  doctor:'พญ.ณัฏฐา อานนทวีศิลป์', note:'DM, HT, Dyslipidemia',
+  height:'158', weight:'60.9', bmi:'24.4',
+  smm:'21.4', slm:'37.5', muscle:'39.5', boneMass:'2.6', bfm:'21.0',
+  pbf:'34.5', vfl:'9', bmr:'1232', whr:'0.85',
+  cid:'Above Avg Weak C-Type', bodyTypeGrid:'Obesity', bodyBalance:'Balanced',
+  inbodyScore:'71', inbodyScoreDelta:'-9',
+  dWeight:'+3.1', dSmm:'-2.3', dBfm:'+6.9', dPbf:'+10.1', dBmr:'-82', dVfl:'+3',
+  fbs:'118', a1c:'6.8', ldl:'145', cr:'1.05', ast:'32', alt:'38',
+  tc:'210', hdl:'38', tg:'185', upcr:'120', tsh:'2.1', albumin:'4.2',
+  psa:'2.1', tmNote:'ติดตามผล PSA ทุกปี',
+  sbp:'138', dbp:'88', bpTarget:'< 130/80', smoker:'yes',
+  dietAdvice:'1. ลดแป้งขัดสี น้ำตาล และอาหารไขมันสูง\n2. เพิ่มผักใบเขียวและโปรตีนจากปลา ทูน่า ไข่ขาว\n3. รับประทาน 3 มื้อตรงเวลา งดของว่างกลางคืน',
+  exerciseAdvice:'1. เดินเร็วหรือปั่นจักรยาน 30–40 นาที ≥ 5 วัน/สัปดาห์\n2. เพิ่มออกกำลังกายสร้างกล้ามเนื้อ 2 ครั้ง/สัปดาห์',
+  vaxAdvice:'• ไข้หวัดใหญ่ ฉีดทุกปี ลดโอกาสนอน รพ. 40%\n• COVID-19 Booster ทุก 6–12 เดือน\n• ปอดอักเสบ (Pneumococcal) แนะนำในผู้ป่วย DM, HT',
+  nextVisit:'2568-08-10', recorder:'พย.สมหญิง',
+  vaccines:{
+    flu:{status:'done',date:'2568-01-15'}, covid:{status:'done',date:'2567-12-01'},
+    pneumo23:{status:'plan',date:''}, pneumo13:{status:'na',date:''},
+    hepb:{status:'done',date:'2560-03-10'}, rsv:{status:'plan',date:''},
+    shingles:{status:'plan',date:''}, tetanus:{status:'partial',date:'2565-06-01'},
+    hpv:{status:'na',date:''}
   }
-  cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
-  txt=ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';
-  color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
-  return{chip:`<span class="chip ${cls}">${txt}</span>`,color,ref};
+};
+
+var DEMO_HIST = [
+  {visitDate:'2567-05-10',weight:'64.0',bmi:'25.7',pbf:'36.0',vfl:'11',smm:'20.5',inbodyScore:'62',fbs:'135',a1c:'7.5',ldl:'162',ast:'45',alt:'52'},
+  {visitDate:'2567-08-12',weight:'63.5',bmi:'25.5',pbf:'35.5',vfl:'10',smm:'20.8',inbodyScore:'64',fbs:'128',a1c:'7.2',ldl:'155',ast:'40',alt:'46'},
+  {visitDate:'2567-11-15',weight:'62.8',bmi:'25.2',pbf:'35.0',vfl:'10',smm:'21.0',inbodyScore:'66',fbs:'122',a1c:'7.0',ldl:'150',ast:'36',alt:'42'},
+  {visitDate:'2568-02-10',weight:'61.5',bmi:'24.6',pbf:'34.8',vfl:'9',smm:'21.2',inbodyScore:'68',fbs:'120',a1c:'6.9',ldl:'148',ast:'34',alt:'40'},
+  {visitDate:'2568-05-10',weight:'60.9',bmi:'24.4',pbf:'34.5',vfl:'9',smm:'21.4',inbodyScore:'71',fbs:'118',a1c:'6.8',ldl:'145',ast:'32',alt:'38'}
+];
+
+function getRec()  { try { var s=localStorage.getItem('cardio_print_rec');  if(s) return JSON.parse(s); } catch(e){} return DEMO_REC; }
+function getHist() { try { var s=localStorage.getItem('cardio_print_history'); if(s) return JSON.parse(s); } catch(e){} return DEMO_HIST; }
+
+/* ════════════════════════════════
+   UTILITY FUNCTIONS
+════════════════════════════════ */
+function thDate(d) {
+  if (!d) return '-';
+  var p = d.split('-');
+  if (p.length === 3) {
+    var M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var y = parseInt(p[0]) < 2400 ? parseInt(p[0]) + 543 : parseInt(p[0]);
+    return parseInt(p[2]) + ' ' + M[parseInt(p[1])-1] + ' ' + y;
+  }
+  return d;
+}
+function thDateShort(d) {
+  if (!d) return '-';
+  var p = d.split('-');
+  if (p.length === 3) {
+    var M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var y = parseInt(p[0]) < 2400 ? parseInt(p[0]) + 543 : parseInt(p[0]);
+    return parseInt(p[2]) + ' ' + M[parseInt(p[1])-1] + ' ' + String(y).slice(-2);
+  }
+  return d;
 }
 
-function ibadge(val,okMin,okMax){
-  if(!val)return'';const v=parseFloat(val);
-  const[cls,txt]=v>=okMin&&v<=okMax?['b-ok','ปกติ']:v<okMin?['b-bad','ต่ำ']:['b-warn','สูง'];
-  return`<span class="ic-badge ${cls}">${txt}</span>`;
+function labStatus(test, v, g) {
+  var na = '<span class="chip chip-na">—</span>';
+  if (!v) return {chip:na, color:'var(--text2)', ref:'—'};
+  var n = parseFloat(v);
+  var ok, warn, ref, cls, txt, color;
+  if (test === 'fbs')   { ok=n<=99;  warn=n<=125; ref='70–99 mg/dL'; }
+  else if (test === 'a1c')  { ok=n<5.7; warn=n<6.5;  ref='< 5.7 %'; }
+  else if (test === 'ldl')  { ok=n<130; warn=n<160;  ref='< 130 mg/dL'; }
+  else if (test === 'cr')   { var mx=g==='หญิง'?1.1:1.2; ok=n<=mx; warn=n<=mx*1.3; ref=(g==='หญิง'?'0.5–1.1':'0.7–1.2')+' mg/dL'; }
+  else if (test === 'ast')  { ok=n<=40; warn=n<=80;  ref='< 40 U/L'; }
+  else if (test === 'alt')  { ok=n<=40; warn=n<=80;  ref='< 40 U/L'; }
+  else if (test === 'tc')   { ok=n<200; warn=n<240;  ref='< 200 mg/dL'; }
+  else if (test === 'hdl')  {
+    var mn=g==='หญิง'?50:40; ok=n>=mn; warn=n>=(mn-10); ref=(g==='หญิง'?'> 50':'> 40')+' mg/dL';
+    cls=ok?'chip-ok':warn?'chip-warn':'chip-bad'; txt=ok?'ปกติ':warn?'ต่ำเล็กน้อย':'ต่ำ'; color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return {chip:'<span class="chip '+cls+'">'+txt+'</span>', color:color, ref:ref};
+  }
+  else if (test === 'tg')   { ok=n<150; warn=n<200;  ref='< 150 mg/dL'; }
+  else if (test === 'upcr') { ok=n<150; warn=n<300;  ref='< 150 mg/g'; }
+  else if (test === 'tsh')  {
+    ok=n>=0.4&&n<=4.0; warn=(n>=0.1&&n<0.4)||(n>4&&n<=10); ref='0.4–4.0 mIU/L';
+    cls=ok?'chip-ok':warn?'chip-warn':'chip-bad'; txt=ok?'ปกติ':n<0.4?'ต่ำ':'สูง'; color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return {chip:'<span class="chip '+cls+'">'+txt+'</span>', color:color, ref:ref};
+  }
+  else if (test === 'albumin') {
+    ok=n>=3.5&&n<=5.0; warn=n>=3.0&&n<3.5; ref='3.5–5.0 g/dL';
+    cls=ok?'chip-ok':warn?'chip-warn':'chip-bad'; txt=ok?'ปกติ':n<3.5?'ต่ำ':'สูง'; color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return {chip:'<span class="chip '+cls+'">'+txt+'</span>', color:color, ref:ref};
+  }
+  else if (test === 'psa')  {
+    if (n<4)      { cls='chip-ok';   txt='ปกติ';      color='var(--ok)'; }
+    else if(n<=10){ cls='chip-warn'; txt='เฝ้าระวัง'; color='var(--warn)'; }
+    else          { cls='chip-bad';  txt='สูง';        color='var(--bad)'; }
+    return {chip:'<span class="chip '+cls+'">'+txt+'</span>', color:color, ref:'< 4.0 ng/mL'};
+  }
+  else return {chip:na, color:'var(--text2)', ref:'—'};
+  cls = ok?'chip-ok':warn?'chip-warn':'chip-bad';
+  txt = ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';
+  color = ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+  return {chip:'<span class="chip '+cls+'">'+txt+'</span>', color:color, ref:ref};
 }
-function gcolor(val,okMin,okMax){
-  if(!val)return'#ccc';const v=parseFloat(val);
-  return v>=okMin&&v<=okMax?'var(--ok)':v>okMax?'var(--warn)':'var(--bad)';
-}
-function gw(val,mn,mx){if(!val)return'0%';return Math.min(100,Math.max(0,((parseFloat(val)-mn)/(mx-mn))*100))+'%';}
-function scoreClass(s){const v=parseInt(s)||0;return v>=70?'sc-ok':v>=50?'sc-warn':'sc-bad';}
 
-function calcIdeal(height,gender){
-  const h=parseFloat(height);if(!h)return{wRange:'-',wMid:null,mRange:'-',mMid:null,fatRange:'-'};
-  const hm=h/100;
-  const wL=(18.5*hm*hm).toFixed(1),wH=(22.9*hm*hm).toFixed(1),wM=((18.5+22.9)/2*hm*hm).toFixed(1);
-  const idealBW=20.7*hm*hm;
-  const[pL,pH]=gender==='หญิง'?[0.28,0.39]:[0.38,0.54];
-  const mL=(idealBW*pL).toFixed(1),mH=(idealBW*pH).toFixed(1),mM=((parseFloat(mL)+parseFloat(mH))/2).toFixed(1);
-  return{wRange:`${wL}–${wH} kg`,wMid:wM,mRange:`${mL}–${mH} kg`,mMid:mM,fatRange:gender==='หญิง'?'18–28 %':'10–20 %'};
-}
-function diffChip(actual,target){
-  if(!actual||!target)return'';
-  const diff=(parseFloat(actual)-parseFloat(target)).toFixed(1);
-  if(Math.abs(diff)<0.1)return`<span class="icmp-diff" style="background:var(--ok-bg);color:var(--ok)">ในเกณฑ์ ✓</span>`;
-  const sign=diff>0?'+':'';
-  const[bg,col]=diff>0?['var(--bad-bg)','var(--bad)']:['var(--ok-bg)','var(--ok)'];
-  return`<span class="icmp-diff" style="background:${bg};color:${col}">${sign}${diff} kg</span>`;
+/* ════════════════════════════════
+   INBODY GAUGE (style = InBody app)
+════════════════════════════════ */
+function ibGauge(name, val, unit, nMin, nMax, tMax, deltaVal, deltaGoodUp) {
+  if (!val) return '';
+  var v = parseFloat(val);
+  var trackMax = tMax || nMax * 1.8;
+
+  // delta badge
+  var deltaBadge = '';
+  if (deltaVal !== undefined && deltaVal !== null && deltaVal !== '') {
+    var d = parseFloat(deltaVal);
+    if (!isNaN(d)) {
+      var sign = d > 0 ? '+' : '';
+      var dcls;
+      if (d === 0) dcls = 'd-neutral';
+      else if (deltaGoodUp) dcls = d > 0 ? 'd-pos-good' : 'd-neg-bad';
+      else dcls = d > 0 ? 'd-pos-bad' : 'd-neg-good';
+      deltaBadge = '<span class="ibg-delta ' + dcls + '">' + sign + d + '</span>';
+    }
+  }
+
+  // positions as %
+  function pct(x) { return Math.min(100, Math.max(0, x / trackMax * 100)); }
+  var underW  = pct(nMin);
+  var normalW = pct(nMax) - pct(nMin);
+  var dotPct  = pct(v);
+  var dotCls  = v < nMin ? 'dot-under' : v > nMax ? 'dot-over' : 'dot-ok';
+
+  return '<div class="ibg">' +
+    '<div class="ibg-row">' +
+    '<span class="ibg-name">' + name + '</span>' +
+    '<span class="ibg-val">' + val + '</span>' +
+    '<span class="ibg-unit">' + unit + '</span>' +
+    deltaBadge +
+    '</div>' +
+    '<div class="ibg-track">' +
+    '<div class="ibg-under" style="width:' + underW + '%"></div>' +
+    '<div class="ibg-normal" style="left:' + underW + '%;width:' + normalW + '%"></div>' +
+    '<div class="ibg-dot ' + dotCls + '" style="left:calc(' + dotPct + '% - 6px)"></div>' +
+    '</div>' +
+    '<div class="ibg-lbls"><span>Under</span><span>Normal</span><span>Over</span></div>' +
+    '</div>';
 }
 
-// ══ THAI CV RISK — Framingham-based RAMA-EGAT score using actual lab values ══
-// Reference: Thai CV Risk Score (Cardiovascular Risk for Thais)
-// Variables: age, gender, Total Cholesterol, HDL, SBP, DM, Smoker
-// Points table from Thai Heart Association / RAMA-EGAT study
-function extractAge(dobStr){
-  if(!dobStr)return null;
-  const m=dobStr.match(/(\d+)\s*ปี/);if(m)return parseInt(m[1]);
-  const m2=dobStr.match(/\d{4}/);if(m2){const y=parseInt(m2[0]);const birth=y>2400?y-543:y;return new Date().getFullYear()-birth;}
+/* ════════════════════════════════
+   InBody Score SVG Gauge
+════════════════════════════════ */
+function scoreSVG(score) {
+  var sc = parseInt(score) || 0;
+  var hex = sc >= 70 ? '#1A7A4A' : sc >= 50 ? '#C67B00' : '#B01D1D';
+  var pct = sc / 100;
+  var r = 44, cx = 56, cy = 58;
+  var sa = -Math.PI * 0.8;
+  var te = sa + Math.PI * 1.6;
+  var ee = sa + Math.PI * 1.6 * pct;
+  var sx = cx + r * Math.cos(sa), sy = cy + r * Math.sin(sa);
+  var ex = cx + r * Math.cos(te), ey = cy + r * Math.sin(te);
+  var fx = cx + r * Math.cos(ee), fy = cy + r * Math.sin(ee);
+  var lg = Math.PI * 1.6 * pct > Math.PI ? 1 : 0;
+  var desc = sc >= 70 ? 'ดี' : sc >= 50 ? 'พอใช้' : 'ปรับปรุง';
+  var arc = sc > 0 ? '<path d="M ' + sx + ' ' + sy + ' A ' + r + ' ' + r + ' 0 ' + lg + ' 1 ' + fx + ' ' + fy + '" fill="none" stroke="' + hex + '" stroke-width="10" stroke-linecap="round"/>' : '';
+  return '<svg width="112" height="92" viewBox="0 0 112 92">' +
+    '<path d="M ' + sx + ' ' + sy + ' A ' + r + ' ' + r + ' 0 1 1 ' + ex + ' ' + ey + '" fill="none" stroke="#E5E0D8" stroke-width="10" stroke-linecap="round"/>' +
+    arc +
+    '<text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-size="22" font-weight="800" font-family="IBM Plex Mono,monospace" fill="' + hex + '">' + sc + '</text>' +
+    '<text x="' + cx + '" y="' + (cy + 13) + '" text-anchor="middle" font-size="10" font-family="Sarabun,sans-serif" fill="#7A7268">' + desc + '</text>' +
+    '</svg>';
+}
+
+/* ════════════════════════════════
+   CV RISK ARC
+════════════════════════════════ */
+function cvArc(risk) {
+  var pct = Math.min(risk, 50) / 50;
+  var hex = risk < 10 ? '#1A7A4A' : risk < 20 ? '#C67B00' : risk < 30 ? '#B05000' : '#8B1A1A';
+  var cx = 85, cy = 80, r = 64;
+  var sx = cx + r * Math.cos(Math.PI), sy = cy + r * Math.sin(Math.PI);
+  var ex = cx + r * Math.cos(2 * Math.PI), ey = cy + r * Math.sin(2 * Math.PI);
+  var ang = Math.PI + Math.PI * pct;
+  var fx = cx + r * Math.cos(ang), fy = cy + r * Math.sin(ang);
+  var lg = pct > 0.5 ? 1 : 0;
+  var arc = pct > 0 ? '<path d="M ' + sx + ' ' + sy + ' A ' + r + ' ' + r + ' 0 ' + lg + ' 1 ' + fx + ' ' + fy + '" fill="none" stroke="' + hex + '" stroke-width="12" stroke-linecap="round"/>' : '';
+  return '<svg width="170" height="98" viewBox="0 0 170 98">' +
+    '<path d="M ' + sx + ' ' + sy + ' A ' + r + ' ' + r + ' 0 0 1 ' + ex + ' ' + ey + '" fill="none" stroke="#E5E0D8" stroke-width="12" stroke-linecap="round"/>' +
+    arc +
+    '<text x="' + cx + '" y="' + (cy - 5) + '" text-anchor="middle" font-size="20" font-weight="800" font-family="IBM Plex Mono,monospace" fill="' + hex + '">' + risk.toFixed(1) + '%</text>' +
+    '<text x="' + cx + '" y="' + (cy + 10) + '" text-anchor="middle" font-size="10" font-family="Sarabun,sans-serif" fill="#7A7268">โอกาสเกิดโรคหัวใจ</text>' +
+    '<text x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle" font-size="10" font-family="Sarabun,sans-serif" fill="#7A7268">ใน 10 ปี</text>' +
+    '<text x="14" y="' + (cy + 30) + '" font-size="9" fill="#ccc">0%</text>' +
+    '<text x="156" y="' + (cy + 30) + '" text-anchor="end" font-size="9" fill="#ccc">50%</text>' +
+    '</svg>';
+}
+
+/* ════════════════════════════════
+   IDEAL CALC
+════════════════════════════════ */
+function calcIdeal(h, g) {
+  var hm = parseFloat(h) / 100;
+  if (!hm) return {wRange:'—', wMid:null, mRange:'—', mMid:null, fat:'—'};
+  var wL = (18.5 * hm * hm).toFixed(1), wH = (22.9 * hm * hm).toFixed(1);
+  var wM = ((18.5 + 22.9) / 2 * hm * hm).toFixed(1);
+  var iBW = 20.7 * hm * hm;
+  var pL = g === 'หญิง' ? 0.28 : 0.38, pH = g === 'หญิง' ? 0.39 : 0.54;
+  var mL = (iBW * pL).toFixed(1), mH = (iBW * pH).toFixed(1);
+  var mM = ((+mL + +mH) / 2).toFixed(1);
+  return {wRange:wL+'–'+wH, wMid:+wM, mRange:mL+'–'+mH, mMid:+mM, fat:g==='หญิง'?'18–28':'10–20'};
+}
+function diffChip(actual, target) {
+  if (!actual || !target) return '';
+  var d = (+actual - +target).toFixed(1);
+  if (Math.abs(+d) < 0.1) return '<span class="ib-diff" style="background:var(--ok-bg);color:var(--ok)">ในเกณฑ์ ✓</span>';
+  var sign = +d > 0 ? '+' : '';
+  var bg = +d > 0 ? 'var(--bad-bg)' : 'var(--ok-bg)';
+  var col = +d > 0 ? 'var(--bad)' : 'var(--ok)';
+  return '<span class="ib-diff" style="background:' + bg + ';color:' + col + '">' + sign + d + ' kg</span>';
+}
+
+/* ════════════════════════════════
+   THAI CV RISK
+════════════════════════════════ */
+function extractAge(s) {
+  if (!s) return null;
+  var m = s.match(/(\d+)\s*ปี/); if (m) return +m[1];
+  var m2 = s.match(/\d{4}/); if (m2) { var y = +m2[0]; return new Date().getFullYear() - (y > 2400 ? y - 543 : y); }
   return null;
 }
-
-function calcThaiCVRisk(r){
-  const age    = extractAge(r.dob);
-  const gender = r.gender||'';
-  const sbp    = parseFloat(r.sbp)||0;
-  const tc     = parseFloat(r.tc)||0;    // Total Cholesterol — primary variable
-  const hdl    = parseFloat(r.hdl)||0;   // HDL — protective factor
-  const ldl    = parseFloat(r.ldl)||0;   // fallback if TC not available
-  const a1c    = parseFloat(r.a1c)||0;
-  const fbs    = parseFloat(r.fbs)||0;
-  const note   = (r.note||'').toLowerCase();
-
-  const dm     = (r.dm==='yes'||note.includes('dm')||a1c>=6.5||fbs>=126);
-  const ht     = (r.ht==='yes'||note.includes('ht')||sbp>=140);
-  const smoker = r.smoker==='yes';
-  const dyslip = (r.dyslipidemia==='yes'||note.includes('dyslip')||ldl>=160||tc>=240);
-
-  if(!age||!gender) return null;
-
-  // Use TC if available, estimate from LDL if not (TC ≈ LDL + HDL + TG/5)
-  const tg   = parseFloat(r.tg)||0;
-  const tcEff = tc>0 ? tc : (ldl>0 ? ldl + (hdl||40) + (tg>0?tg/5:30) : 0);
-  const hdlEff= hdl>0 ? hdl : (gender==='หญิง'?55:45);
-  const tcHDLRatio = tcEff>0 && hdlEff>0 ? tcEff/hdlEff : null;
-
-  let pts = 0;
-
-  // ── AGE POINTS (RAMA-EGAT Thai CV Risk) ──
-  if(gender==='ชาย'){
-    if     (age< 40) pts+=0;
-    else if(age< 45) pts+=3;
-    else if(age< 50) pts+=6;
-    else if(age< 55) pts+=8;
-    else if(age< 60) pts+=10;
-    else if(age< 65) pts+=12;
-    else if(age< 70) pts+=14;
-    else             pts+=15;
+function cvRisk(r) {
+  var age = extractAge(r.dob), g = r.gender || '';
+  var sbp = +r.sbp||0, tc = +r.tc||0, hdl = +r.hdl||0, ldl = +r.ldl||0, tg = +r.tg||0;
+  var a1c = +r.a1c||0, fbs = +r.fbs||0, note = (r.note||'').toLowerCase();
+  var dm = note.indexOf('dm')>=0 || a1c>=6.5 || fbs>=126;
+  var ht = note.indexOf('ht')>=0 || sbp>=140;
+  var smoker = r.smoker === 'yes';
+  var dyslip = note.indexOf('dyslip')>=0 || ldl>=160 || tc>=240;
+  if (!age || !g) return null;
+  var tcE = tc > 0 ? tc : (ldl > 0 ? ldl + (hdl||40) + (tg > 0 ? tg/5 : 30) : 0);
+  var hdlE = hdl > 0 ? hdl : (g === 'หญิง' ? 55 : 45);
+  var pts = 0;
+  if (g === 'ชาย') {
+    if (age<40) pts=0; else if(age<45) pts=3; else if(age<50) pts=6;
+    else if(age<55) pts=8; else if(age<60) pts=10; else if(age<65) pts=12;
+    else if(age<70) pts=14; else pts=15;
   } else {
-    if     (age< 40) pts-=7;
-    else if(age< 45) pts+=-4;
-    else if(age< 50) pts+=-1;
-    else if(age< 55) pts+=1;
-    else if(age< 60) pts+=3;
-    else if(age< 65) pts+=5;
-    else if(age< 70) pts+=6;
-    else             pts+=7;
+    if (age<40) pts=-7; else if(age<45) pts=-4; else if(age<50) pts=-1;
+    else if(age<55) pts=1; else if(age<60) pts=3; else if(age<65) pts=5;
+    else if(age<70) pts=6; else pts=7;
   }
-
-  // ── TOTAL CHOLESTEROL (mg/dL) ──
-  if(tcEff>0){
-    if     (tcEff<160)  pts+=0;
-    else if(tcEff<200)  pts+=1;
-    else if(tcEff<240)  pts+=2;
-    else if(tcEff<280)  pts+=3;
-    else                pts+=4;
-  }
-
-  // ── HDL (protective — subtract points) ──
-  if(hdlEff>0){
-    if     (hdlEff>=60) pts-=1;
-    else if(hdlEff>=50) pts+=0;
-    else if(hdlEff>=45) pts+=1;
-    else if(hdlEff>=35) pts+=2;
-    else                pts+=2;
-  }
-
-  // ── SBP ──
-  if     (sbp<120)          pts+=0;
-  else if(sbp<130)          pts+=0;
-  else if(sbp>=130&&sbp<140)pts+=1;
-  else if(sbp>=140&&sbp<160)pts+=2;
-  else if(sbp>=160&&sbp<180)pts+=4;
-  else if(sbp>=180)         pts+=5;
-
-  // ── DIABETES ──
-  if(dm) pts += (gender==='ชาย' ? 3 : 4);
-
-  // ── SMOKER ──
-  if(smoker) pts += (gender==='ชาย' ? 2 : 2);
-
-  // ── POINTS → 10-year risk % (RAMA-EGAT lookup table) ──
-  const ptRisk = {
-    '-3':0.5,'-2':0.5,'-1':0.6,'0':0.7,'1':0.9,'2':1.1,'3':1.4,
-    '4':1.8,'5':2.2,'6':2.8,'7':3.5,'8':4.4,'9':5.4,'10':6.8,
-    '11':8.4,'12':10.4,'13':12.7,'14':15.6,'15':18.9,'16':22.9,
-    '17':27.5,'18':33.0,'19':38.0,'20':44.0
-  };
-  const cp   = Math.max(-3, Math.min(20, pts));
-  const risk = ptRisk[String(cp)] || (cp>20?49:0.5);
-
-  // ── RISK CATEGORY ──
-  // Thai CV Risk: <10% Low | 10–19% Moderate | 20–29% High | ≥30% Very High
-  let level,levelTH,icon,cls;
-  const forceUp = dm&&ht&&dyslip;
-  if     (risk<10 && !forceUp){level='LOW';  levelTH='ความเสี่ยงต่ำ';      icon='🟢';cls='cv-risk-LOW';}
-  else if(risk<20)             {level='MOD';  levelTH='ความเสี่ยงปานกลาง';  icon='🟡';cls='cv-risk-MOD';}
-  else if(risk<30)             {level='HIGH'; levelTH='ความเสี่ยงสูง';       icon='🟠';cls='cv-risk-HIGH';}
-  else                         {level='VHIGH';levelTH='ความเสี่ยงสูงมาก';   icon='🔴';cls='cv-risk-VHIGH';}
-  if(forceUp&&level==='LOW'){level='MOD';levelTH='ความเสี่ยงปานกลาง';icon='🟡';cls='cv-risk-MOD';}
-
-  const ldlGoal={LOW:'< 130 mg/dL',MOD:'< 130 mg/dL',HIGH:'< 100 mg/dL',VHIGH:'< 70 mg/dL'};
-  const usedTC = tc>0;
-
-  return{pts,risk,level,levelTH,icon,cls,age,dm,ht,smoker,dyslip,
-    sbp,tc:tcEff,hdl:hdlEff,tcHDLRatio,usedTC,
-    ldlGoal:ldlGoal[level]};
+  if(tcE<160) pts+=0; else if(tcE<200) pts+=1; else if(tcE<240) pts+=2; else if(tcE<280) pts+=3; else pts+=4;
+  if(hdlE>=60) pts-=1; else if(hdlE>=50) pts+=0; else if(hdlE>=45) pts+=1; else pts+=2;
+  if(sbp<130) pts+=0; else if(sbp<140) pts+=1; else if(sbp<160) pts+=2; else if(sbp<180) pts+=4; else pts+=5;
+  pts += (dm ? (g==='ชาย'?3:4) : 0) + (smoker ? 2 : 0);
+  var MAP = {'-3':0.5,'-2':0.5,'-1':0.6,'0':0.7,'1':0.9,'2':1.1,'3':1.4,'4':1.8,'5':2.2,
+    '6':2.8,'7':3.5,'8':4.4,'9':5.4,'10':6.8,'11':8.4,'12':10.4,'13':12.7,
+    '14':15.6,'15':18.9,'16':22.9,'17':27.5,'18':33.0,'19':38.0,'20':44.0};
+  var cp = Math.max(-3, Math.min(20, pts));
+  var risk = MAP[String(cp)] || (cp > 20 ? 49 : 0.5);
+  var lv, lth, icon, cls;
+  var fu = dm && ht && dyslip;
+  if (risk<10&&!fu)  { lv='LOW';   lth='ความเสี่ยงต่ำ';      icon='🟢'; cls='cv-LOW'; }
+  else if (risk<20)  { lv='MOD';   lth='ความเสี่ยงปานกลาง';  icon='🟡'; cls='cv-MOD'; }
+  else if (risk<30)  { lv='HIGH';  lth='ความเสี่ยงสูง';       icon='🟠'; cls='cv-HIGH'; }
+  else               { lv='VHIGH'; lth='ความเสี่ยงสูงมาก';   icon='🔴'; cls='cv-VHIGH'; }
+  if (fu && lv==='LOW') { lv='MOD'; lth='ความเสี่ยงปานกลาง'; icon='🟡'; cls='cv-MOD'; }
+  var ldlGoal = {LOW:'< 130', MOD:'< 130', HIGH:'< 100', VHIGH:'< 70'};
+  return {pts:pts, risk:risk, lv:lv, lth:lth, icon:icon, cls:cls, age:age,
+    dm:dm, ht:ht, smoker:smoker, tc:tcE, hdl:hdlE, usedTC:tc>0, ldlGoal:ldlGoal[lv]};
 }
 
-function renderCVArc(risk){
-  const pct=Math.min(risk,50)/50;
-  const color=risk<10?'#1A7A4A':risk<20?'#C67B00':risk<30?'#B05000':'#8B1A1A';
-  const cx=85,cy=85,r=68;
-  const sx=cx+r*Math.cos(Math.PI),sy=cy+r*Math.sin(Math.PI);
-  const ex2=cx+r*Math.cos(2*Math.PI),ey2=cy+r*Math.sin(2*Math.PI);
-  const ang=Math.PI+Math.PI*pct;
-  const fx=cx+r*Math.cos(ang),fy=cy+r*Math.sin(ang);
-  const lg=pct>0.5?1:0;
-  return`<svg width="170" height="104" viewBox="0 0 170 104">
-    <path d="M ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex2} ${ey2}" fill="none" stroke="#E5E0D8" stroke-width="13" stroke-linecap="round"/>
-    ${pct>0?`<path d="M ${sx} ${sy} A ${r} ${r} 0 ${lg} 1 ${fx} ${fy}" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round"/>`:''}
-    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="20" font-weight="800" font-family="IBM Plex Mono,monospace" fill="${color}">${risk.toFixed(1)}%</text>
-    <text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="10" font-family="Sarabun,sans-serif" fill="#6B6057">โอกาสเกิดโรคหัวใจ</text>
-    <text x="${cx}" y="${cy+20}" text-anchor="middle" font-size="10" font-family="Sarabun,sans-serif" fill="#6B6057">ใน 10 ปี</text>
-    <text x="18" y="${cy+28}" text-anchor="middle" font-size="9" fill="#bbb">0%</text>
-    <text x="152" y="${cy+28}" text-anchor="middle" font-size="9" fill="#bbb">50%</text>
-  </svg>`;
-}
-
-// ══ DATA TABLE BUILDERS ══
-function buildLabTable(hist){
-  if(!hist||!hist.length)return'';
-  const rows=[
-    {key:'fbs',label:'FBS (mg/dL)',ref:99,high:true},
-    {key:'a1c',label:'HbA1c (%)',ref:5.7,high:true},
-    {key:'ldl',label:'LDL (mg/dL)',ref:130,high:true},
-    {key:'ast',label:'AST (U/L)',ref:40,high:true},
-    {key:'alt',label:'ALT (U/L)',ref:40,high:true},
-    {key:'cr',label:'Cr (mg/dL)',ref:1.2,high:true},
-  ];
-  const cols=hist.map(h=>thDateShort(h.visitDate));
-  let html=`<table class="data-table"><thead><tr><th class="row-head">ค่าตรวจ</th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
-  for(const row of rows){
-    html+=`<tr><td class="row-head">${row.label}</td>`;
-    for(const h of hist){
-      const v=h[row.key];if(!v){html+=`<td class="dt-na">—</td>`;continue;}
-      const n=parseFloat(v);const cls=n<=row.ref?'dt-ok':n<=row.ref*1.3?'dt-warn':'dt-bad';
-      html+=`<td class="${cls}">${v}</td>`;
+/* ════════════════════════════════
+   BODY TYPE GRID
+════════════════════════════════ */
+var BT_CELLS = [
+  ['Athletic','Overweight','Obesity'],
+  ['Muscular','Average','Mild Obesity'],
+  ['Slim Muscular','Slim','Sarcopenic Obesity'],
+  ['Thin','Slightly Thin','—']
+];
+function bodyTypeGrid(active) {
+  var html = '';
+  for (var i = 0; i < BT_CELLS.length; i++) {
+    for (var j = 0; j < BT_CELLS[i].length; j++) {
+      var cell = BT_CELLS[i][j];
+      var cls = cell === active ? 'bt-cell bt-active' : 'bt-cell';
+      html += '<div class="' + cls + '">' + cell + '</div>';
     }
-    html+='</tr>';
-  }
-  return html+'</tbody></table>';
-}
-
-function buildIbTable(hist){
-  if(!hist||!hist.length)return'';
-  const rows=[
-    {key:'weight',label:'น้ำหนัก (kg)',ok:[0,70]},
-    {key:'bmi',label:'BMI',ok:[18.5,22.9]},
-    {key:'muscle',label:'Muscle Mass (kg)',ok:[30,999]},
-    {key:'smm',label:'SMM (kg)',ok:[33,999]},
-    {key:'bfm',label:'BFM ไขมัน (kg)',ok:[0,20]},
-    {key:'pbf',label:'% ไขมัน',ok:[0,24.9]},
-    {key:'vfl',label:'VFL ไขมันช่องท้อง',ok:[0,10]},
-    {key:'inbodyScore',label:'InBody Score',ok:[70,100]},
-  ];
-  const cols=hist.map(h=>thDateShort(h.visitDate));
-  let html=`<table class="data-table"><thead><tr><th class="row-head">ค่า</th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
-  for(const row of rows){
-    html+=`<tr><td class="row-head">${row.label}</td>`;
-    for(const h of hist){
-      const v=h[row.key];if(!v){html+=`<td class="dt-na">—</td>`;continue;}
-      const n=parseFloat(v);const cls=n>=row.ok[0]&&n<=row.ok[1]?'dt-ok':'dt-warn';
-      html+=`<td class="${cls}">${v}</td>`;
-    }
-    html+='</tr>';
-  }
-  return html+'</tbody></table>';
-}
-
-function renderVaxTable(vaccines){
-  if(!vaccines)return'<p style="color:#aaa;font-size:12px">ไม่มีข้อมูลวัคซีน</p>';
-  const statusMap={
-    done:{cls:'vs-done',txt:'ฉีดแล้ว ✓'},
-    partial:{cls:'vs-partial',txt:'ฉีดบางส่วน'},
-    plan:{cls:'vs-plan',txt:'วางแผนฉีด'},
-    na:{cls:'vs-na',txt:'ไม่จำเป็น'},
-    '':{cls:'vs-none',txt:'ยังไม่ฉีด'},
-  };
-  let html=`<table class="vax-table"><thead><tr><th>วัคซีน</th><th>รายละเอียด</th><th>สถานะ</th><th>วันที่ฉีด</th></tr></thead><tbody>`;
-  for(const v of VACCINES){
-    const d=vaccines[v.id]||{};
-    const s=statusMap[d.status||'']||statusMap[''];
-    html+=`<tr>
-      <td><strong>${v.name}</strong></td>
-      <td style="color:var(--text2);font-size:11px">${v.sub}</td>
-      <td><span class="vax-status ${s.cls}">${s.txt}</span></td>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${d.date?thDate(d.date):'—'}</td>
-    </tr>`;
-  }
-  return html+'</tbody></table>';
-}
-
-// ══ LOGO SVG ══
-const LOGO_SVG=`<svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M24 42C24 42 6 30 6 18C6 12.477 10.477 8 16 8C19.5 8 22.5 9.8 24 12.5C25.5 9.8 28.5 8 32 8C37.523 8 42 12.477 42 18C42 30 24 42 24 42Z" stroke="white" stroke-width="2.5" fill="none"/>
-  <polyline points="10,20 15,20 18,14 22,26 26,18 29,22 32,20 38,20" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M33 7 L33 13 M30 10 L36 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-</svg>`;
-
-// ══ EXTENDED LAB + PSA RENDER ══
-function renderExtendedLabHTML(r) {
-  const g = r.gender||'';
-  const sections = [
-    {
-      title:'ไขมันในเลือด (Lipid Profile)',
-      rows:[
-        {key:'tc',  name:'Total Cholesterol',full:'ไขมันรวม',                 unit:'mg/dL'},
-        {key:'hdl', name:'HDL Cholesterol',  full:'ไขมันดี — ยิ่งสูงยิ่งดี', unit:'mg/dL'},
-        {key:'tg',  name:'Triglyceride (TG)',full:'ไขมันไตรกลีเซอไรด์',      unit:'mg/dL'},
-      ]
-    },
-    {
-      title:'ไต / ปัสสาวะ',
-      rows:[
-        {key:'upcr',name:'UPCr (Urine PCR)', full:'Urine Protein-Creatinine Ratio — ตรวจการรั่วของโปรตีน',unit:'mg/g'},
-      ]
-    },
-    {
-      title:'ต่อมไทรอยด์ / โปรตีน',
-      rows:[
-        {key:'tsh',    name:'TSH',    full:'Thyroid Stimulating Hormone — ต่อมไทรอยด์',unit:'mIU/L'},
-        {key:'albumin',name:'Albumin',full:'อัลบูมิน — ภาวะโภชนาการ / การทำงานตับ', unit:'g/dL'},
-      ]
-    },
-  ];
-  // Add PSA only for male
-  if(!g||g==='ชาย'){
-    sections.push({
-      title:'สารบ่งชี้มะเร็ง (Tumor Marker)',
-      rows:[{key:'psa',name:'PSA',full:'Prostate-Specific Antigen — ต่อมลูกหมาก<span class="tm-gender-badge tm-male" style="display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#E8F0FA;color:#2C5F8A;margin-left:6px">ชาย</span>',unit:'ng/mL'}]
-    });
-  }
-
-  // Check if any value exists
-  const anyValue = sections.some(s=>s.rows.some(row=>r[row.key]));
-  if(!anyValue&&!r.tmNote) return '';
-
-  let html='';
-  for(const sec of sections){
-    const hasVal=sec.rows.some(row=>r[row.key]);
-    if(!hasVal) continue;
-    html+=`<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:6px 0 4px;border-top:1px dashed var(--border-light);margin-top:6px;">${sec.title}</div>`;
-    html+=`<table class="lab-table">
-      <thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>`;
-    for(const row of sec.rows){
-      if(!r[row.key]) continue;
-      const s=labStatus(row.key,r[row.key],g);
-      html+=`<tr>
-        <td><div class="lab-name">${row.name}</div><div class="lab-full">${row.full}</div></td>
-        <td><span class="lab-val" style="color:${s.color}">${r[row.key]||'—'}</span> <small>${row.unit}</small></td>
-        <td><span class="lab-ref">${s.ref}</span></td>
-        <td>${s.chip}</td>
-      </tr>`;
-    }
-    html+='</tbody></table>';
-  }
-
-  // TC/HDL ratio card
-  const tc=parseFloat(r.tc),hdl=parseFloat(r.hdl);
-  if(tc>0&&hdl>0){
-    const ratio=(tc/hdl).toFixed(1);
-    const ratioOk=parseFloat(ratio)<5;
-    const ratioWarn=parseFloat(ratio)<6;
-    html+=`<div style="display:inline-flex;align-items:center;gap:10px;background:${ratioOk?'var(--ok-bg)':ratioWarn?'var(--warn-bg)':'var(--bad-bg)'};border:1px solid ${ratioOk?'var(--ok-mid)':'#F0C870'};border-radius:8px;padding:8px 14px;margin-top:8px;">
-      <span style="font-size:11px;font-weight:700;color:var(--text2)">อัตราส่วน TC/HDL:</span>
-      <span style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:${ratioOk?'var(--ok)':ratioWarn?'var(--warn)':'var(--bad)'}">${ratio}</span>
-      <span class="chip ${ratioOk?'chip-ok':ratioWarn?'chip-warn':'chip-bad'}">${ratioOk?'ดี':ratioWarn?'เฝ้าระวัง':'ความเสี่ยงสูง'}</span>
-      <span style="font-size:10px;color:var(--text2)">เป้าหมาย &lt; 5.0</span>
-    </div>`;
-  }
-
-  if(r.tmNote){
-    html+=`<div style="font-size:11px;color:var(--text2);font-style:italic;margin-top:8px;padding:6px 10px;background:var(--bg);border-radius:6px;">📝 หมายเหตุ: ${r.tmNote}</div>`;
   }
   return html;
 }
 
-// ══ MAIN RENDER ══
-function render(){
-  const r=getRec(), hist=getHist();
-  const ideal=calcIdeal(r.height,r.gender);
-  const cv=calcThaiCVRisk(r);
+/* ════════════════════════════════
+   CID INFO
+════════════════════════════════ */
+var CID_INFO = {
+  'I-Type':            {w:50, s:55, f:45, desc:'น้ำหนัก กล้ามเนื้อ และไขมัน อยู่ในเกณฑ์สมดุล'},
+  'Above Avg Weak C-Type': {w:76, s:35, f:80, desc:'Above Average Weak C-Type: น้ำหนักและ Body Fat Mass สูงกว่าเกณฑ์ Skeletal Muscle Mass ต่ำกว่าเกณฑ์ ควรเพิ่มกล้ามเนื้อและลดไขมัน'},
+  'C-Type Weak':       {w:70, s:30, f:75, desc:'น้ำหนักและไขมันสูง กล้ามเนื้อต่ำกว่าเกณฑ์'},
+  'D-Type':            {w:70, s:80, f:45, desc:'กล้ามเนื้อสูงกว่าเกณฑ์ น้ำหนักมากแต่เป็นกล้ามเนื้อ'},
+  'Sarcopenic Obesity':{w:65, s:28, f:85, desc:'ไขมันสูง กล้ามเนื้อน้อย ภาวะซาร์โคพีเนีย'},
+  'Slim':              {w:30, s:35, f:30, desc:'น้ำหนักน้อย กล้ามเนื้อและไขมันต่ำ'}
+};
 
-  const fbs=labStatus('fbs',r.fbs,r.gender),a1c=labStatus('a1c',r.a1c,r.gender);
-  const ldl=labStatus('ldl',r.ldl,r.gender),cr=labStatus('cr',r.cr,r.gender);
-  const ast=labStatus('ast',r.ast,r.gender),alt=labStatus('alt',r.alt,r.gender);
-  const sc=parseInt(r.inbodyScore)||0;
-  const scDesc=sc>=70?'ดี — ร่างกายสมดุลอยู่ในเกณฑ์ที่ดี':sc>=50?'พอใช้ — ควรปรับพฤติกรรมสุขภาพ':'ควรปรับปรุง — โปรดปรึกษาแพทย์';
-
-  // BP status
-  const sbpV=parseFloat(r.sbp)||0,dbpV=parseFloat(r.dbp)||0;
-  const bpOk=sbpV>0&&sbpV<130&&dbpV>0&&dbpV<80;
-  const bpHigh=sbpV>=140||dbpV>=90;
-  const bpColor=bpOk?'var(--ok)':bpHigh?'var(--bad)':'var(--warn)';
-
-  // CV block
-  let cvHTML='';
-  if(cv){
-    const bpGoal=cv.dm||cv.level==='HIGH'||cv.level==='VHIGH'?'< 130/80 mmHg':'< 140/90 mmHg';
-    cvHTML=`
-    <div class="sec-divider"></div>
-    <div class="sec-title"><span class="sec-tag cvrisk">Thai CV Risk</span><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี (RAMA-EGAT Thai CV Risk Score)</h2></div>
-    <div class="cv-main">
-      <div class="cv-gauge-wrap">
-        ${renderCVArc(cv.risk)}
-        <div class="cv-arc-label">คะแนนสะสม ${cv.pts} คะแนน</div>
-      </div>
-      <div>
-        <div class="cv-risk-box ${cv.cls}">
-          <div class="cv-risk-icon">${cv.icon}</div>
-          <div><div class="cv-risk-level">${cv.levelTH}</div>
-          <div class="cv-risk-sub">โอกาสเกิดโรคหัวใจและหลอดเลือดใน 10 ปี ≈ ${cv.risk.toFixed(1)}%
-          &nbsp;|&nbsp; ตัดระดับ: ต่ำ &lt;10% / ปานกลาง 10–19% / สูง 20–29% / สูงมาก ≥30%</div></div>
-        </div>
-        <div class="cv-details-grid">
-          <div class="cv-factor"><div class="cv-factor-lbl">🎯 เป้าหมาย LDL</div><div class="cv-factor-val">${cv.ldlGoal}</div><div class="cv-factor-sub">ปัจจุบัน: ${r.ldl?r.ldl+' mg/dL':'—'}</div></div>
-          <div class="cv-factor"><div class="cv-factor-lbl">💉 เป้าหมายความดัน</div><div class="cv-factor-val">${bpGoal}</div><div class="cv-factor-sub">ปัจจุบัน: ${r.sbp?r.sbp+'/'+r.dbp+' mmHg':'—'}</div></div>
-          <div class="cv-factor"><div class="cv-factor-lbl">🩸 เป้าหมาย HbA1c</div><div class="cv-factor-val">${cv.dm?'< 7.0 %':'< 5.7 %'}</div><div class="cv-factor-sub">ปัจจุบัน: ${r.a1c?r.a1c+' %':'—'}</div></div>
-        </div>
-      </div>
-    </div>
-      <div class="cv-factors-row">
-      <div class="cv-factor"><div class="cv-factor-lbl">อายุ</div><div class="cv-factor-val" style="font-size:15px">${cv.age} ปี</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">เพศ</div><div class="cv-factor-val" style="font-size:15px">${r.gender||'—'}</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">Total Cholesterol</div><div class="cv-factor-val" style="font-size:13px;color:${cv.tc>240?'var(--bad)':cv.tc>200?'var(--warn)':'var(--ok)'}">${cv.usedTC?r.tc:'~'+cv.tc.toFixed(0)} mg/dL${!cv.usedTC?' *':''}</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">HDL Cholesterol</div><div class="cv-factor-val" style="font-size:13px;color:${cv.hdl<40?'var(--bad)':cv.hdl<50?'var(--warn)':'var(--ok)'}">${r.hdl||'~'+cv.hdl.toFixed(0)} mg/dL${!r.hdl?' *':''}</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">SBP</div><div class="cv-factor-val" style="font-size:13px">${r.sbp||'—'} mmHg</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">เบาหวาน DM</div><div class="cv-factor-val" style="color:${cv.dm?'var(--bad)':'var(--ok)'}">${cv.dm?'มี ✕':'ไม่มี ✓'}</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">ความดัน HT</div><div class="cv-factor-val" style="color:${cv.ht?'var(--bad)':'var(--ok)'}">${cv.ht?'มี ✕':'ไม่มี ✓'}</div></div>
-      <div class="cv-factor"><div class="cv-factor-lbl">สูบบุหรี่</div><div class="cv-factor-val" style="color:${cv.smoker?'var(--bad)':'var(--ok)'}">${cv.smoker?'สูบ ✕':'ไม่สูบ ✓'}</div></div>
-      </div>
-      ${!cv.usedTC?`<div class="cv-note" style="margin-top:6px;border-left:3px solid var(--warn);background:var(--warn-bg);">⚠️ * ยังไม่มีค่า Total Cholesterol — ใช้การประมาณจาก LDL+HDL+TG ความแม่นยำอาจต่ำกว่า กรุณากรอก TC เพื่อผลลัพธ์ที่แม่นยำขึ้น</div>`:''}
-      <div class="cv-note" style="margin-top:6px;">อ้างอิง: Thai CV Risk Score (Framingham-based RAMA-EGAT) — คำนวณจาก อายุ, เพศ, Total Cholesterol, HDL, SBP, DM, การสูบบุหรี่ | ตัดระดับ: ต่ำ &lt;10% / ปานกลาง 10–19% / สูง 20–29% / สูงมาก ≥30%</div>`;
-  }
-
-  document.getElementById('reportContainer').innerHTML=`
-  <div class="report">
-
-    <!-- ── HEADER ── -->
-    <div class="report-header">
-      <div class="hdr-top">
-        <div class="hdr-brand">
-          ${LOGO_SVG}
-          <div>
-            <div class="clinic-name">CardioPluz Clinic</div>
-            <div class="clinic-sub">คลินิกอายุรกรรมโรคหัวใจ — รายงานผลการตรวจสุขภาพ</div>
-          </div>
-        </div>
-        <div class="hdr-meta">
-          วันที่ตรวจ: ${thDate(r.visitDate)}<br>
-          HN: ${r.hn||'-'}<br>
-          แพทย์: ${r.doctor||'-'}
-        </div>
-      </div>
-      <div class="patient-strip">
-        <div><div class="ps-label">ชื่อ-นามสกุล</div><div class="ps-val">${r.fullName||'-'}</div></div>
-        <div><div class="ps-label">วันเกิด / อายุ</div><div class="ps-val">${r.dob||'-'}</div></div>
-        <div><div class="ps-label">เพศ</div><div class="ps-val">${r.gender||'-'}</div></div>
-        <div><div class="ps-label">ส่วนสูง</div><div class="ps-val mono">${r.height?r.height+' cm':'-'}</div></div>
-        <div><div class="ps-label">โรคประจำตัว</div><div class="ps-val">${r.note||'-'}</div></div>
-      </div>
-    </div>
-
-    <!-- ── BODY ── -->
-    <div class="report-body">
-
-      <!-- INBODY -->
-      <div class="sec-title"><span class="sec-tag inbody">INBODY</span><h2>ผลการวัดองค์ประกอบร่างกาย</h2></div>
-      <div class="inbody-grid">
-        <div class="ic">${ibadge(r.weight,0,9999)}<div class="ic-lbl">น้ำหนัก</div><div class="ic-val">${r.weight||'—'}</div><div class="ic-unit">kg</div></div>
-        <div class="ic">${ibadge(r.bmi,18.5,22.9)}<div class="ic-lbl">BMI</div><div class="ic-val">${r.bmi||'—'}</div><div class="ic-unit">ปกติ 18.5–22.9</div></div>
-        <div class="ic"><div class="ic-lbl">Muscle Mass</div><div class="ic-val">${r.muscle||'—'}</div><div class="ic-unit">kg — กล้ามเนื้อล้วน</div></div>
-        <div class="ic"><div class="ic-lbl">SMM กล้ามเนื้อ-กระดูก</div><div class="ic-val">${r.smm||'—'}</div><div class="ic-unit">kg — Skeletal MM</div></div>
-        <div class="ic"><div class="ic-lbl">มวลไขมัน BFM</div><div class="ic-val">${r.bfm||'—'}</div><div class="ic-unit">kg</div></div>
-        <div class="ic">${ibadge(r.pbf,0,r.gender==='หญิง'?34.9:24.9)}<div class="ic-lbl">% ไขมัน</div><div class="ic-val">${r.pbf||'—'}</div><div class="ic-unit">% (ชาย &lt;25 / หญิง &lt;35)</div></div>
-        <div class="ic">${ibadge(r.vfl,0,10)}<div class="ic-lbl">VFL ไขมันช่องท้อง</div><div class="ic-val">${r.vfl||'—'}</div><div class="ic-unit">ระดับ (ปกติ ≤10)</div></div>
-        <div class="ic"><div class="ic-lbl">BMR เผาผลาญ</div><div class="ic-val" style="font-size:16px">${r.bmr||'—'}</div><div class="ic-unit">kcal/วัน</div></div>
-        <div class="ic">${ibadge(r.whr,0,r.gender==='หญิง'?0.849:0.899)}<div class="ic-lbl">WHR เอว/สะโพก</div><div class="ic-val">${r.whr||'—'}</div><div class="ic-unit">ชาย &lt;0.90 / หญิง &lt;0.85</div></div>
-        <div class="ic"><div class="ic-lbl">รูปร่าง</div><div class="ic-val" style="font-size:14px">${r.bodyType?r.bodyType.split(' ')[0]:'—'}</div><div class="ic-unit">${r.bodyType||''}</div></div>
-      </div>
-
-      <!-- IDEAL -->
-      <div class="ideal-compare">
-        <div class="icmp"><div class="icmp-lbl">🎯 น้ำหนักที่เหมาะสม</div><div class="icmp-target">${ideal.wMid?ideal.wMid+' kg':'—'}</div><div class="icmp-actual">ช่วง: ${ideal.wRange} | ปัจจุบัน: ${r.weight?r.weight+' kg':'—'}</div>${ideal.wMid&&r.weight?diffChip(r.weight,ideal.wMid):''}</div>
-        <div class="icmp"><div class="icmp-lbl">💪 มวลกล้ามเนื้อที่เหมาะสม</div><div class="icmp-target">${ideal.mMid?ideal.mMid+' kg':'—'}</div><div class="icmp-actual">ช่วง: ${ideal.mRange} | ปัจจุบัน: ${r.muscle?r.muscle+' kg':'—'}</div>${ideal.mMid&&r.muscle?diffChip(r.muscle,ideal.mMid):''}</div>
-        <div class="icmp"><div class="icmp-lbl">🔥 % ไขมันเป้าหมาย</div><div class="icmp-target">${ideal.fatRange||'—'}</div><div class="icmp-actual">ปัจจุบัน: ${r.pbf?r.pbf+' %':'—'}</div>${r.pbf&&r.gender?(parseFloat(r.pbf)<=(r.gender==='หญิง'?34.9:24.9)?'<span class="icmp-diff" style="background:var(--ok-bg);color:var(--ok)">ในเกณฑ์ ✓</span>':'<span class="icmp-diff" style="background:var(--bad-bg);color:var(--bad)">เกินเกณฑ์</span>'):''}</div>
-        <div class="icmp"><div class="icmp-lbl">📏 ส่วนสูง / BMI</div><div class="icmp-target">${r.height?r.height+' cm':'—'}</div><div class="icmp-actual">BMI ปัจจุบัน: ${r.bmi||'—'}</div>${r.bmi?ibadge(r.bmi,18.5,22.9):''}</div>
-      </div>
-
-      <!-- SCORE + GAUGES -->
-      <div class="score-box">
-        <div class="score-circle ${scoreClass(r.inbodyScore)}"><div class="sc-num">${r.inbodyScore||'—'}</div><div class="sc-lbl">คะแนน</div></div>
-        <div class="score-detail"><div class="sd-title">InBody Score</div><div class="sd-sub">${scDesc}</div>
-          <div style="margin-top:6px;font-size:11px">รูปแบบ: <strong>${r.bodyType||'-'}</strong> &nbsp;|&nbsp; สมดุล: <strong>${r.bodyBalance||'-'}</strong></div></div>
-      </div>
-      ${r.bmi?`<div class="gauge-row"><div class="gauge-name">BMI</div><div class="gauge-bg"><div class="gauge-fill" style="width:${gw(r.bmi,0,40)};background:${gcolor(r.bmi,18.5,22.9)}"></div></div><div class="gauge-val" style="color:${gcolor(r.bmi,18.5,22.9)}">${r.bmi}</div></div>`:''}
-      ${r.pbf?`<div class="gauge-row"><div class="gauge-name">% ไขมัน</div><div class="gauge-bg"><div class="gauge-fill" style="width:${gw(r.pbf,0,50)};background:${gcolor(r.pbf,0,r.gender==='หญิง'?34.9:24.9)}"></div></div><div class="gauge-val" style="color:${gcolor(r.pbf,0,r.gender==='หญิว'?34.9:24.9)}">${r.pbf}%</div></div>`:''}
-      ${r.vfl?`<div class="gauge-row"><div class="gauge-name">VFL ไขมันช่องท้อง</div><div class="gauge-bg"><div class="gauge-fill" style="width:${gw(r.vfl,0,30)};background:${gcolor(r.vfl,0,10)}"></div></div><div class="gauge-val" style="color:${gcolor(r.vfl,0,10)}">Lv.${r.vfl}</div></div>`:''}
-
-      <div class="sec-divider"></div>
-
-      <!-- LAB + BP -->
-      <div class="sec-title"><span class="sec-tag lab">LAB</span><h2>ผลการตรวจเลือดและความดันโลหิต</h2></div>
-
-      <!-- BP panel -->
-      ${r.sbp?`<div class="bp-row">
-        <div style="font-size:20px">🩺</div>
-        <div><div class="bp-label">ความดันโลหิต (SBP/DBP)</div>
-          <div class="bp-val" style="color:${bpColor}">${r.sbp} / ${r.dbp||'—'} <span style="font-size:13px;font-weight:400">mmHg</span></div></div>
-        <div style="margin-left:12px"><span class="chip ${bpOk?'chip-ok':bpHigh?'chip-bad':'chip-warn'}">${bpOk?'ปกติ':bpHigh?'สูง':'เฝ้าระวัง'}</span></div>
-        ${r.bpTarget?`<div style="margin-left:16px;font-size:11px;color:var(--text2)">เป้าหมาย: <strong>${r.bpTarget}</strong></div>`:''}
-      </div>`:''}
-
-      <table class="lab-table">
-        <thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead>
-        <tbody>
-          <tr><td><div class="lab-name">FBS</div><div class="lab-full">Fasting Blood Sugar — น้ำตาลในเลือดตอนเช้า</div></td><td><span class="lab-val" style="color:${fbs.color}">${r.fbs||'—'}</span> <small>mg/dL</small></td><td><span class="lab-ref">${fbs.ref}</span></td><td>${fbs.chip}</td></tr>
-          <tr><td><div class="lab-name">HbA1c</div><div class="lab-full">Hemoglobin A1C — น้ำตาลสะสม 3 เดือน</div></td><td><span class="lab-val" style="color:${a1c.color}">${r.a1c||'—'}</span> <small>%</small></td><td><span class="lab-ref">${a1c.ref}</span></td><td>${a1c.chip}</td></tr>
-          <tr><td><div class="lab-name">LDL Cholesterol</div><div class="lab-full">ไขมันเลว — ความเสี่ยงโรคหัวใจและหลอดเลือด</div></td><td><span class="lab-val" style="color:${ldl.color}">${r.ldl||'—'}</span> <small>mg/dL</small></td><td><span class="lab-ref">${ldl.ref}</span></td><td>${ldl.chip}</td></tr>
-          <tr><td><div class="lab-name">Creatinine (Cr)</div><div class="lab-full">ครีเอตินิน — การทำงานของไต</div></td><td><span class="lab-val" style="color:${cr.color}">${r.cr||'—'}</span> <small>mg/dL</small></td><td><span class="lab-ref">${cr.ref}</span></td><td>${cr.chip}</td></tr>
-          <tr><td><div class="lab-name">AST (SGOT)</div><div class="lab-full">เอนไซม์ตับ</div></td><td><span class="lab-val" style="color:${ast.color}">${r.ast||'—'}</span> <small>U/L</small></td><td><span class="lab-ref">${ast.ref}</span></td><td>${ast.chip}</td></tr>
-          <tr><td><div class="lab-name">ALT (SGPT)</div><div class="lab-full">เอนไซม์ตับ</div></td><td><span class="lab-val" style="color:${alt.color}">${r.alt||'—'}</span> <small>U/L</small></td><td><span class="lab-ref">${alt.ref}</span></td><td>${alt.chip}</td></tr>
-        </tbody>
-      </table>
-
-      ${cvHTML}
-
-      <div class="sec-divider"></div>
-
-      ${(()=>{
-        const extHTML = renderExtendedLabHTML(r);
-        if (!extHTML) return '';
-        return `<div class="sec-divider"></div>
-        <div class="sec-title"><span class="sec-tag lab">LAB เพิ่มเติม</span><h2>ผลการตรวจเลือดเพิ่มเติม — Lipid / ไต / Thyroid / PSA</h2></div>
-        ${extHTML}`;
-      })()}
-
-      <!-- TREND CHARTS — stacked -->
-      <div class="sec-title"><span class="sec-tag trend">กราฟแนวโน้ม</span><h2>การเปลี่ยนแปลงย้อนหลัง ${hist.length} ครั้ง</h2></div>
-
-      <!-- Lab chart (top) -->
-      <div class="chart-card">
-        <div class="chart-card-title"><div class="ct-dot" style="background:var(--accent)"></div>Lab Results — แนวโน้มผลเลือด (แกนซ้าย: FBS/LDL/AST/ALT | แกนขวา: HbA1c)</div>
-        <canvas id="labChart" height="160"></canvas>
-        <div class="chart-legend" id="labLegend"></div>
-      </div>
-      <div class="data-table-wrap">${buildLabTable(hist)}</div>
-
-      <!-- InBody chart (below) -->
-      <div class="chart-card">
-        <div class="chart-card-title"><div class="ct-dot" style="background:var(--teal)"></div>InBody — แนวโน้มองค์ประกอบร่างกาย (แกนซ้าย: kg | แกนขวา: %, Score, Level)</div>
-        <canvas id="ibChart" height="160"></canvas>
-        <div class="chart-legend" id="ibLegend"></div>
-      </div>
-      <div class="data-table-wrap">${buildIbTable(hist)}</div>
-
-      <div class="sec-divider"></div>
-
-      <!-- VACCINES -->
-      <div class="sec-title"><span class="sec-tag vax">วัคซีน</span><h2>วัคซีนที่ควรได้รับ</h2></div>
-      ${renderVaxTable(r.vaccines)}
-
-      <div class="sec-divider"></div>
-
-      <!-- ADVICE -->
-      <div class="sec-title"><span class="sec-tag advice">คำแนะนำ</span><h2>คำแนะนำจากแพทย์</h2></div>
-      ${r.dietAdvice?`<div class="advice-box"><div class="ab-title">🥗 โภชนาการ</div><div class="ab-text">${r.dietAdvice}</div></div>`:''}
-      ${r.exerciseAdvice?`<div class="advice-box exercise"><div class="ab-title">🏃 การออกกำลังกาย</div><div class="ab-text">${r.exerciseAdvice}</div></div>`:''}
-      ${r.nextVisit?`<div class="next-box"><div style="font-size:24px">📅</div><div><div class="nv-lbl">นัดติดตามผลครั้งถัดไป</div><div class="nv-date">${thDate(r.nextVisit)}</div></div></div>`:''}
-
-    </div>
-
-    <!-- FOOTER -->
-    <div class="report-footer">
-      <div>
-        <div style="font-weight:600;margin-bottom:3px">CardioPluz Clinic — คลินิกอายุรกรรมโรคหัวใจ</div>
-        <div>ผลการตรวจนี้เป็นความลับทางการแพทย์ สำหรับผู้ป่วยเท่านั้น</div>
-        <div>กรุณาพกเอกสารนี้มาทุกครั้งที่มาพบแพทย์</div>
-      </div>
-      <div style="text-align:right">
-        <div class="sig-line"></div>
-        <div style="font-weight:600">${r.doctor||'แพทย์ผู้ดูแล'}</div>
-        <div style="font-size:10px">ผู้บันทึก: ${r.recorder||'-'}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;margin-top:2px">${thDate(r.visitDate)}</div>
-      </div>
-    </div>
-  </div>`;
-
-  setTimeout(()=>drawCharts(hist),120);
+/* ════════════════════════════════
+   DATA TABLE BUILDERS
+════════════════════════════════ */
+function buildLabTable(hist) {
+  if (!hist || !hist.length) return '';
+  var rows = [
+    {k:'fbs',  l:'FBS (mg/dL)',  ref:99},
+    {k:'a1c',  l:'HbA1c (%)',    ref:5.7},
+    {k:'ldl',  l:'LDL (mg/dL)', ref:130},
+    {k:'ast',  l:'AST (U/L)',   ref:40},
+    {k:'alt',  l:'ALT (U/L)',   ref:40}
+  ];
+  var cols = hist.map(function(h){ return thDateShort(h.visitDate); });
+  var html = '<table class="dtbl"><thead><tr><th class="rhd">ค่าตรวจ</th>';
+  cols.forEach(function(c){ html += '<th>' + c + '</th>'; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(row) {
+    html += '<tr><td class="rhd">' + row.l + '</td>';
+    hist.forEach(function(h) {
+      var v = h[row.k];
+      if (!v) { html += '<td class="tna">—</td>'; return; }
+      var n = +v;
+      var cls = n <= row.ref ? 'tok' : n <= row.ref*1.3 ? 'twarn' : 'tbad';
+      html += '<td class="' + cls + '">' + v + '</td>';
+    });
+    html += '</tr>';
+  });
+  return html + '</tbody></table>';
+}
+function buildIbTable(hist) {
+  if (!hist || !hist.length) return '';
+  var rows = [
+    {k:'weight',      l:'น้ำหนัก (kg)',   ok:[0,70]},
+    {k:'bmi',         l:'BMI',            ok:[18.5,22.9]},
+    {k:'smm',         l:'SMM (kg)',        ok:[22,32]},
+    {k:'pbf',         l:'% ไขมัน',        ok:[10,24.9]},
+    {k:'vfl',         l:'VFL',             ok:[0,10]},
+    {k:'inbodyScore', l:'InBody Score',    ok:[70,100]}
+  ];
+  var cols = hist.map(function(h){ return thDateShort(h.visitDate); });
+  var html = '<table class="dtbl"><thead><tr><th class="rhd">ค่า</th>';
+  cols.forEach(function(c){ html += '<th>' + c + '</th>'; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(row) {
+    html += '<tr><td class="rhd">' + row.l + '</td>';
+    hist.forEach(function(h) {
+      var v = h[row.k];
+      if (!v) { html += '<td class="tna">—</td>'; return; }
+      var n = +v;
+      var cls = n >= row.ok[0] && n <= row.ok[1] ? 'tok' : 'twarn';
+      html += '<td class="' + cls + '">' + v + '</td>';
+    });
+    html += '</tr>';
+  });
+  return html + '</tbody></table>';
 }
 
-// ══ CHARTS ══
-function drawCharts(hist){
-  if(!hist||!hist.length)return;
-  const labels=hist.map(h=>thDateShort(h.visitDate));
-  const def=key=>hist.map(h=>parseFloat(h[key])||null);
-  Chart.defaults.font.family="'Sarabun',sans-serif";
-  Chart.defaults.font.size=10;
-  const P={
-    red:'#C0392B',redA:'rgba(192,57,43,0.1)',
-    blue:'#2C5F8A',blueA:'rgba(44,95,138,0.1)',
-    teal:'#1A9B8C',tealA:'rgba(26,155,140,0.1)',
-    green:'#1A7A4A',greenA:'rgba(26,122,74,0.1)',
-    orange:'#C67B00',orangeA:'rgba(198,123,0,0.1)',
-    purple:'#6B3FA0',purpleA:'rgba(107,63,160,0.1)',
-    brown:'#8B4513',brownA:'rgba(139,69,19,0.1)',
-  };
-  function ds(label,data,color,colorA,yAxis='yLeft'){
-    return{label,data,borderColor:color,backgroundColor:colorA,borderWidth:2,
-      pointRadius:3.5,pointHoverRadius:5,pointBackgroundColor:color,
-      tension:0.35,fill:false,yAxisID:yAxis};
+/* ════════════════════════════════
+   LOGO
+════════════════════════════════ */
+var LOGO = '<svg width="42" height="42" viewBox="0 0 48 48" fill="none">' +
+  '<circle cx="24" cy="24" r="24" fill="rgba(255,255,255,0.15)"/>' +
+  '<path d="M24 38C24 38 10 29 10 19C10 14.582 13.582 11 18 11C20.7 11 23.1 12.4 24 14.5C24.9 12.4 27.3 11 30 11C34.418 11 38 14.582 38 19C38 29 24 38 24 38Z" stroke="white" stroke-width="2" fill="none"/>' +
+  '<polyline points="12,21 16,21 19,15 23,27 27,19 30,23 33,21 37,21" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+  '<path d="M31 10 L31 15 M28.5 12.5 L33.5 12.5" stroke="white" stroke-width="2" stroke-linecap="round"/>' +
+  '</svg>';
+
+/* ════════════════════════════════
+   MAIN RENDER
+════════════════════════════════ */
+function render() {
+  var r = getRec();
+  var hist = getHist();
+  var g = r.gender || '';
+  var ideal = calcIdeal(r.height, g);
+  var cv = cvRisk(r);
+
+  /* Lab statuses */
+  var fbs=labStatus('fbs',r.fbs,g), a1c=labStatus('a1c',r.a1c,g), ldl=labStatus('ldl',r.ldl,g);
+  var cr=labStatus('cr',r.cr,g), ast=labStatus('ast',r.ast,g), alt=labStatus('alt',r.alt,g);
+  var tc=labStatus('tc',r.tc,g), hdl=labStatus('hdl',r.hdl,g), tg=labStatus('tg',r.tg,g);
+  var upcr=labStatus('upcr',r.upcr,g), tsh=labStatus('tsh',r.tsh,g), alb=labStatus('albumin',r.albumin,g);
+  var psa = g !== 'หญิง' ? labStatus('psa',r.psa,g) : null;
+
+  /* BP */
+  var sbpV=+r.sbp||0, dbpV=+r.dbp||0;
+  var bpCls = sbpV<120&&dbpV<80 ? 'chip-ok' : sbpV>=140||dbpV>=90 ? 'chip-bad' : 'chip-warn';
+  var bpTxt = sbpV<120&&dbpV<80 ? 'ปกติ' : sbpV>=140||dbpV>=90 ? 'ความดันสูง' : 'เฝ้าระวัง';
+  var bpColor = sbpV<120&&dbpV<80 ? 'var(--ok)' : sbpV>=140||dbpV>=90 ? 'var(--bad)' : 'var(--warn)';
+
+  /* TC/HDL ratio */
+  var tcV=+r.tc, hdlV=+r.hdl;
+  var tcHDL = tcV>0&&hdlV>0 ? (tcV/hdlV).toFixed(1) : null;
+
+  /* InBody Score */
+  var sc = +r.inbodyScore || 0;
+  var scColor = sc>=70 ? 'var(--ok)' : sc>=50 ? 'var(--warn)' : 'var(--bad)';
+  var scBg    = sc>=70 ? 'var(--ok-bg)' : sc>=50 ? 'var(--warn-bg)' : 'var(--bad-bg)';
+  var scDelta = r.inbodyScoreDelta ? parseFloat(r.inbodyScoreDelta) : null;
+  var scDeltaHTML = '';
+  if (scDelta !== null && !isNaN(scDelta)) {
+    var dcls = scDelta >= 0 ? 'd-pos-good' : 'd-neg-bad';
+    scDeltaHTML = '<span class="ibg-delta ' + dcls + '">' + (scDelta>0?'+':'') + scDelta + '</span>';
   }
-  // LAB: left=FBS,LDL,AST,ALT  right=HbA1c
-  const labCtx=document.getElementById('labChart')?.getContext('2d');
-  if(labCtx){
-    new Chart(labCtx,{type:'line',data:{labels,datasets:[
-      ds('FBS (mg/dL)',def('fbs'),P.red,P.redA,'yLeft'),
-      ds('LDL (mg/dL)',def('ldl'),P.blue,P.blueA,'yLeft'),
-      ds('AST (U/L)',def('ast'),P.green,P.greenA,'yLeft'),
-      ds('ALT (U/L)',def('alt'),P.purple,P.purpleA,'yLeft'),
-      ds('HbA1c (%)',def('a1c'),P.orange,P.orangeA,'yRight'),
-    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
+
+  /* InBody normal ranges by gender */
+  var nSMM = g==='หญิง' ? [18,26] : [24,33];
+  var nBFM = g==='หญิง' ? [10,20] : [6,20];
+  var nPBF = g==='หญิง' ? [18,28] : [10,20];
+  var wMin=50, wMax=70;
+  var h=parseFloat(r.height);
+  if(h>0){var hm=h/100; wMin=+(18.5*hm*hm).toFixed(1); wMax=+(22.9*hm*hm).toFixed(1);}
+
+  /* CID */
+  var cidInfo = r.cid ? CID_INFO[r.cid] : null;
+
+  /* CV block HTML */
+  var cvHTML = '';
+  if (cv) {
+    var bpGoal = cv.dm || cv.lv==='HIGH' || cv.lv==='VHIGH' ? '< 130/80 mmHg' : '< 140/90 mmHg';
+    cvHTML =
+      '<div class="sec-div"></div>' +
+      '<div class="sec">' +
+      '<div class="sec-hdr"><div class="sec-icon si-orange">❤️</div>' +
+      '<div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2>' +
+      '<p>Thai CV Risk Score (Framingham-based RAMA-EGAT)</p></div></div>' +
+      '<div class="cv-card">' +
+      '<div class="cv-top">' +
+      '<div class="cv-gauge-col">' + cvArc(cv.risk) + '<div class="cv-pts">คะแนนสะสม ' + cv.pts + ' pts</div></div>' +
+      '<div class="cv-banner ' + cv.cls + '">' +
+      '<div class="cv-icon">' + cv.icon + '</div>' +
+      '<div class="cv-level">' + cv.lth + '</div>' +
+      '<div class="cv-pct">โอกาสเกิดโรคหัวใจใน 10 ปี ≈ <strong>' + cv.risk.toFixed(1) + '%</strong></div>' +
+      '<div style="font-size:10px;margin-top:6px;opacity:.75">ต่ำ &lt;10% / ปานกลาง 10–19% / สูง 20–29% / สูงมาก ≥30%</div>' +
+      '</div></div>' +
+      '<div class="cv-goals">' +
+      '<div class="cv-goal"><div class="cv-goal-lbl">🎯 เป้าหมาย LDL</div><div class="cv-goal-val">' + cv.ldlGoal + ' mg/dL</div><div class="cv-goal-cur">ปัจจุบัน: ' + (r.ldl||'—') + ' mg/dL</div></div>' +
+      '<div class="cv-goal"><div class="cv-goal-lbl">💉 เป้าหมายความดัน</div><div class="cv-goal-val">' + bpGoal + '</div><div class="cv-goal-cur">ปัจจุบัน: ' + (r.sbp||'—') + '/' + (r.dbp||'—') + ' mmHg</div></div>' +
+      '<div class="cv-goal"><div class="cv-goal-lbl">🩸 เป้าหมาย HbA1c</div><div class="cv-goal-val">' + (cv.dm?'< 7.0':'< 5.7') + ' %</div><div class="cv-goal-cur">ปัจจุบัน: ' + (r.a1c||'—') + ' %</div></div>' +
+      '</div>' +
+      '<div class="cv-factors">' +
+      '<div class="cv-fac"><div class="cv-fac-lbl">อายุ / เพศ</div><div class="cv-fac-val">' + cv.age + ' ปี / ' + (g||'—') + '</div></div>' +
+      '<div class="cv-fac"><div class="cv-fac-lbl">TC / HDL</div><div class="cv-fac-val" style="font-size:11px">' + (cv.usedTC?r.tc:'~'+cv.tc.toFixed(0)) + ' / ' + (r.hdl||'~'+cv.hdl.toFixed(0)) + '</div></div>' +
+      '<div class="cv-fac"><div class="cv-fac-lbl">เบาหวาน DM</div><div class="cv-fac-val" style="color:' + (cv.dm?'var(--bad)':'var(--ok)') + '">' + (cv.dm?'มี ✕':'ไม่มี ✓') + '</div></div>' +
+      '<div class="cv-fac"><div class="cv-fac-lbl">สูบบุหรี่</div><div class="cv-fac-val" style="color:' + (cv.smoker?'var(--bad)':'var(--ok)') + '">' + (cv.smoker?'สูบ ✕':'ไม่สูบ ✓') + '</div></div>' +
+      '</div>' +
+      (!cv.usedTC ? '<div class="cv-note">⚠️ ยังไม่มีค่า Total Cholesterol — ประมาณจาก LDL+HDL+TG ผลอาจคลาดเคลื่อน</div>' : '') +
+      '</div></div>';
+  }
+
+  /* ── BUILD HTML ── */
+  var out = '<div class="report">';
+
+  /* HEADER */
+  out += '<div class="rpt-header">' +
+    '<div class="hdr-top"><div class="hdr-brand">' + LOGO +
+    '<div><div class="clinic-name">CardioPluz Clinic</div>' +
+    '<div class="clinic-sub">คลินิกอายุรกรรมโรคหัวใจ — รายงานผลการตรวจสุขภาพ</div></div></div>' +
+    '<div class="hdr-meta">วันที่ตรวจ: ' + thDate(r.visitDate) + '<br>HN: ' + (r.hn||'-') + ' | แพทย์: ' + (r.doctor||'-') + '</div></div>' +
+    '<div class="patient-strip">' +
+    '<div><div class="ps-label">ชื่อ-นามสกุล</div><div class="ps-val">' + (r.fullName||'-') + '</div></div>' +
+    '<div><div class="ps-label">วันเกิด / อายุ</div><div class="ps-val">' + (r.dob||'-') + '</div></div>' +
+    '<div><div class="ps-label">เพศ</div><div class="ps-val">' + (g||'-') + '</div></div>' +
+    '<div><div class="ps-label">ส่วนสูง</div><div class="ps-val ps-mono">' + (r.height?r.height+' cm':'-') + '</div></div>' +
+    '<div><div class="ps-label">โรคประจำตัว</div><div class="ps-val">' + (r.note||'-') + '</div></div>' +
+    '</div></div>';
+
+  /* BODY */
+  out += '<div class="rpt-body">';
+
+  /* ── INBODY ── */
+  out += '<div class="sec"><div class="sec-hdr"><div class="sec-icon si-teal">⚖️</div>' +
+    '<div><h2>ผลการวัดองค์ประกอบร่างกาย</h2><p>InBody Analysis — Body Composition</p></div></div>';
+
+  /* InBody Score */
+  out += '<div class="score-wrap">' +
+    '<div>' + scoreSVG(r.inbodyScore) + '</div>' +
+    '<div class="score-right">' +
+    '<div class="score-label">InBody Score ' + scDeltaHTML + '</div>' +
+    '<div class="score-num-row"><span class="score-num" style="color:' + scColor + '">' + (r.inbodyScore||'—') + '</span><span class="score-pts">Points</span></div>' +
+    '<div class="score-badges">' +
+    '<span class="score-badge" style="background:' + scBg + ';color:' + scColor + '">' + (sc>=70?'✓ ดี':sc>=50?'⚠ พอใช้':'⚠ ควรปรับปรุง') + '</span>' +
+    (r.bodyTypeGrid ? '<span class="score-badge" style="background:' + (r.bodyTypeGrid.indexOf('Obesity')>=0?'var(--warn-bg)':'var(--cream2)') + ';color:' + (r.bodyTypeGrid.indexOf('Obesity')>=0?'var(--warn)':'var(--text2)') + '">' + r.bodyTypeGrid + '</span>' : '') +
+    (r.bodyBalance ? '<span class="score-badge" style="background:' + (r.bodyBalance==='Balanced'?'var(--ok-bg)':'var(--warn-bg)') + ';color:' + (r.bodyBalance==='Balanced'?'var(--ok)':'var(--warn)') + '">Balance: ' + r.bodyBalance + '</span>' : '') +
+    '</div></div></div>';
+
+  /* Muscle-Fat Analysis */
+  out += '<div class="ib-sec"><div class="ib-sec-title">💪 Muscle-Fat Analysis</div>' +
+    ibGauge('Weight', r.weight, 'kg', wMin, wMax, wMax*1.7, r.dWeight, false) +
+    ibGauge('Skeletal Muscle Mass', r.smm, 'kg', nSMM[0], nSMM[1], nSMM[1]*1.7, r.dSmm, true) +
+    ibGauge('Body Fat Mass', r.bfm, 'kg', nBFM[0], nBFM[1], nBFM[1]*2.2, r.dBfm, false) +
+    '</div>';
+
+  /* Obesity Analysis */
+  out += '<div class="ib-sec"><div class="ib-sec-title">📊 Obesity Analysis</div>' +
+    ibGauge('BMI', r.bmi, 'kg/m²', 18.5, 23, 35, null, false) +
+    ibGauge('Percent Body Fat', r.pbf, '%', nPBF[0], nPBF[1], nPBF[1]*2, r.dPbf, false) +
+    '</div>';
+
+  /* Abdominal Obesity */
+  out += '<div class="ib-sec"><div class="ib-sec-title">🫁 Abdominal Obesity Analysis</div>' +
+    ibGauge('Waist Hip Ratio', r.whr, '', 0.7, g==='หญิง'?0.85:0.9, 1.1, null, false) +
+    ibGauge('Visceral Fat Level', r.vfl, 'Lv', 1, 10, 20, r.dVfl, false) +
+    '</div>';
+
+  /* Comprehensive */
+  out += '<div class="ib-sec"><div class="ib-sec-title">⚡ Comprehensive Analysis</div>';
+  if (r.bmr) out += '<div class="ibg"><div class="ibg-row"><span class="ibg-name">Basal Metabolic Rate</span><span class="ibg-val">' + r.bmr + '</span><span class="ibg-unit">kcal</span>' + (r.dBmr?'<span class="ibg-delta ' + (+r.dBmr>=0?'d-neutral':'d-neg-bad') + '">' + (+r.dBmr>0?'+':'') + r.dBmr + '</span>':'') + '</div></div>';
+  if (r.slm)     out += '<div class="ibg"><div class="ibg-row"><span class="ibg-name">Soft Lean Mass</span><span class="ibg-val">' + r.slm + '</span><span class="ibg-unit">kg</span></div></div>';
+  if (r.muscle)  out += '<div class="ibg"><div class="ibg-row"><span class="ibg-name">Muscle Mass</span><span class="ibg-val">' + r.muscle + '</span><span class="ibg-unit">kg</span></div></div>';
+  if (r.boneMass)out += '<div class="ibg"><div class="ibg-row"><span class="ibg-name">Bone Mass</span><span class="ibg-val">' + r.boneMass + '</span><span class="ibg-unit">kg</span><span style="font-size:10px;color:var(--text2)">(ชาย ~3.0 / หญิง ~2.5)</span></div></div>';
+  out += '</div>';
+
+  /* CID */
+  if (r.cid) {
+    var ci = cidInfo;
+    out += '<div class="cid-box"><div class="cid-label">CID — Body Composition Index</div><div class="cid-type">' + r.cid + '</div>';
+    if (ci) {
+      out += '<div class="cid-bars">' +
+        '<div class="cid-bar-row"><div class="cid-bar-name">Weight</div><div class="cid-bar-bg"><div class="cid-bar-fill" style="width:' + ci.w + '%;background:' + (ci.w>65?'#E88080':'#6EC6A0') + '"></div></div></div>' +
+        '<div class="cid-bar-row"><div class="cid-bar-name">Skeletal Muscle</div><div class="cid-bar-bg"><div class="cid-bar-fill" style="width:' + ci.s + '%;background:' + (ci.s<40?'#F0B860':'#6EC6A0') + '"></div></div></div>' +
+        '<div class="cid-bar-row"><div class="cid-bar-name">Body Fat</div><div class="cid-bar-bg"><div class="cid-bar-fill" style="width:' + ci.f + '%;background:' + (ci.f>65?'#E88080':'#6EC6A0') + '"></div></div></div>' +
+        '</div><div class="cid-desc">' + ci.desc + '</div>';
+    }
+    out += '</div>';
+  }
+
+  /* Body Type Grid */
+  if (r.bodyTypeGrid) {
+    out += '<div class="bt-wrap"><div class="bt-header"><div><div class="bt-label">Body Type</div><div class="bt-type-val">' + r.bodyTypeGrid + '</div></div></div>' +
+      '<div class="bt-grid">' + bodyTypeGrid(r.bodyTypeGrid) + '</div>' +
+      '<div class="bt-axis"><span>← Percent Body Fat →</span><span>BMI ↑</span></div></div>';
+  }
+
+  /* Body Balance */
+  if (r.bodyBalance) {
+    var bbCls = r.bodyBalance === 'Balanced' ? 'bb-balanced' : 'bb-unbalanced';
+    out += '<div class="bb-row"><div style="font-size:18px">⚖️</div><div class="bb-lbl">Body Balance Evaluation (Upper-Lower)</div><span class="bb-chip ' + bbCls + '">' + (r.bodyBalance==='Balanced'?'✓ Balanced':r.bodyBalance) + '</span></div>';
+  }
+
+  /* Ideal targets */
+  out += '<div class="ideal-row">' +
+    '<div class="ideal-box"><div class="ib-lbl">🎯 น้ำหนักเป้าหมาย</div><div class="ib-target">' + (ideal.wMid?ideal.wMid+' kg':'—') + '</div><div class="ib-actual">ช่วง ' + ideal.wRange + ' kg | ปัจจุบัน ' + (r.weight||'—') + ' kg</div>' + diffChip(r.weight,ideal.wMid) + '</div>' +
+    '<div class="ideal-box"><div class="ib-lbl">💪 SMM เป้าหมาย</div><div class="ib-target">' + (ideal.mMid?ideal.mMid+' kg':'—') + '</div><div class="ib-actual">ช่วง ' + ideal.mRange + ' kg | ปัจจุบัน ' + (r.smm||'—') + ' kg</div>' + diffChip(r.smm,ideal.mMid) + '</div>' +
+    '<div class="ideal-box"><div class="ib-lbl">🔥 % ไขมันเป้าหมาย</div><div class="ib-target">' + (ideal.fat||'—') + ' %</div><div class="ib-actual">ปัจจุบัน ' + (r.pbf||'—') + ' %</div>' + (r.pbf&&g?(+r.pbf<=(g==='หญิง'?34.9:24.9)?'<span class="ib-diff" style="background:var(--ok-bg);color:var(--ok)">ในเกณฑ์ ✓</span>':'<span class="ib-diff" style="background:var(--bad-bg);color:var(--bad)">เกินเกณฑ์</span>'):'') + '</div>' +
+    '<div class="ideal-box"><div class="ib-lbl">📏 ส่วนสูง / BMI</div><div class="ib-target">' + (r.height?r.height+' cm':'—') + '</div><div class="ib-actual">BMI ปัจจุบัน ' + (r.bmi||'—') + '</div></div>' +
+    '</div>';
+
+  out += '</div>'; /* end InBody sec */
+
+  /* ── LAB ── */
+  out += '<div class="sec-div"></div><div class="sec"><div class="sec-hdr"><div class="sec-icon si-blue">🔬</div>' +
+    '<div><h2>ผลการตรวจเลือดและความดัน</h2><p>Laboratory Results & Blood Pressure</p></div></div>';
+
+  /* BP */
+  if (r.sbp) {
+    out += '<div class="bp-card"><div style="font-size:22px">🩺</div>' +
+      '<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:3px">ความดันโลหิต (SBP/DBP)</div>' +
+      '<div class="bp-nums"><span class="bp-n" style="color:' + bpColor + '">' + r.sbp + '</span><span class="bp-u">/</span><span class="bp-n" style="color:' + bpColor + '">' + (r.dbp||'—') + '</span><span class="bp-u">mmHg</span></div>' +
+      (r.bpTarget ? '<div style="font-size:10px;color:var(--text2);margin-top:3px">เป้าหมาย: <strong>' + r.bpTarget + '</strong></div>' : '') +
+      '</div><span class="chip ' + bpCls + '">' + bpTxt + '</span></div>';
+  }
+
+  /* Main lab */
+  out += '<div class="lab-wrap"><div class="lab-sec-title">ระดับน้ำตาล / ไต / ตับ</div>' +
+    '<table class="lab-tbl"><thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>' +
+    '<tr><td><div class="lname">FBS</div><div class="lfull">Fasting Blood Sugar — น้ำตาลในเลือดตอนเช้า</div></td><td><span class="lval" style="color:' + fbs.color + '">' + (r.fbs||'—') + '</span> <small>mg/dL</small></td><td><span class="lref">' + fbs.ref + '</span></td><td>' + fbs.chip + '</td></tr>' +
+    '<tr><td><div class="lname">HbA1c</div><div class="lfull">Hemoglobin A1C — น้ำตาลสะสม 3 เดือน</div></td><td><span class="lval" style="color:' + a1c.color + '">' + (r.a1c||'—') + '</span> <small>%</small></td><td><span class="lref">' + a1c.ref + '</span></td><td>' + a1c.chip + '</td></tr>' +
+    '<tr><td><div class="lname">LDL Cholesterol</div><div class="lfull">ไขมันเลว</div></td><td><span class="lval" style="color:' + ldl.color + '">' + (r.ldl||'—') + '</span> <small>mg/dL</small></td><td><span class="lref">' + ldl.ref + '</span></td><td>' + ldl.chip + '</td></tr>' +
+    '<tr><td><div class="lname">Creatinine (Cr)</div><div class="lfull">การทำงานของไต</div></td><td><span class="lval" style="color:' + cr.color + '">' + (r.cr||'—') + '</span> <small>mg/dL</small></td><td><span class="lref">' + cr.ref + '</span></td><td>' + cr.chip + '</td></tr>' +
+    '<tr><td><div class="lname">AST / ALT</div><div class="lfull">เอนไซม์ตับ (SGOT / SGPT)</div></td><td><span class="lval" style="color:' + ast.color + '">' + (r.ast||'—') + '</span> / <span class="lval" style="color:' + alt.color + '">' + (r.alt||'—') + '</span> <small>U/L</small></td><td><span class="lref">&lt; 40 U/L</span></td><td>' + ast.chip + '</td></tr>' +
+    '</tbody></table>';
+
+  /* Lipid */
+  if (r.tc || r.hdl || r.tg) {
+    out += '<div class="lab-sec-title">ไขมันในเลือด (Lipid Profile)</div>' +
+      '<table class="lab-tbl"><thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>';
+    if(r.tc)  out += '<tr><td><div class="lname">Total Cholesterol</div><div class="lfull">ไขมันรวม</div></td><td><span class="lval" style="color:' + tc.color + '">' + r.tc + '</span> <small>mg/dL</small></td><td><span class="lref">' + tc.ref + '</span></td><td>' + tc.chip + '</td></tr>';
+    if(r.hdl) out += '<tr><td><div class="lname">HDL Cholesterol</div><div class="lfull">ไขมันดี</div></td><td><span class="lval" style="color:' + hdl.color + '">' + r.hdl + '</span> <small>mg/dL</small></td><td><span class="lref">' + hdl.ref + '</span></td><td>' + hdl.chip + '</td></tr>';
+    if(r.tg)  out += '<tr><td><div class="lname">Triglyceride (TG)</div><div class="lfull">ไขมันไตรกลีเซอไรด์</div></td><td><span class="lval" style="color:' + tg.color + '">' + r.tg + '</span> <small>mg/dL</small></td><td><span class="lref">' + tg.ref + '</span></td><td>' + tg.chip + '</td></tr>';
+    out += '</tbody></table>';
+  }
+
+  /* Kidney / Thyroid */
+  if (r.upcr || r.tsh || r.albumin) {
+    out += '<div class="lab-sec-title">ไต / ไทรอยด์ / โปรตีน</div>' +
+      '<table class="lab-tbl"><thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>';
+    if(r.upcr)   out += '<tr><td><div class="lname">UPCr</div><div class="lfull">Urine Protein-Creatinine Ratio</div></td><td><span class="lval" style="color:' + upcr.color + '">' + r.upcr + '</span> <small>mg/g</small></td><td><span class="lref">' + upcr.ref + '</span></td><td>' + upcr.chip + '</td></tr>';
+    if(r.tsh)    out += '<tr><td><div class="lname">TSH</div><div class="lfull">Thyroid Stimulating Hormone</div></td><td><span class="lval" style="color:' + tsh.color + '">' + r.tsh + '</span> <small>mIU/L</small></td><td><span class="lref">' + tsh.ref + '</span></td><td>' + tsh.chip + '</td></tr>';
+    if(r.albumin) out += '<tr><td><div class="lname">Albumin</div><div class="lfull">ภาวะโภชนาการ / การทำงานตับ</div></td><td><span class="lval" style="color:' + alb.color + '">' + r.albumin + '</span> <small>g/dL</small></td><td><span class="lref">' + alb.ref + '</span></td><td>' + alb.chip + '</td></tr>';
+    out += '</tbody></table>';
+  }
+
+  /* PSA */
+  if (g !== 'หญิง' && r.psa && psa) {
+    out += '<div class="lab-sec-title">สารบ่งชี้มะเร็ง</div>' +
+      '<table class="lab-tbl"><thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>' +
+      '<tr><td><div class="lname">PSA <span style="font-size:9px;background:#E8F0FA;color:#2C5F8A;padding:1px 5px;border-radius:6px;margin-left:4px">ชาย</span></div><div class="lfull">Prostate-Specific Antigen | เฝ้าระวัง 4–10</div></td>' +
+      '<td><span class="lval" style="color:' + psa.color + '">' + r.psa + '</span> <small>ng/mL</small></td><td><span class="lref">' + psa.ref + '</span></td><td>' + psa.chip + '</td></tr>' +
+      '</tbody></table>';
+  }
+  out += '</div>'; /* end lab-wrap */
+
+  /* TC/HDL ratio */
+  if (tcHDL) {
+    var rCls = +tcHDL<5?'chip-ok':+tcHDL<6?'chip-warn':'chip-bad';
+    var rTxt = +tcHDL<5?'ดี':+tcHDL<6?'เฝ้าระวัง':'เสี่ยงสูง';
+    var rColor = +tcHDL<5?'var(--ok)':+tcHDL<6?'var(--warn)':'var(--bad)';
+    out += '<div class="ratio-card"><div class="ratio-lbl">อัตราส่วน TC/HDL</div><div class="ratio-val" style="color:' + rColor + '">' + tcHDL + '</div><span class="chip ' + rCls + '">' + rTxt + '</span><div style="font-size:10px;color:var(--text2)">เป้าหมาย &lt; 5.0</div></div>';
+  }
+  if (r.tmNote) out += '<div style="font-size:11px;color:var(--text2);font-style:italic;margin-top:7px;padding:5px 10px;background:white;border:1px solid var(--border-light);border-radius:7px;">📝 ' + r.tmNote + '</div>';
+
+  out += '</div>'; /* end LAB sec */
+
+  /* CV RISK */
+  out += cvHTML;
+
+  /* ── TREND CHARTS ── */
+  out += '<div class="sec-div"></div>' +
+    '<div class="sec"><div class="sec-hdr"><div class="sec-icon si-purple">📈</div>' +
+    '<div><h2>แนวโน้มการเปลี่ยนแปลง</h2><p>ย้อนหลัง ' + hist.length + ' ครั้ง</p></div></div>' +
+    '<div class="chart-card"><div class="chart-title-row"><div class="cdot" style="background:var(--accent)"></div><div><div class="chart-title">Lab — ผลเลือด</div><div class="chart-sub">แกนซ้าย: FBS/LDL/AST/ALT | แกนขวา: HbA1c</div></div></div>' +
+    '<canvas id="labChart" height="160"></canvas><div class="clegend" id="labLegend"></div></div>' +
+    '<div class="dtbl-wrap">' + buildLabTable(hist) + '</div>' +
+    '<div class="chart-card" style="margin-top:6px"><div class="chart-title-row"><div class="cdot" style="background:var(--teal)"></div><div><div class="chart-title">InBody — องค์ประกอบร่างกาย</div><div class="chart-sub">แกนซ้าย: kg | แกนขวา: %, Score, Level</div></div></div>' +
+    '<canvas id="ibChart" height="160"></canvas><div class="clegend" id="ibLegend"></div></div>' +
+    '<div class="dtbl-wrap">' + buildIbTable(hist) + '</div>' +
+    '</div>';
+
+  /* ── VACCINES ── */
+  out += '<div class="sec-div"></div>' +
+    '<div class="sec"><div class="sec-hdr"><div class="sec-icon si-green">💉</div>' +
+    '<div><h2>วัคซีนที่ควรได้รับ</h2><p>Vaccination Status</p></div></div>' +
+    '<div class="vax-grid">';
+  var vaxStatusMap = {done:{icon:'✅',cls:'vs-done',txt:'ฉีดแล้ว'}, partial:{icon:'⚠️',cls:'vs-partial',txt:'บางส่วน'}, plan:{icon:'📋',cls:'vs-plan',txt:'วางแผนฉีด'}, na:{icon:'—',cls:'',txt:'ไม่จำเป็น'}, '': {icon:'○',cls:'',txt:'ยังไม่ฉีด'}};
+  VACCINES.forEach(function(v) {
+    var d = (r.vaccines && r.vaccines[v.id]) || {};
+    var st = vaxStatusMap[d.status||''] || vaxStatusMap[''];
+    out += '<div class="vax-item ' + st.cls + '"><div class="vax-ico">' + st.icon + '</div>' +
+      '<div><div class="vax-name">' + v.name + '</div>' +
+      '<div class="vax-sub">' + v.sub + ' — ' + st.txt + '</div>' +
+      (d.date ? '<div class="vax-date">ฉีด ' + thDate(d.date) + '</div>' : '') +
+      '</div></div>';
+  });
+  out += '</div></div>';
+
+  /* ── ADVICE ── */
+  out += '<div class="sec-div"></div><div class="sec"><div class="sec-hdr"><div class="sec-icon si-green">💡</div>' +
+    '<div><h2>คำแนะนำจากแพทย์</h2><p>Medical Recommendations</p></div></div>';
+  if (r.dietAdvice)     out += '<div class="adv-card adv-diet"><div class="adv-hdr">🥗 โภชนาการ</div><div class="adv-body">' + r.dietAdvice + '</div></div>';
+  if (r.exerciseAdvice) out += '<div class="adv-card adv-ex"><div class="adv-hdr">🏃 การออกกำลังกาย</div><div class="adv-body">' + r.exerciseAdvice + '</div></div>';
+  if (r.smoker === 'yes') out += '<div class="adv-card adv-smoke"><div class="adv-hdr">🚭 การเลิกบุหรี่ — สำคัญมาก</div><div class="adv-body">การสูบบุหรี่เพิ่มความเสี่ยงโรคหัวใจและหลอดเลือด 2–4 เท่า และมะเร็งปอด 15–30 เท่า\nการหยุดสูบบุหรี่ภายใน 1 ปี ลดความเสี่ยงโรคหัวใจได้ถึง 50%\nปรึกษาแพทย์เรื่องยาช่วยเลิกบุหรี่ (Varenicline, NRT patch)</div></div>';
+  if (r.vaxAdvice)      out += '<div class="adv-card adv-vax"><div class="adv-hdr">💉 คำแนะนำวัคซีน</div><div class="adv-body">' + r.vaxAdvice + '</div></div>';
+  if (r.nextVisit)      out += '<div class="next-card"><div style="font-size:24px">📅</div><div><div class="nv-lbl">นัดติดตามผลครั้งถัดไป</div><div class="nv-date">' + thDate(r.nextVisit) + '</div></div></div>';
+  out += '</div>';
+
+  out += '</div>'; /* end rpt-body */
+
+  /* FOOTER */
+  out += '<div class="rpt-footer">' +
+    '<div><div class="footer-name">CardioPluz Clinic</div>' +
+    '<div style="font-size:10px;color:var(--text2)">คลินิกอายุรกรรมโรคหัวใจ — เอกสารนี้เป็นความลับทางการแพทย์</div>' +
+    '<div style="font-size:10px;color:var(--text2);margin-top:1px">กรุณาพกมาทุกครั้งที่มาพบแพทย์</div></div>' +
+    '<div><div class="sig-line"></div>' +
+    '<div class="sig-name">' + (r.doctor||'แพทย์ผู้ดูแล') + '</div>' +
+    '<div class="sig-sub">ผู้บันทึก: ' + (r.recorder||'—') + ' | ' + thDate(r.visitDate) + '</div>' +
+    '</div></div>';
+
+  out += '</div>'; /* end report */
+
+  document.getElementById('rpt').innerHTML = out;
+  setTimeout(function(){ drawCharts(hist); }, 150);
+}
+
+/* ════════════════════════════════
+   CHARTS
+════════════════════════════════ */
+function drawCharts(hist) {
+  if (!hist || !hist.length) return;
+  var labels = hist.map(function(h){ return thDateShort(h.visitDate); });
+  function def(k){ return hist.map(function(h){ return parseFloat(h[k])||null; }); }
+  Chart.defaults.font.family = "'Sarabun',sans-serif";
+  Chart.defaults.font.size = 10;
+  var P = {r:'#C0392B',rA:'rgba(192,57,43,.1)',b:'#2C5F8A',bA:'rgba(44,95,138,.1)',
+    g:'#1A7A4A',gA:'rgba(26,122,74,.1)',o:'#C67B00',oA:'rgba(198,123,0,.1)',
+    p:'#6B3FA0',pA:'rgba(107,63,160,.1)',t:'#1A9B8C',tA:'rgba(26,155,140,.1)',
+    br:'#8B4513',brA:'rgba(139,69,19,.1)'};
+  function ds(label,data,color,colorA,ya){
+    return {label:label, data:data, borderColor:color, backgroundColor:colorA,
+      borderWidth:2, pointRadius:3.5, pointHoverRadius:5, pointBackgroundColor:color,
+      tension:.35, fill:false, yAxisID:ya||'yLeft'};
+  }
+  var labCtx = document.getElementById('labChart');
+  if (labCtx) {
+    new Chart(labCtx, {type:'line', data:{labels:labels, datasets:[
+      ds('FBS (mg/dL)', def('fbs'), P.r, P.rA, 'yLeft'),
+      ds('LDL (mg/dL)', def('ldl'), P.b, P.bA, 'yLeft'),
+      ds('AST (U/L)', def('ast'), P.g, P.gA, 'yLeft'),
+      ds('ALT (U/L)', def('alt'), P.p, P.pA, 'yLeft'),
+      ds('HbA1c (%)', def('a1c'), P.o, P.oA, 'yRight')
+    ]}, options:{responsive:true, interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:false}},
       scales:{
-        x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxRotation:25}},
+        x:{grid:{color:'rgba(0,0,0,0.04)'}, ticks:{maxRotation:25}},
         yLeft:{type:'linear',position:'left',grid:{color:'rgba(0,0,0,0.04)'},beginAtZero:false,title:{display:true,text:'mg/dL | U/L',font:{size:9}}},
-        yRight:{type:'linear',position:'right',grid:{drawOnChartArea:false},min:4,max:12,
-          title:{display:true,text:'HbA1c (%)',font:{size:9},color:P.orange},ticks:{color:P.orange,font:{weight:'600'}}}
+        yRight:{type:'linear',position:'right',grid:{drawOnChartArea:false},min:4,max:12,title:{display:true,text:'HbA1c (%)',font:{size:9},color:P.o},ticks:{color:P.o}}
       }}});
-    document.getElementById('labLegend').innerHTML=[
-      {l:'FBS (mg/dL)',c:P.red},{l:'LDL (mg/dL)',c:P.blue},
-      {l:'AST (U/L)',c:P.green},{l:'ALT (U/L)',c:P.purple},
-      {l:'HbA1c % (แกนขวา)',c:P.orange}
-    ].map(s=>`<div class="cl-item"><div class="cl-dot" style="background:${s.c}"></div>${s.l}</div>`).join('');
+    var ll = document.getElementById('labLegend');
+    if(ll) ll.innerHTML = [{l:'FBS',c:P.r},{l:'LDL',c:P.b},{l:'AST',c:P.g},{l:'ALT',c:P.p},{l:'HbA1c (แกนขวา)',c:P.o}]
+      .map(function(s){ return '<div class="cleg-item"><div class="cleg-dot" style="background:'+s.c+'"></div>'+s.l+'</div>'; }).join('');
   }
-  // INBODY: left=kg  right=%, score, level
-  const ibCtx=document.getElementById('ibChart')?.getContext('2d');
-  if(ibCtx){
-    new Chart(ibCtx,{type:'line',data:{labels,datasets:[
-      ds('น้ำหนัก (kg)',def('weight'),P.red,P.redA,'yLeft'),
-      ds('Muscle Mass (kg)',def('muscle'),P.green,P.greenA,'yLeft'),
-      ds('SMM (kg)',def('smm'),P.teal,P.tealA,'yLeft'),
-      ds('BFM ไขมัน (kg)',def('bfm'),P.orange,P.orangeA,'yLeft'),
-      ds('% ไขมัน',def('pbf'),P.purple,P.purpleA,'yRight'),
-      ds('InBody Score',def('inbodyScore'),P.blue,P.blueA,'yRight'),
-      ds('VFL',def('vfl'),P.brown,P.brownA,'yRight'),
-    ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
+  var ibCtx = document.getElementById('ibChart');
+  if (ibCtx) {
+    new Chart(ibCtx, {type:'line', data:{labels:labels, datasets:[
+      ds('น้ำหนัก (kg)', def('weight'), P.r, P.rA, 'yLeft'),
+      ds('SMM (kg)', def('smm'), P.g, P.gA, 'yLeft'),
+      ds('% ไขมัน', def('pbf'), P.o, P.oA, 'yRight'),
+      ds('InBody Score', def('inbodyScore'), P.b, P.bA, 'yRight'),
+      ds('VFL', def('vfl'), P.br, P.brA, 'yRight')
+    ]}, options:{responsive:true, interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:false}},
       scales:{
-        x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{maxRotation:25}},
+        x:{grid:{color:'rgba(0,0,0,0.04)'}, ticks:{maxRotation:25}},
         yLeft:{type:'linear',position:'left',grid:{color:'rgba(0,0,0,0.04)'},beginAtZero:false,title:{display:true,text:'kg',font:{size:9}}},
         yRight:{type:'linear',position:'right',grid:{drawOnChartArea:false},beginAtZero:false,title:{display:true,text:'% | Score | Level',font:{size:9}}}
       }}});
-    document.getElementById('ibLegend').innerHTML=[
-      {l:'น้ำหนัก (kg)',c:P.red},{l:'Muscle Mass (kg)',c:P.green},
-      {l:'SMM (kg)',c:P.teal},{l:'BFM ไขมัน (kg)',c:P.orange},
-      {l:'% ไขมัน (แกนขวา)',c:P.purple},{l:'InBody Score (แกนขวา)',c:P.blue},{l:'VFL (แกนขวา)',c:P.brown}
-    ].map(s=>`<div class="cl-item"><div class="cl-dot" style="background:${s.c}"></div>${s.l}</div>`).join('');
+    var il = document.getElementById('ibLegend');
+    if(il) il.innerHTML = [{l:'น้ำหนัก (kg)',c:P.r},{l:'SMM (kg)',c:P.g},{l:'% ไขมัน (แกนขวา)',c:P.o},{l:'InBody Score (แกนขวา)',c:P.b},{l:'VFL (แกนขวา)',c:P.br}]
+      .map(function(s){ return '<div class="cleg-item"><div class="cleg-dot" style="background:'+s.c+'"></div>'+s.l+'</div>'; }).join('');
   }
 }
 
