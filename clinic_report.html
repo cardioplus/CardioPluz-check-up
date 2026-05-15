@@ -301,7 +301,8 @@ canvas{display:block;width:100%!important;}
   /* ── Cards: no background, minimal border ── */
   .cc,.ekg-card,.cv-card,.ldl-goal-card,.bpc,.rcard,.ac,.sw,.ibsec{
     background:white!important;border:1px solid #DDD!important;
-    border-radius:4px!important;padding:6px 8px!important;margin-bottom:4px!important;}
+    border-radius:4px!important;padding:6px 8px!important;margin-bottom:4px!important;
+    -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   .lw{background:white!important;border:1px solid #DDD!important;border-radius:4px!important;margin-bottom:4px!important;}
   .fu-item,.vi{background:white!important;border:1px solid #DDD!important;border-radius:4px!important;padding:5px 7px!important;}
   .nxt{background:white!important;border:1px solid #DDD!important;border-radius:4px!important;padding:5px 8px!important;}
@@ -406,7 +407,7 @@ canvas{display:block;width:100%!important;}
   /* Compact extras */
   .heart-anatomy-print-hide{display:none!important;}
   .sw{margin-bottom:6px!important;}
-  canvas{max-height:120px!important;}
+  canvas{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   .ldl-goal-card{padding:6px 8px!important;}
   .lgd-val{font-size:20px!important;}
   img[id="heartImgNew"],#heartImgDataNew{display:none!important;}
@@ -486,15 +487,17 @@ canvas{display:block;width:100%!important;}
   /* ── Chart canvas: hide in print (charts are visual only) ── */
   /* Keep the DATA TABLES visible, hide canvas */
   canvas#labChart,canvas#ibChart{
-    display:none!important;
+    display:block!important;
+    max-height:130px!important;
+    width:100%!important;
   }
   /* Also hide chart legend */
-  .cleg{display:none!important;}
+  .cleg{display:flex!important;flex-wrap:wrap!important;gap:4px!important;font-size:9px!important;margin-top:2px!important;}
   /* Hide chart title row if chart is hidden */
-  .ctr{display:none!important;}
+  .ctr{display:flex!important;}
 
   /* So .cc (chart card) with no visible content collapses */
-  .cc:has(canvas:only-child){display:none!important;}
+  /* cc:has rule removed */
 
   /* The section heading still shows */
   .si-p{background:var(--acc)!important;}
@@ -503,8 +506,8 @@ canvas{display:block;width:100%!important;}
   /* Chart+table wrapper: let it break between chart and table, not inside */
   .dtw+.dtw{page-break-before:auto!important;}
 
-  /* ── Chart-only divs: hide in print, table stays ── */
-  .chart-only{display:none!important;}
+  /* ── Chart-only divs: show in print with compact height ── */
+  .chart-only{display:block!important;}
   /* chart-pair: table shows as standalone block */
   .chart-pair{margin-bottom:6px!important;page-break-inside:avoid!important;break-inside:avoid!important;}
   .chart-pair .dtw{margin-bottom:0!important;}
