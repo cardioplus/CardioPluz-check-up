@@ -221,6 +221,8 @@ canvas{display:block;width:100%!important;}
 
 /* Data tables */
 .dtw{background:white;border:1px solid var(--bl);border-radius:9px;overflow:auto;margin-bottom:10px;}
+.chart-pair{margin-bottom:10px;}
+.chart-only{}
 .dt{width:100%;border-collapse:collapse;min-width:480px;}
 .dt th{background:var(--cream);padding:6px 10px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;}
 .dt th.rh{text-align:left;}
@@ -427,6 +429,85 @@ canvas{display:block;width:100%!important;}
   .ibsec .sw{page-break-inside:avoid!important;}
   /* Trend chart row */
   .cc{page-break-inside:avoid!important;break-inside:avoid!important;}
+
+  /* ══════════════════════════════════════════
+     CUMULATIVE TABLE (Lab / InBody trend) 
+     ══════════════════════════════════════════ */
+
+  /* .dtw wrapper: remove overflow:auto so browser sees full height */
+  .dtw{
+    overflow:visible!important;
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+  }
+
+  /* .dt table itself */
+  .dt{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+    min-width:0!important;   /* remove min-width so no horizontal overflow */
+    width:100%!important;
+    font-size:10px!important;
+  }
+
+  /* Each row must not break */
+  .dt tr{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+  }
+
+  /* thead stays with first data row */
+  .dt thead{
+    display:table-header-group!important;  /* repeat header on each page if needed */
+    page-break-after:avoid!important;
+    break-after:avoid!important;
+  }
+
+  /* tbody: display as table so page-break works correctly */
+  .dt tbody{
+    display:table-row-group!important;
+    page-break-inside:auto!important; /* let it break between rows if table too tall */
+  }
+
+  /* Compact cells for print */
+  .dt th{
+    padding:3px 6px!important;
+    font-size:9px!important;
+    white-space:nowrap!important;
+  }
+  .dt td{
+    padding:3px 6px!important;
+    font-size:10px!important;
+    white-space:nowrap!important;
+  }
+  .rh{max-width:90px!important;white-space:normal!important;word-break:break-word!important;}
+  .gc,.gtd{font-size:9px!important;padding:3px 5px!important;}
+
+  /* ── Chart canvas: hide in print (charts are visual only) ── */
+  /* Keep the DATA TABLES visible, hide canvas */
+  canvas#labChart,canvas#ibChart{
+    display:none!important;
+  }
+  /* Also hide chart legend */
+  .cleg{display:none!important;}
+  /* Hide chart title row if chart is hidden */
+  .ctr{display:none!important;}
+
+  /* So .cc (chart card) with no visible content collapses */
+  .cc:has(canvas:only-child){display:none!important;}
+
+  /* The section heading still shows */
+  .si-p{background:var(--acc)!important;}
+
+  /* ── Ensure the whole trend section avoids breaking inside ── */
+  /* Chart+table wrapper: let it break between chart and table, not inside */
+  .dtw+.dtw{page-break-before:auto!important;}
+
+  /* ── Chart-only divs: hide in print, table stays ── */
+  .chart-only{display:none!important;}
+  /* chart-pair: table shows as standalone block */
+  .chart-pair{margin-bottom:6px!important;page-break-inside:avoid!important;break-inside:avoid!important;}
+  .chart-pair .dtw{margin-bottom:0!important;}
 }
 @media screen and (max-width:700px){
   .ps{grid-template-columns:1fr 1fr;}
@@ -1652,12 +1733,18 @@ function render(){
 
   /* ── TREND CHARTS ── */
   O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-p">📈</div><div><h2>แนวโน้มการเปลี่ยนแปลง</h2><p>ย้อนหลัง '+hist.length+' ครั้ง</p></div></div>'+
-    '<div class="cc"><div class="ctr"><div class="cdo" style="background:var(--acc)"></div><div><div class="ctt">ผลเลือด — Lab Trends</div><div class="csb">แกนซ้าย: FBS/LDL/AST/ALT | แกนขวา: HbA1c</div></div></div>'+
-    '<canvas id="labChart" height="155"></canvas><div class="cleg" id="labLeg"></div></div>'+
-    '<div class="dtw">'+buildLabTable(hist,ldlGoalData.goal)+'</div>'+
-    '<div class="cc" style="margin-top:6px"><div class="ctr"><div class="cdo" style="background:var(--teal)"></div><div><div class="ctt">InBody — Body Composition Trends</div><div class="csb">แกนซ้าย: กก. | แกนขวา: %, คะแนน, ระดับ</div></div></div>'+
-    '<canvas id="ibChart" height="155"></canvas><div class="cleg" id="ibLeg"></div></div>'+
-    '<div class="dtw">'+buildIbTable(hist,ideal)+'</div>'+
+    /* Lab: chart (screen only) + table (always) */
+    '<div class="chart-pair">'+
+      '<div class="cc chart-only"><div class="ctr"><div class="cdo" style="background:var(--acc)"></div><div><div class="ctt">ผลเลือด — Lab Trends</div><div class="csb">แกนซ้าย: FBS/LDL/AST/ALT | แกนขวา: HbA1c</div></div></div>'+
+      '<canvas id="labChart" height="155"></canvas><div class="cleg" id="labLeg"></div></div>'+
+      '<div class="dtw">'+buildLabTable(hist,ldlGoalData.goal)+'</div>'+
+    '</div>'+
+    /* InBody: chart (screen only) + table (always) */
+    '<div class="chart-pair" style="margin-top:8px">'+
+      '<div class="cc chart-only"><div class="ctr"><div class="cdo" style="background:var(--teal)"></div><div><div class="ctt">InBody — Body Composition Trends</div><div class="csb">แกนซ้าย: กก. | แกนขวา: %, คะแนน, ระดับ</div></div></div>'+
+      '<canvas id="ibChart" height="155"></canvas><div class="cleg" id="ibLeg"></div></div>'+
+      '<div class="dtw">'+buildIbTable(hist,ideal)+'</div>'+
+    '</div>'+
     '</div>';
 
   /* ── VACCINES ── */
