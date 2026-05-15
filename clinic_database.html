@@ -5,215 +5,201 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CardioPluz Clinic — Staff Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Firebase compat SDK (works in plain HTML without bundler) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
-  :root {
-    --teal:#1A9B8C; --teal-dark:#147A6E; --teal-light:#E6F6F4; --teal-mid:#A8DDD8;
-    --cream:#F7F4EE; --cream2:#EDE9E0; --cream3:#E2DDD3;
-    --surface:#FFFFFF; --border:#D4CFC4; --border-light:#EAE6DE;
-    --text:#2C2820; --text2:#6B6057;
-    --ok:#1A7A4A; --ok-bg:#EDF7F2;
-    --warn:#C67B00; --warn-bg:#FFF8EC;
-    --bad:#B01D1D; --bad-bg:#FFF2F2;
-    --accent:#2C5F8A;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Sarabun',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+:root{
+  --teal:#1A9B8C;--teal-dark:#147A6E;--teal-light:#E6F6F4;--teal-mid:#A8DDD8;
+  --cream:#F7F4EE;--cream2:#EDE9E0;--border:#D4CFC4;--border-light:#EAE6DE;
+  --text:#2C2820;--text2:#6B6057;
+  --ok:#1A7A4A;--ok-bg:#EDF7F2;
+  --warn:#C67B00;--warn-bg:#FFF8EC;
+  --high:#B05000;--high-bg:#FFF2E8;
+  --bad:#B01D1D;--bad-bg:#FFF2F2;
+  --accent:#2C5F8A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden;word-break:break-word;}
+header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:white;padding:0 20px;display:flex;align-items:center;gap:16px;min-height:68px;box-shadow:0 3px 16px rgba(26,155,140,.3);}
+.hdr-logo{display:flex;align-items:center;gap:12px;}
+.hdr-clinic .name{font-size:19px;font-weight:700;}
+.hdr-clinic .sub{font-size:12px;opacity:.8;margin-top:2px;}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;font-family:'IBM Plex Mono',monospace;}
+.hdr-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:18px;}
+#dbStatus{font-size:11px;}
+.container{max-width:1020px;margin:0 auto;padding:20px 20px;overflow-x:hidden;box-sizing:border-box;}
+.tabs{display:flex;border-bottom:2px solid var(--border);overflow-x:auto;}
+.tab-btn{padding:11px 22px;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tab-panel{display:none;} .tab-panel.active{display:block;}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-top:16px;overflow:hidden;}
+.card-title{font-size:15px;font-weight:700;color:var(--teal-dark);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px;;overflow:hidden;}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.cols2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.cols3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.cols4{grid-template-columns:repeat(4,minmax(0,1fr));}
+.span2{grid-column:span 2;} .span3{grid-column:span 3;} .span4{grid-column:span 4;}
+.field{display:flex;flex-direction:column;gap:5px;;min-width:0;}
+.field label{font-size:10.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;line-height:1.4;display:block;margin-bottom:4px;}
+.field label .unit{font-weight:400;text-transform:none;font-size:10px;margin-left:3px;opacity:.7;}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);background:white;}
+.field input[type="number"]{font-family:'IBM Plex Mono',monospace;}
+.ref-hint{font-size:10px;color:var(--text2);opacity:.7;font-family:'IBM Plex Mono',monospace;}
+.sec-sep{grid-column:1/-1;border-top:1px dashed var(--border);padding:10px 0 4px 2px;margin-top:2px;font-size:11px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.8px;}
+.ideal-panel{grid-column:1/-1;background:linear-gradient(135deg,var(--teal-light),#EBF4FF);border:1.5px solid var(--teal-mid);border-radius:10px;padding:13px 17px;}
+.ideal-panel .ip-title{font-size:11px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.ideal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ideal-item .il-label{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:3px;}
+.ideal-item .il-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--teal-dark);}
+.ideal-item .il-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+/* LDL Risk Panel */
+.ldl-risk-panel{grid-column:1/-1;background:linear-gradient(135deg,#FFF8EC,#FFFBF0);border:1.5px solid #F0C870;border-radius:10px;padding:13px 17px;;overflow:hidden;box-sizing:border-box;}
+.ldl-risk-panel .lrp-title{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.ldl-risk-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+.lrp-item label{display:block;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:4px;}
+.lrp-item select,.lrp-item input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:8px 10px;font-family:'Sarabun',sans-serif;font-size:13px;background:var(--cream);outline:none;}
+.lrp-item select:focus,.lrp-item input:focus{border-color:var(--accent);}
+.ldl-goal-display{grid-column:1/-1;background:white;border:1.5px solid var(--accent);border-radius:8px;padding:12px 15px;display:flex;align-items:center;gap:12px;;overflow:hidden;min-width:0;}
+.lgd-label{font-size:12px;color:var(--text2);}
+.lgd-val{font-size:20px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--accent);;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lgd-edit{padding:5px 14px;border-radius:7px;background:var(--accent);color:white;border:none;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;margin-left:auto;}
+/* Checkbox rows */
+.cb-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.cb-item{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;}
+.cb-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--teal);}
+/* EKG / Echo */
+.ekg-row{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;}
+.ekg-radio{display:flex;gap:6px;flex-wrap:wrap;}
+.ekg-radio label{display:flex;align-items:center;gap:5px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;background:var(--cream);white-space:nowrap;flex-shrink:0;min-width:fit-content;}
+.ekg-radio input[type=radio]:checked+span{font-weight:700;}
+.ekg-radio label:has(input:checked){border-color:var(--teal);background:var(--teal-light);}
+/* Vax */
+.vax-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
+.vax-item{border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--cream);}
+.vax-name{font-size:13px;font-weight:700;color:var(--text);}
+.vax-age{font-size:10px;color:var(--teal-dark);font-weight:600;margin-bottom:2px;}
+.vax-sub{font-size:11px;color:var(--text2);margin-bottom:8px;}
+.vax-row{display:flex;gap:8px;align-items:center;}
+.vax-row select,.vax-row input[type=date]{flex:1;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-family:'Sarabun',sans-serif;font-size:12px;background:var(--cream);outline:none;}
+.vax-row select:focus,.vax-row input:focus{border-color:var(--teal);}
+/* Doctor selector */
+.doctor-selector{display:flex;gap:10px;}
+.doc-btn{flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:var(--cream);color:var(--text2);text-align:center;transition:all .2s;}
+.doc-btn.selected{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark);}
+/* Buttons */
+.btn-row{display:flex;gap:12px;margin-top:20px;justify-content:flex-end;padding:0 2px;}
+.btn{padding:11px 24px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:var(--teal);color:white;}
+.btn-primary:hover{background:var(--teal-dark);}
+.btn-secondary{background:var(--cream2);color:var(--text);border:1.5px solid var(--border);}
+/* List */
+.pt-table{width:100%;border-collapse:collapse;font-size:13px;}
+.pt-table th{background:var(--cream);padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);}
+.pt-table td{padding:10px;border-bottom:1px solid var(--border-light);vertical-align:middle;}
+.pt-table tr:hover td{background:var(--teal-light);}
+.hn{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal-dark);font-weight:600;}
+.btn-sm{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Sarabun',sans-serif;}
+.btn-sm.edit{background:var(--accent);color:white;}
+.btn-sm.print{background:var(--teal);color:white;}
+.btn-sm.del{background:#eee;color:var(--bad);border:1px solid #ddd;}
+.search-bar{display:flex;gap:10px;margin-bottom:14px;}
+.search-bar input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--cream);outline:none;}
+.search-bar input:focus{border-color:var(--teal);background:white;}
+/* Advice gen */
+.advice-gen-btn{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:white;border:none;padding:10px 18px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:14px;}
+.advice-preview{background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:10px;padding:15px 17px;margin-bottom:14px;display:none;}
+.advice-preview.show{display:block;}
+.ap-title{font-size:12px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.ap-section{margin-bottom:10px;}
+.ap-section-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;}
+.ap-text{font-size:13px;line-height:1.6;white-space:pre-wrap;}
+.ap-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.ap-use-btn{padding:7px 14px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;}
+.ap-use-both{background:var(--teal);color:white;}
+.ap-discard{background:var(--cream2);color:var(--text);border:1px solid var(--border);}
+/* Data toolbar */
+.data-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 15px;margin-top:16px;}
+.data-toolbar .dt-label{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;flex:1;}
+.dt-btn{padding:7px 13px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;}
+.dt-export{background:var(--ok);color:white;} .dt-import{background:var(--accent);color:white;}
+.toast{position:fixed;top:24px;right:24px;background:var(--teal);color:white;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);transform:translateY(-60px);opacity:0;transition:all .3s;z-index:999;}
+.toast.show{transform:translateY(0);opacity:1;}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text2);}
+.empty-state .big{font-size:40px;margin-bottom:12px;}
+/* tag labels */
+.tag{display:inline-block;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
+.tag-teal{background:var(--teal);} .tag-blue{background:var(--accent);} .tag-cv{background:#7A4A00;} .tag-vax{background:#3D7A5F;} .tag-tm{background:#6B3FA0;} .tag-ekg{background:#1A6B8A;} .tag-echo{background:#3A5A8A;}
 
-  header{
-    background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 100%);
-    color:white;padding:0 32px;
-    display:flex;align-items:center;gap:20px;
-    box-shadow:0 3px 16px rgba(26,155,140,0.3);
-    min-height:72px;
-  }
-  .hdr-logo{display:flex;align-items:center;gap:14px;}
-  .hdr-logo svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));}
-  .hdr-clinic{line-height:1.2;}
-  .hdr-clinic .name{font-size:20px;font-weight:700;letter-spacing:.5px;}
-  .hdr-clinic .sub{font-size:12px;opacity:.8;margin-top:2px;}
-  .hdr-badge{margin-left:auto;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:6px 16px;border-radius:20px;font-size:12px;font-family:'IBM Plex Mono',monospace;}
-
-  .container{max-width:1000px;margin:0 auto;padding:28px 20px;}
-
-  .tabs{display:flex;border-bottom:2px solid var(--border);}
-  .tab-btn{padding:12px 24px;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
-  .tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
-  .tab-btn:hover:not(.active){color:var(--text);background:var(--teal-light);}
-  .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
-
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-top:20px;}
-  .card-title{font-size:15px;font-weight:700;color:var(--teal-dark);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px;}
-
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .cols3{grid-template-columns:1fr 1fr 1fr;}
-  .cols4{grid-template-columns:1fr 1fr 1fr 1fr;}
-  .span2{grid-column:span 2;}
-  .span3{grid-column:span 3;}
-  .span4{grid-column:span 4;}
-
-  .field{display:flex;flex-direction:column;gap:5px;}
-  .field label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
-  .field label .unit{font-weight:400;text-transform:none;font-size:10px;margin-left:3px;opacity:.75;}
-  .field input,.field select,.field textarea{border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--text);background:var(--cream);transition:border-color .2s;outline:none;}
-  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);background:white;}
-  .field input[type="number"]{font-family:'IBM Plex Mono',monospace;font-size:14px;}
-  .ref-hint{font-size:10px;color:var(--text2);opacity:.7;font-family:'IBM Plex Mono',monospace;}
-  .sec-sep{grid-column:1/-1;border-top:1px dashed var(--border);padding-top:10px;margin-top:2px;font-size:11px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.8px;}
-
-  /* Ideal panel */
-  .ideal-panel{grid-column:1/-1;background:linear-gradient(135deg,var(--teal-light),#E8F4FF);border:1.5px solid var(--teal-mid);border-radius:10px;padding:14px 18px;}
-  .ideal-panel .ip-title{font-size:11px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
-  .ideal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-  .ideal-item .il-label{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:3px;}
-  .ideal-item .il-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--teal-dark);line-height:1.1;}
-  .ideal-item .il-sub{font-size:10px;color:var(--text2);margin-top:2px;}
-
-  /* Vaccine table */
-  .vax-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .vax-item{border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;background:var(--cream);}
-  .vax-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
-  .vax-sub{font-size:11px;color:var(--text2);margin-bottom:8px;}
-  .vax-row{display:flex;gap:8px;align-items:center;}
-  .vax-row select{flex:1;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-family:'Sarabun',sans-serif;font-size:12px;background:var(--cream);outline:none;}
-  .vax-row select:focus{border-color:var(--teal);}
-  .vax-row input[type="date"]{flex:1.5;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-family:'Sarabun',sans-serif;font-size:12px;background:var(--cream);outline:none;}
-  .vax-row input:focus{border-color:var(--teal);}
-
-  /* Doctor selector */
-  .doctor-selector{display:flex;gap:10px;}
-  .doc-btn{flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:var(--cream);color:var(--text2);text-align:center;transition:all .2s;}
-  .doc-btn.selected{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark);}
-  .doc-btn:hover:not(.selected){border-color:var(--teal-mid);}
-
-  /* Buttons */
-  .btn-row{display:flex;gap:12px;margin-top:20px;justify-content:flex-end;}
-  .btn{padding:11px 26px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
-  .btn-primary{background:var(--teal);color:white;}
-  .btn-primary:hover{background:var(--teal-dark);}
-  .btn-secondary{background:var(--cream2);color:var(--text);border:1.5px solid var(--border);}
-  .btn-secondary:hover{background:var(--cream3);}
-
-  /* List table */
-  .pt-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
-  .pt-table th{background:var(--cream);padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);}
-  .pt-table td{padding:10px;border-bottom:1px solid var(--border-light);vertical-align:middle;}
-  .pt-table tr:hover td{background:var(--teal-light);}
-  .hn{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal-dark);font-weight:600;}
-  .btn-sm{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Sarabun',sans-serif;transition:all .15s;}
-  .btn-sm.edit{background:var(--accent);color:white;}
-  .btn-sm.print{background:var(--teal);color:white;}
-  .btn-sm.del{background:#eee;color:var(--bad);border:1px solid #ddd;}
-
-  .search-bar{display:flex;gap:10px;margin-bottom:14px;}
-  .search-bar input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--cream);outline:none;}
-  .search-bar input:focus{border-color:var(--teal);background:white;}
-
-  .teal-label{display:inline-block;background:var(--teal);color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
-  .lab-label{display:inline-block;background:var(--accent);color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
-  .tm-label{display:inline-block;background:#6B3FA0;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
-  .cv-label{display:inline-block;background:#7A4A00;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
-  .vax-label{display:inline-block;background:#3D7A5F;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-right:4px;}
-
-  .toast{position:fixed;top:24px;right:24px;background:var(--teal);color:white;padding:14px 22px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);transform:translateY(-60px);opacity:0;transition:all .3s;z-index:999;}
-  .toast.show{transform:translateY(0);opacity:1;}
-  .empty-state{text-align:center;padding:48px 24px;color:var(--text2);font-size:15px;}
-  .empty-state .big{font-size:40px;margin-bottom:12px;}
-
-  /* AI Advice panel */
-  .advice-gen-btn{
-    display:flex;align-items:center;gap:8px;
-    background:linear-gradient(135deg,var(--teal-dark),var(--teal));
-    color:white;border:none;padding:10px 18px;border-radius:8px;
-    font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;
-    cursor:pointer;margin-bottom:14px;transition:all .2s;
-  }
-  .advice-gen-btn:hover{opacity:.88;}
-  .advice-gen-btn:disabled{opacity:.5;cursor:not-allowed;}
-  .advice-preview{
-    background:var(--teal-light);border:1.5px solid var(--teal-mid);
-    border-radius:10px;padding:16px 18px;margin-bottom:14px;
-    display:none;
-  }
-  .advice-preview.show{display:block;}
-  .ap-title{font-size:12px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
-  .ap-section{margin-bottom:10px;}
-  .ap-section-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;}
-  .ap-text{font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;}
-  .ap-actions{display:flex;gap:8px;margin-top:12px;}
-  .ap-use-btn{padding:7px 16px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;}
-  .ap-use-diet{background:var(--teal);color:white;}
-  .ap-use-exercise{background:var(--accent);color:white;}
-  .ap-use-both{background:var(--ok);color:white;}
-  .ap-discard{background:var(--cream2);color:var(--text);border:1px solid var(--border);}
-
-  /* Export/Import toolbar */
-  .data-toolbar{
-    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:10px;padding:12px 16px;margin-top:16px;
-  }
-  .data-toolbar .dt-label{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;flex:1;}
-  .dt-btn{padding:7px 14px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
-  .dt-export{background:var(--ok);color:white;}
-  .dt-import{background:var(--accent);color:white;}
-  .dt-server{background:#7A4A00;color:white;}
+@media screen and (max-width:768px){
+  .cols4{grid-template-columns:1fr 1fr!important;}
+  .cols2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.cols3{grid-template-columns:1fr 1fr!important;}
+  .form-grid{grid-template-columns:1fr!important;}
+  .ldl-risk-grid{grid-template-columns:1fr 1fr!important;}
+  .span2,.span3,.span4{grid-column:span 1!important;}
+  .card{padding:14px;}
+}
+@media screen and (max-width:480px){
+  .cols4,.cols2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.cols3{grid-template-columns:1fr!important;}
+  .ldl-risk-grid{grid-template-columns:1fr!important;}
+}
 </style>
 </head>
 <body>
-
 <header>
   <div class="hdr-logo">
-    <!-- CardioPluz logo SVG recreation in teal/white -->
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M24 42C24 42 6 30 6 18C6 12.477 10.477 8 16 8C19.5 8 22.5 9.8 24 12.5C25.5 9.8 28.5 8 32 8C37.523 8 42 12.477 42 18C42 30 24 42 24 42Z" stroke="white" stroke-width="2.5" fill="none"/>
-      <polyline points="10,20 15,20 18,14 22,26 26,18 29,22 32,20 38,20" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M33 7 L33 13 M30 10 L36 10" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+    <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="24" fill="rgba(255,255,255,.15)"/>
+      <path d="M24 38C24 38 10 29 10 19C10 14.582 13.582 11 18 11C20.7 11 23.1 12.4 24 14.5C24.9 12.4 27.3 11 30 11C34.418 11 38 14.582 38 19C38 29 24 38 24 38Z" stroke="white" stroke-width="2" fill="none"/>
+      <polyline points="12,21 16,21 19,15 23,27 27,19 30,23 33,21 37,21" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M31 10L31 15M28.5 12.5L33.5 12.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
     </svg>
     <div class="hdr-clinic">
-      <div class="name">CardioPluz Clinic</div>
-      <div class="sub">คลินิกอายุรกรรมโรคหัวใจ — Staff Portal</div>
+      <div class="name">CardioPluz Clinic — Staff Portal</div>
+      <div class="sub">คลินิกอายุรกรรมโรคหัวใจ — พญ.ณัฏฐา & พญ.พรอนงค์</div>
     </div>
   </div>
-  <div class="hdr-badge" id="recCount">0 ผู้ป่วย</div>
-  <div id="dbStatus" style="font-size:12px;opacity:.9;font-family:'IBM Plex Mono',monospace;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);padding:5px 12px;border-radius:16px;">🔄 กำลังเชื่อมต่อ...</div>
+  <div class="hdr-right">
+    <div class="hdr-badge" id="recCount">0 ผู้ป่วย</div>
+    <div id="dbStatus" style="color:var(--warn-bg)">🔄 กำลังเชื่อมต่อ...</div>
+  </div>
 </header>
 
 <div class="container">
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('entry',this)">➕ กรอกข้อมูลใหม่</button>
+    <button class="tab-btn active" onclick="switchTab('entry',this)">➕ กรอกข้อมูล</button>
     <button class="tab-btn" onclick="switchTab('list',this)">📋 รายชื่อผู้ป่วย</button>
   </div>
 
-  <!-- ════ ENTRY TAB ════ -->
+  <!-- ══ ENTRY TAB ══ -->
   <div class="tab-panel active" id="tab-entry">
 
     <!-- Patient Info -->
     <div class="card">
       <div class="card-title">👤 ข้อมูลผู้ป่วย</div>
       <div class="form-grid cols4">
-        <div class="field"><label>HN / รหัสผู้ป่วย</label><input type="text" id="hn" placeholder="HN-2568-001"></div>
+        <div class="field"><label>รหัสประจำตัวคลินิก</label><input type="text" id="hn" placeholder="เช่น CP-001"></div>
         <div class="field"><label>วันที่ตรวจ</label><input type="date" id="visitDate"></div>
         <div class="field span2"><label>ชื่อ-นามสกุล</label><input type="text" id="fullName" placeholder="ชื่อและนามสกุล"></div>
-        <div class="field"><label>วันเกิด / อายุ</label><input type="text" id="dob" placeholder="1 ม.ค. 2510 / 58 ปี"></div>
         <div class="field">
-          <label>เพศ</label>
-          <select id="gender" onchange="calcIdeal()">
-            <option value="">-- เลือก --</option>
-            <option value="ชาย">ชาย</option>
-            <option value="หญิง">หญิง</option>
+          <label>วันเกิด</label>
+          <input type="date" id="dobDate" onchange="updateDobField()" style="margin-bottom:4px">
+          <div id="dobDisplay" style="font-size:12px;color:var(--teal-dark);font-weight:600;min-height:18px"></div>
+          <input type="hidden" id="dob">
+        </div>
+        <div class="field"><label>เพศ</label>
+          <select id="gender" onchange="calcIdeal();updateLdlGoal();">
+            <option value="">-- เลือก --</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option>
           </select>
         </div>
-        <div class="field"><label>โรคประจำตัว / หมายเหตุ</label><input type="text" id="note" placeholder="DM, HT, Dyslipidemia"></div>
-        <div class="field">
-          <label>แพทย์ผู้ดูแล</label>
-          <input type="hidden" id="doctor" value="">
+        <div class="field"><label>โรคประจำตัว</label><input type="text" id="note" placeholder="DM, HT, Dyslipidemia, ASCVD"></div>
+        <div class="field"><label>แพทย์ผู้ดูแล</label>
+          <input type="hidden" id="doctor">
           <div class="doctor-selector">
-            <div class="doc-btn" onclick="selectDoctor('พญ.ณัฏฐา อานนทวีศิลป์',this)">พญ.ณัฏฐา<br><small>อานนทวีศิลป์</small></div>
-            <div class="doc-btn" onclick="selectDoctor('พญ.พรอนงค์ คุรุเสถียร',this)">พญ.พรอนงค์<br><small>คุรุเสถียร</small></div>
+            <div class="doc-btn" onclick="selectDoc('พญ.ณัฏฐา อานนทวีศิลป์',this)">พญ.ณัฏฐา</div>
+            <div class="doc-btn" onclick="selectDoc('พญ.พรอนงค์ คุรุเสถียร',this)">พญ.พรอนงค์</div>
           </div>
         </div>
       </div>
@@ -221,249 +207,498 @@
 
     <!-- InBody -->
     <div class="card">
-      <div class="card-title"><span class="teal-label">INBODY</span> ผลการวัดองค์ประกอบร่างกาย</div>
-      <div class="form-grid cols4">
-        <div class="field">
-          <label>ส่วนสูง <span class="unit">cm</span></label>
-          <input type="number" id="height" placeholder="168" step="0.1" oninput="calcIdeal();autoBMI()">
-        </div>
-        <div class="field">
-          <label>น้ำหนัก <span class="unit">kg</span></label>
-          <input type="number" id="weight" placeholder="0.0" step="0.1" oninput="autoBMI()">
-        </div>
-        <div class="field">
-          <label>BMI <span class="unit">(อัตโนมัติ)</span></label>
-          <input type="number" id="bmi" placeholder="0.0" step="0.1">
-          <span class="ref-hint">ปกติ 18.5–22.9</span>
-        </div>
-        <div class="field">
-          <label>% ไขมันใต้ผิวหนัง <span class="unit">%</span></label>
-          <input type="number" id="pbf" placeholder="0.0" step="0.1">
-          <span class="ref-hint">ชาย &lt;25 / หญิง &lt;35</span>
-        </div>
-
-        <!-- Ideal panel -->
+      <div class="card-title"><span class="tag tag-teal">INBODY</span> ผลการวัดองค์ประกอบร่างกาย</div>
+      <div class="form-grid cols3">
+        <div class="field"><label>ส่วนสูง <span class="unit">cm</span></label><input type="number" id="height" placeholder="168" step=".1" oninput="calcIdeal();autoBMI()"></div>
+        <div class="field"><label>น้ำหนัก <span class="unit">kg</span></label><input type="number" id="weight" placeholder="0.0" step=".1" oninput="autoBMI()"></div>
+        <div class="field"><label>BMI <span class="unit">(อัตโนมัติ)</span></label><input type="number" id="bmi" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 18.5–22.9</span></div>
+        <div class="field"><label>% ไขมัน <span class="unit">%</span></label><input type="number" id="pbf" placeholder="0.0" step=".1"><span class="ref-hint">ชาย&lt;25 / หญิง&lt;35</span></div>
         <div class="ideal-panel">
-          <div class="ip-title">📐 ค่าเป้าหมาย — คำนวณจากส่วนสูง & เพศ</div>
+          <div class="ip-title">📐 ค่าเป้าหมาย (คำนวณจากส่วนสูง & เพศ)</div>
           <div class="ideal-grid">
             <div class="ideal-item"><div class="il-label">🎯 น้ำหนักที่เหมาะสม</div><div class="il-val" id="idealWeightVal">—</div><div class="il-sub" id="idealWeightRange">กรอกส่วนสูงก่อน</div></div>
-            <div class="ideal-item"><div class="il-label">📊 BMI เป้าหมาย</div><div class="il-val">18.5–22.9</div><div class="il-sub">เกณฑ์ชาวเอเชีย</div></div>
-            <div class="ideal-item"><div class="il-label">💪 มวลกล้ามเนื้อที่เหมาะสม</div><div class="il-val" id="idealMuscleVal">—</div><div class="il-sub" id="idealMuscleRange">กรอกส่วนสูง+เพศก่อน</div></div>
+            <div class="ideal-item"><div class="il-label">📊 BMI เป้าหมาย</div><div class="il-val">18.5–22.9</div><div class="il-sub">เกณฑ์เอเชีย</div></div>
+            <div class="ideal-item"><div class="il-label">💪 SMM เป้าหมาย</div><div class="il-val" id="idealMuscleVal">—</div><div class="il-sub" id="idealMuscleRange">กรอกส่วนสูง+เพศ</div></div>
             <div class="ideal-item"><div class="il-label">🔥 % ไขมันเป้าหมาย</div><div class="il-val" id="idealFatVal">—</div><div class="il-sub" id="idealFatRange">กรอกเพศก่อน</div></div>
           </div>
         </div>
-
         <div class="sec-sep">ส่วนประกอบร่างกาย</div>
-        <div class="field"><label>Skeletal Muscle Mass (SMM) <span class="unit">kg</span></label><input type="number" id="smm" placeholder="0.0" step="0.1"><span class="ref-hint">กล้ามเนื้อโครงร่าง</span></div>
-        <div class="field"><label>Soft Lean Mass <span class="unit">kg</span></label><input type="number" id="slm" placeholder="0.0" step="0.1"><span class="ref-hint">SLM = SMM + น้ำในร่างกาย</span></div>
-        <div class="field"><label>Muscle Mass <span class="unit">kg</span></label><input type="number" id="muscle" placeholder="0.0" step="0.1"><span class="ref-hint">มวลกล้ามเนื้อรวม</span></div>
-        <div class="field"><label>มวลกระดูก (Bone Mass) <span class="unit">kg</span></label><input type="number" id="boneMass" placeholder="0.0" step="0.1"><span class="ref-hint">ชาย ~3.0 / หญิง ~2.5 kg</span></div>
-        <div class="field"><label>มวลไขมัน (BFM) <span class="unit">kg</span></label><input type="number" id="bfm" placeholder="0.0" step="0.1"></div>
-        <div class="field"><label>ไขมันช่องท้อง (VFL) <span class="unit">level</span></label><input type="number" id="vfl" placeholder="0" step="1"><span class="ref-hint">ปกติ ≤10</span></div>
-        <div class="field"><label>อัตราเผาผลาญ (BMR) <span class="unit">kcal</span></label><input type="number" id="bmr" placeholder="0" step="1"></div>
-        <div class="field"><label>อัตราส่วนเอว/สะโพก (WHR)</label><input type="number" id="whr" placeholder="0.00" step="0.01"><span class="ref-hint">ชาย &lt;0.90 / หญิง &lt;0.85</span></div>
-
-        <div class="sec-sep">การวิเคราะห์เพิ่มเติม (จากเครื่อง InBody)</div>
-        <div class="field">
-          <label>CID — ประเภทร่างกาย</label>
-          <select id="cid">
-            <option value="">-- เลือก --</option>
-            <option value="I-Type">I-Type (สมดุล)</option>
-            <option value="C-Type Weak">C-Type Weak (น้ำหนักสูง/กล้ามเนื้อน้อย)</option>
-            <option value="Above Avg Weak C-Type">Above Average Weak C-Type</option>
-            <option value="D-Type">D-Type (กล้ามเนื้อสูง)</option>
-            <option value="Slim">Slim (ผอมบาง)</option>
-            <option value="Sarcopenic Obesity">Sarcopenic Obesity</option>
-          </select>
+        <div class="field"><label>SMM Skeletal Muscle <span class="unit">kg</span></label><input type="number" id="smm" placeholder="0.0" step=".1"></div>
+        <div class="field"><label>Soft Lean Mass <span class="unit">kg</span></label><input type="number" id="slm" placeholder="0.0" step=".1"></div>
+        <div class="field"><label>Muscle Mass <span class="unit">kg</span></label><input type="number" id="muscle" placeholder="0.0" step=".1"></div>
+        <div class="field"><label>มวลไขมัน BFM <span class="unit">kg</span></label><input type="number" id="bfm" placeholder="0.0" step=".1"></div>
+        <div class="field"><label>VFL ไขมันช่องท้อง <span class="unit">level</span></label><input type="number" id="vfl" placeholder="0" step="1"><span class="ref-hint">ปกติ ≤10</span></div>
+        <div class="field"><label>BMR เผาผลาญ <span class="unit">kcal</span></label><input type="number" id="bmr" placeholder="0" step="1"></div>
+        <div class="field"><label>WHR เอว/สะโพก</label><input type="number" id="whr" placeholder="0.00" step=".01"><span class="ref-hint">ชาย&lt;0.90 / หญิง&lt;0.85</span></div>
+        <div class="sec-sep">InBody Analysis</div>
+        <div class="field"><label>CID ประเภทร่างกาย</label>
+          <select id="cid"><option value="">-- เลือก --</option><option value="I-Type">I-Type (สมดุล)</option><option value="C-Type Weak">C-Type Weak</option><option value="Above Avg Weak C-Type">Above Avg Weak C-Type</option><option value="D-Type">D-Type (กล้ามเนื้อสูง)</option><option value="Slim">Slim (ผอม)</option><option value="Sarcopenic Obesity">Sarcopenic Obesity</option></select>
         </div>
-        <div class="field">
-          <label>Body Type (Obesity Grid)</label>
-          <select id="bodyTypeGrid">
-            <option value="">-- เลือก --</option>
-            <option value="Athletic">Athletic</option>
-            <option value="Overweight">Overweight</option>
-            <option value="Obesity">Obesity</option>
-            <option value="Muscular">Muscular</option>
-            <option value="Average">Average</option>
-            <option value="Mild Obesity">Mild Obesity</option>
-            <option value="Slim Muscular">Slim Muscular</option>
-            <option value="Slim">Slim</option>
-            <option value="Sarcopenic Obesity">Sarcopenic Obesity</option>
-            <option value="Thin">Thin</option>
-            <option value="Slightly Thin">Slightly Thin</option>
-          </select>
+        <div class="field"><label>Body Type (Grid)</label>
+          <select id="bodyTypeGrid"><option value="">-- เลือก --</option><option>Athletic</option><option>Overweight</option><option>Obesity</option><option>Muscular</option><option>Average</option><option>Mild Obesity</option><option>Slim Muscular</option><option>Slim</option><option>Sarcopenic Obesity</option><option>Thin</option><option>Slightly Thin</option></select>
         </div>
-        <div class="field">
-          <label>Body Balance (Upper-Lower)</label>
-          <select id="bodyBalance">
-            <option value="">-- เลือก --</option>
-            <option value="Balanced">Balanced (สมดุล)</option>
-            <option value="Upper Heavy">Upper Heavy</option>
-            <option value="Lower Heavy">Lower Heavy</option>
-          </select>
+        <div class="field"><label>Body Balance</label>
+          <select id="bodyBalance"><option value="">-- เลือก --</option><option value="Balanced">Balanced</option><option value="Upper Heavy">Upper Heavy</option><option value="Lower Heavy">Lower Heavy</option></select>
         </div>
-        <div class="field"><label>InBody Score <span class="unit">0–100</span></label><input type="number" id="inbodyScore" placeholder="0–100" step="1" min="0" max="100"><span class="ref-hint">ดี ≥ 70</span></div>
-        <div class="field"><label>InBody Score เปลี่ยนแปลง <span class="unit">จากครั้งก่อน</span></label><input type="number" id="inbodyScoreDelta" placeholder="เช่น -9 หรือ +5" step="1"><span class="ref-hint">ใส่ค่า + หรือ − จากเครื่อง</span></div>
-
-        <div class="sec-sep">ค่าเปลี่ยนแปลงจากครั้งก่อน (Δ Delta — ใส่จากเครื่อง InBody)</div>
-        <div class="field"><label>Δ น้ำหนัก <span class="unit">kg</span></label><input type="number" id="dWeight" placeholder="+3.1" step="0.1"></div>
-        <div class="field"><label>Δ SMM <span class="unit">kg</span></label><input type="number" id="dSmm" placeholder="-2.3" step="0.1"></div>
-        <div class="field"><label>Δ BFM <span class="unit">kg</span></label><input type="number" id="dBfm" placeholder="+6.9" step="0.1"></div>
-        <div class="field"><label>Δ % ไขมัน</label><input type="number" id="dPbf" placeholder="+10.1" step="0.1"></div>
-        <div class="field"><label>Δ BMR <span class="unit">kcal</span></label><input type="number" id="dBmr" placeholder="-82" step="1"></div>
-        <div class="field"><label>Δ VFL <span class="unit">level</span></label><input type="number" id="dVfl" placeholder="+3" step="1"></div>
+        <div class="field"><label>InBody Score <span class="unit">0–100</span></label><input type="number" id="inbodyScore" placeholder="0–100" step="1" min="0" max="100"><span class="ref-hint">ดี ≥70</span></div>
       </div>
     </div>
 
     <!-- Lab -->
     <div class="card">
-      <div class="card-title"><span class="lab-label">LAB</span> ผลการตรวจเลือด</div>
+      <div class="card-title"><span class="tag tag-blue">LAB</span> ผลการตรวจเลือด</div>
       <div class="form-grid cols3">
         <div class="field"><label>FBS <span class="unit">mg/dL</span></label><input type="number" id="fbs" placeholder="0" step="1"><span class="ref-hint">ปกติ 70–99</span></div>
-        <div class="field"><label>HbA1c <span class="unit">%</span></label><input type="number" id="a1c" placeholder="0.0" step="0.1"><span class="ref-hint">ปกติ &lt;5.7</span></div>
-        <div class="field"><label>LDL Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="ldl" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;130</span></div>
-        <div class="field"><label>Creatinine (Cr) <span class="unit">mg/dL</span></label><input type="number" id="cr" placeholder="0.00" step="0.01"><span class="ref-hint">ชาย 0.7–1.2 / หญิง 0.5–1.1</span></div>
+        <div class="field"><label>HbA1c <span class="unit">%</span></label><input type="number" id="a1c" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;5.7</span></div>
+        <div class="field"><label>LDL Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="ldl" placeholder="0" step="1" oninput="updateLdlGoal()"><span class="ref-hint">ดู LDL Goal ด้านล่าง</span></div>
+        <div class="field"><label>Total Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="tc" placeholder="0" step="1"></div>
+        <div class="field"><label>HDL <span class="unit">mg/dL</span></label><input type="number" id="hdl" placeholder="0" step="1"><span class="ref-hint">ชาย&gt;40 / หญิง&gt;50</span></div>
+        <div class="field"><label>Triglyceride TG <span class="unit">mg/dL</span></label><input type="number" id="tg" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;150</span></div>
+        <div class="field"><label>Creatinine Cr <span class="unit">mg/dL</span></label><input type="number" id="cr" placeholder="0.00" step=".01"><span class="ref-hint">ชาย 0.7–1.2 / หญิง 0.5–1.1</span></div>
+        <div class="field"><label>UPCr <span class="unit">mg/g</span></label><input type="number" id="upcr" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;150</span></div>
         <div class="field"><label>AST (SGOT) <span class="unit">U/L</span></label><input type="number" id="ast" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
         <div class="field"><label>ALT (SGPT) <span class="unit">U/L</span></label><input type="number" id="alt" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
+        <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step=".01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
+        <div class="field"><label>Albumin <span class="unit">g/dL</span></label><input type="number" id="albumin" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 3.5–5.0</span></div>
+        <div class="field" id="psa-field"><label>PSA <span class="unit">ng/mL</span> <span style="font-size:10px;color:var(--teal-dark)">(ชาย)</span></label><input type="number" id="psa" placeholder="0.0" step=".01"><span class="ref-hint">ปกติ &lt;4.0</span></div>
+        <div class="field"><label>หมายเหตุ Lab</label><input type="text" id="tmNote" placeholder="เช่น ติดตาม PSA ทุกปี"></div>
       </div>
     </div>
 
-    <!-- Extended Lab -->
+    <!-- LDL Goal (Thai DLP/ESC/ACC 2025) -->
     <div class="card">
-      <div class="card-title"><span class="lab-label">LAB เพิ่มเติม</span> ผลการตรวจเลือดเพิ่มเติม</div>
+      <div class="card-title"><span class="tag tag-cv">LDL Goal</span> เป้าหมาย LDL — อิง Thai DLP / ESC 2021 / ACC 2025</div>
       <div class="form-grid cols3">
-        <div class="sec-sep span3" style="margin-top:0">ไขมันในเลือด (Lipid Profile)</div>
-        <div class="field"><label>Total Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="tc" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;200</span></div>
-        <div class="field"><label>HDL Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="hdl" placeholder="0" step="1"><span class="ref-hint">ชาย &gt;40 / หญิง &gt;50</span></div>
-        <div class="field"><label>Triglyceride (TG) <span class="unit">mg/dL</span></label><input type="number" id="tg" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;150</span></div>
-        <div class="sec-sep span3">ไต / ปัสสาวะ</div>
-        <div class="field"><label>UPCr (Urine PCR) <span class="unit">mg/g</span></label><input type="number" id="upcr" placeholder="0.0" step="0.1"><span class="ref-hint">ปกติ &lt;150 / เสี่ยง &gt;300</span></div>
-        <div class="sec-sep span3">ต่อมไทรอยด์ / โปรตีน</div>
-        <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step="0.01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
-        <div class="field"><label>Albumin <span class="unit">g/dL</span></label><input type="number" id="albumin" placeholder="0.0" step="0.1"><span class="ref-hint">ปกติ 3.5–5.0</span></div>
-        <div class="sec-sep span3">มะเร็ง (Tumor Marker)</div>
-        <div class="field" id="psa-field">
-          <label>PSA <span class="unit">ng/mL</span> <span style="font-size:10px;color:var(--teal-dark);font-weight:600">(ชาย)</span></label>
-          <input type="number" id="psa" placeholder="0.0" step="0.01">
-          <span class="ref-hint">ปกติ &lt;4.0 / เฝ้าระวัง 4–10 — ต่อมลูกหมาก</span>
+        <div class="ldl-risk-panel span3">
+          <div class="lrp-title">🎯 คำนวณ LDL Goal อัตโนมัติ — ปรับแก้ได้</div>
+          <div class="ldl-risk-grid">
+            <div class="lrp-item">
+              <label>ระดับความเสี่ยง ASCVD</label>
+              <select id="ascvdRisk" onchange="updateLdlGoal()">
+                <option value="">-- เลือก / Auto --</option>
+                <option value="very-high">Very High — ASCVD / DM+organ damage / eGFR&lt;30</option>
+                <option value="high">High — DM / HeFH / CKD 3–4 / SCORE2≥10%</option>
+                <option value="moderate">Moderate — SCORE2 5–9.9%</option>
+                <option value="low">Low — SCORE2 &lt;5%</option>
+              </select>
+            </div>
+            <div class="lrp-item" style="background:var(--bad-bg);border:1.5px solid #DDB0B0;border-radius:8px;padding:10px 12px;">
+              <label style="font-weight:700;color:var(--bad);display:block;margin-bottom:6px;">🚨 เคยเป็น ASCVD (MI, Stroke, PAD)?</label>
+              <select id="hasASCVD" onchange="setVal('hasASCVD',this.value);updateLdlGoal();" style="width:100%;border:1.5px solid #DDB0B0;border-radius:8px;padding:9px 11px;font-family:'Sarabun',sans-serif;font-size:14px;background:white;">
+                <option value="no">❌ ไม่มี</option>
+                <option value="yes">✅ มี (ข้าม Thai CV Risk — Very High Risk)</option>
+              </select>
+              <input type="hidden" id="hasASCVD_hidden" value="no">
+            </div>
+            <div class="lrp-item">
+              <label>Familial Hypercholesterolemia</label>
+              <select id="hasFH" onchange="updateLdlGoal()">
+                <option value="no">ไม่มี</option><option value="yes">มี (HeFH) ✓</option>
+              </select>
+            </div>
+            <div class="lrp-item">
+              <label>เบาหวาน (DM)</label>
+              <select id="hasDMRisk" onchange="updateLdlGoal()">
+                <option value="no">ไม่มี</option>
+                <option value="dm-organ">DM + Organ Damage / ≥10 ปี</option>
+                <option value="dm-simple">DM ไม่มี Organ Damage &lt;10 ปี</option>
+              </select>
+            </div>
+            <div class="lrp-item">
+              <label>eGFR / CKD Stage</label>
+              <select id="ckdStage" onchange="updateLdlGoal()">
+                <option value="normal">ปกติ / G1-2</option>
+                <option value="ckd3">CKD G3 (eGFR 30–59)</option>
+                <option value="ckd4">CKD G4 (eGFR 15–29)</option>
+                <option value="ckd5">CKD G5 / Dialysis</option>
+              </select>
+            </div>
+            <div class="lrp-item">
+              <label>On Statin / อยู่ระหว่างรักษา</label>
+              <select id="onStatin" onchange="updateLdlGoal()">
+                <option value="no">ไม่ได้รับ Statin</option>
+                <option value="max">Max tolerated Statin แล้ว</option>
+                <option value="moderate">Moderate Statin</option>
+              </select>
+            </div>
+          </div>
+          <div class="ldl-risk-grid" style="margin-top:10px">
+            <div class="ldl-goal-display span3">
+              <div>
+                <div class="lgd-label">🎯 LDL Goal (Thai DLP/ESC/ACC)</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;min-width:0;">
+                  <div class="lgd-val" id="ldlGoalDisplay" style="font-size:22px;font-weight:800;">— กรอกข้อมูลด้านบนก่อน</div>
+                  <button type="button" onclick="toggleLdlEditPanel()" 
+                    style="padding:4px 12px;background:var(--acc-bg);color:var(--acc);border:1px solid #B8CCE0;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+                    ✏️ แก้ไข LDL Goal
+                  </button>
+                </div>
+              </div>
+              <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.6;word-break:break-word;" id="ldlGoalBasis"></div>
+              <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin-top:8px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+                  <input type="checkbox" id="ldlInsufficient" onchange="toggleLdlInsufficient()" style="accent-color:var(--teal)">
+                  ข้อมูลไม่เพียงพอ
+                </label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <label style="font-size:12px;color:var(--text2)">แพทย์ตั้งเอง:</label>
+                  <input type="number" id="ldlGoalCustom" placeholder="mg/dL" step="1" style="width:90px;border:1.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--cream);outline:none;">
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Non-HDL Goal -->
+          <div style="background:linear-gradient(135deg,#EEF4FB,#E8F0FA);border:1px solid #B8CCE0;border-radius:10px;padding:12px 14px;margin-top:10px;box-sizing:border-box;overflow:hidden;">
+            <div style="font-size:11px;font-weight:700;color:#2C5F8A;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">📊 Non-HDL Cholesterol Goal</div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;">
+              <div>
+                <div id="nonHdlGoalDisplay" style="font-size:20px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#2C5F8A;">—</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px;">= LDL Goal + 30 (อัตโนมัติ)</div>
+                <div style="font-size:11px;color:var(--text2);">ปัจจุบัน TC−HDL = <strong id="nonHdlCurrent">—</strong> มก./ดล.</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+                <label style="font-size:11px;color:var(--text2);white-space:nowrap;">ปรับเอง:</label>
+                <input type="number" id="nonHdlGoalCustom" placeholder="mg/dL" step="5"
+                  style="width:80px;border:1.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--cream);outline:none;box-sizing:border-box;"
+                  oninput="updateNonHdlDisplay()">
+              </div>
+            </div>
+          </div>
+          <!-- Editable LDL panel -->
+          <div id="ldlEditPanel" style="display:none;margin-top:10px;padding:12px 14px;background:var(--acc-bg);border:1.5px solid #B8CCE0;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px;">✏️ แก้ไข LDL Goal ด้วยตนเอง (override อัตโนมัติ)</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow:hidden;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button type="button" onclick="setLdlGoalManual(55)" class="ldl-preset-btn">Very High &lt;55</button>
+                <button type="button" onclick="setLdlGoalManual(70)" class="ldl-preset-btn">High &lt;70</button>
+                <button type="button" onclick="setLdlGoalManual(100)" class="ldl-preset-btn">Moderate &lt;100</button>
+                <button type="button" onclick="setLdlGoalManual(116)" class="ldl-preset-btn">Low &lt;116</button>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <input type="number" id="ldlGoalCustom" placeholder="ตั้งเอง mg/dL" step="5" min="30" max="200"
+                  style="width:100px;border:1.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:14px;"
+                  oninput="if(this.value)setLdlGoalManual(+this.value)">
+                <button type="button" onclick="clearLdlManual()" 
+                  style="padding:5px 10px;background:var(--cream2);border:1px solid var(--border);border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">
+                  รีเซ็ต (Auto)
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="field"><label>หมายเหตุ Lab เพิ่มเติม</label><input type="text" id="tmNote" placeholder="เช่น ติดตามผล นัด ultrasound..."></div>
       </div>
     </div>
 
-    <!-- CV Risk Inputs -->
+    <!-- CV Risk + BP -->
     <div class="card">
-      <div class="card-title"><span class="cv-label">Thai CV Risk</span> ข้อมูลความเสี่ยงหัวใจและหลอดเลือด</div>
-      <div class="form-grid cols4">
-        <div class="field"><label>SBP ความดันตัวบน <span class="unit">mmHg</span></label><input type="number" id="sbp" placeholder="120" step="1"><span class="ref-hint">ปกติ &lt;120 / เสี่ยง ≥130</span></div>
+      <div class="card-title"><span class="tag tag-cv">Thai CV Risk</span> ความเสี่ยงหัวใจและความดัน</div>
+      <div class="form-grid cols2">
+        <div class="field"><label>SBP ความดันตัวบน <span class="unit">mmHg</span></label><input type="number" id="sbp" placeholder="120" step="1"><span class="ref-hint">ปกติ &lt;120</span></div>
         <div class="field"><label>DBP ความดันตัวล่าง <span class="unit">mmHg</span></label><input type="number" id="dbp" placeholder="80" step="1"><span class="ref-hint">ปกติ &lt;80</span></div>
-        <div class="field"><label>ความดันตั้งเป้า <span class="unit">mmHg</span></label><input type="text" id="bpTarget" placeholder="เช่น < 130/80" ></div>
+        <div class="field"><label>BP เป้าหมาย <span class="unit">mmHg</span></label><input type="text" id="bpTarget" placeholder="เช่น &lt; 130/80"></div>
         <div class="field"><label>การสูบบุหรี่</label>
-          <select id="smoker"><option value="no">ไม่สูบบุหรี่</option><option value="yes">สูบบุหรี่</option></select>
+          <select id="smoker"><option value="no">ไม่สูบ</option><option value="yes">สูบบุหรี่</option></select>
         </div>
       </div>
+    </div>
+
+    <!-- EKG -->
+    <div class="card">
+      <div class="card-title"><span class="tag tag-ekg">EKG</span> ผลคลื่นไฟฟ้าหัวใจ</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>วันที่ทำ EKG</label>
+          <input type="date" id="ekgDate">
+        </div>
+        <div class="field span2">
+          <label>ผล EKG</label>
+          <div class="ekg-row" style="margin-top:4px">
+            <div class="ekg-radio">
+              <label><input type="radio" name="ekgResult" id="ekgNormal" value="Normal"> <span>ปกติ</span></label>
+              <label><input type="radio" name="ekgResult" id="ekgAbnormal" value="Abnormal"> <span>ผิดปกติ</span></label>
+              <label><input type="radio" name="ekgResult" id="ekgNA" value="NA" checked> <span>N/A</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="field span2">
+          <label>ความเห็น EKG / ผลที่พบ</label>
+          <textarea id="ekgComment" rows="2" style="resize:vertical" placeholder="เช่น Normal sinus rhythm / LVH / ST changes..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Echo -->
+    <div class="card">
+      <div class="card-title"><span class="tag tag-echo"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;">
+  <!-- Monitor -->
+  <rect x="3" y="6" width="26" height="22" rx="3" fill="#546E7A" stroke="#263238" stroke-width="2.5"/>
+  <rect x="5" y="8" width="22" height="16" rx="1.5" fill="#78909C"/>
+  <!-- Heart on screen -->
+  <path d="M16 20 C16 18 14 16 12 17 C10 18 10 21 14 23 L16 24.5 L18 23 C22 21 22 18 20 17 C18 16 16 18 16 20Z" fill="#EF5350"/>
+  <!-- Monitor stand -->
+  <rect x="13" y="28" width="6" height="4" rx="1" fill="#90A4AE"/>
+  <rect x="10" y="31" width="12" height="2.5" rx="1" fill="#B0BEC5"/>
+  <!-- Cable from monitor to probe -->
+  <path d="M32 18 C36 18 36 26 33 28 L30 32 L29 38 L28 42" stroke="#263238" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Probe body -->
+  <rect x="30" y="8" width="10" height="18" rx="4" fill="#263238" stroke="#263238" stroke-width="1"/>
+  <rect x="32" y="10" width="6" height="6" rx="1" fill="#00BCD4"/>
+  <rect x="32" y="18" width="6" height="4" rx="0" fill="#80DEEA"/>
+  <!-- Probe tip -->
+  <path d="M32 26 L35 30 L38 26Z" fill="#263238"/>
+  <!-- Wifi waves -->
+  <path d="M41 6 Q44 9 41 12" stroke="#263238" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M43 3 Q48 8 43 14" stroke="#263238" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg> Echo</span> ผลตรวจคลื่นเสียงสะท้อนหัวใจ</div>
+      <div class="form-grid cols3">
+        <div class="field">
+          <label>วันที่ทำ Echo</label>
+          <input type="date" id="echoDate">
+        </div>
+        <div class="field">
+          <label>LVEF — ค่าสูบฉีดหัวใจห้องล่างซ้าย <span class="unit">%</span></label>
+          <input type="number" id="lvef" placeholder="เช่น 60" step="1" min="0" max="100">
+          <span class="ref-hint">ปกติ ≥55%</span>
+        </div>
+        <div class="field span3">
+          <label>ผล Echo ทั่วไป</label>
+          <div class="ekg-radio" style="margin-top:4px;flex-wrap:wrap">
+            <label><input type="radio" name="echoResult" value="Normal"> <span>ปกติ</span></label>
+            <label><input type="radio" name="echoResult" value="Abnormal"> <span>ผิดปกติ</span></label>
+            <label><input type="radio" name="echoResult" value="NA" checked> <span>N/A</span></label>
+          </div>
+        </div>
+
+        <!-- Valvular Stenosis -->
+        <div class="field span3">
+          <label>Valvular Stenosis (ลิ้นหัวใจตีบ)</label>
+          <div style="display:grid;grid-template-columns:minmax(90px,1.5fr) 1fr 1fr 1fr;gap:6px;margin-top:6px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text2);padding:5px 0">ลิ้นหัวใจ</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center">น้อย</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center">ปานกลาง</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center">รุนแรง</div>
+            <div id="stenosisRows"></div>
+          </div>
+        </div>
+
+        <!-- Valvular Regurgitation -->
+        <div class="field span3">
+          <label>Valvular Regurgitation (ลิ้นหัวใจรั่ว)</label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px">
+            <div style="font-size:12px;font-weight:700;color:var(--text2);padding:6px 0">ลิ้นหัวใจ</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center">Mild</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center">Moderate</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center">Severe</div>
+            <div id="regurgRows"></div>
+          </div>
+        </div>
+
+        <div class="field span3">
+          <label>ความเห็น Echo / ผลที่พบเพิ่มเติม</label>
+          <textarea id="echoComment" rows="2" style="resize:vertical" placeholder="เช่น Mild LVH, Diastolic dysfunction grade I..."></textarea>
+        </div>
+      
+
+      <!-- Echo Summary auto-gen -->
+      <div style="grid-column:1/-1;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:12px 16px;margin-top:4px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:24px;height:24px;background:#1B5E20;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="color:white;font-size:13px;">&#10003;</span>
+          </div>
+          <div style="font-size:13px;font-weight:800;color:#1B5E20;">สรุปผล Echo สำหรับคนไข้</div>
+          <button type="button" onclick="genEchoSummary()" style="margin-left:auto;padding:5px 14px;background:var(--teal);color:white;border:none;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">🔄 สร้างอัตโนมัติ</button>
+        </div>
+        <textarea id="echoSummary" rows="6" style="width:100%;border:1.5px solid #86EFAC;border-radius:8px;padding:10px;font-family:'Sarabun',sans-serif;font-size:13px;resize:vertical;background:white;line-height:1.8;" placeholder="กด 'สร้างอัตโนมัติ' หรือพิมพ์สรุปผลเอง..."></textarea>
+        <div style="font-size:10.5px;color:var(--text2);margin-top:4px;">ข้อความนี้จะแสดงในรายงานใต้ผล Echo</div>
+      </div>
+</div>
     </div>
 
     <!-- Vaccines -->
     <div class="card">
-      <div class="card-title"><span class="vax-label">วัคซีน</span> วัคซีนที่ควรได้รับ</div>
-      <div class="vax-grid" id="vaxGrid">
-        <!-- rendered by JS -->
+      <div class="card-title"><span class="tag tag-vax">วัคซีน</span> วัคซีนที่แนะนำ (Thai Guideline)</div>
+      <div class="vax-grid" id="vaxGrid"></div>
+    </div>
+
+    <!-- Follow-up -->
+    <div class="card">
+      <div class="card-title">📅 Follow-up & Recommendations</div>
+      <div class="form-grid cols3">
+        <div class="field"><label>นัดครั้งถัดไป</label><input type="date" id="nextVisit"></div>
+        <div class="field"><label>ความถี่ตรวจ Lab <span class="unit">เดือน/ครั้ง</span></label>
+          <select id="labFreq">
+            <option value="">-- เลือก --</option>
+            <option value="1">ทุกเดือน</option>
+            <option value="3">ทุก 3 เดือน</option>
+            <option value="6">ทุก 6 เดือน</option>
+            <option value="12">ทุกปี</option>
+            <option value="24">ทุก 2 ปี</option>
+            <option value="doctor">ตามดุลยพินิจแพทย์</option>
+          </select>
+        </div>
+        <div class="field"><label>ความถี่ทำ EKG <span class="unit">เดือน/ครั้ง</span></label>
+          <select id="ekgFreq">
+            <option value="">-- เลือก --</option>
+            <option value="6">ทุก 6 เดือน</option>
+            <option value="12">ทุกปี</option>
+            <option value="24">ทุก 2 ปี</option>
+            <option value="36">ทุก 3 ปี</option>
+            <option value="0">ตามอาการ</option>
+            <option value="doctor">ตามดุลยพินิจแพทย์</option>
+          </select>
+        </div>
+        <div class="field"><label>ความถี่ทำ Echo <span class="unit">เดือน/ครั้ง</span></label>
+          <select id="echoFreq">
+            <option value="">-- เลือก --</option>
+            <option value="3">ทุก 3 เดือน (HFrEF)</option>
+            <option value="3-6">ทุก 3–6 เดือน (HFmrEF)</option>
+            <option value="6">ทุก 6 เดือน</option>
+            <option value="12">ทุกปี</option>
+            <option value="24">ทุก 2 ปี</option>
+            <option value="36">ทุก 3 ปี</option>
+            <option value="60">ทุก 5 ปี</option>
+            <option value="0">ตามอาการ</option>
+            <option value="doctor">ตามดุลยพินิจแพทย์</option>
+          </select>
+        </div>
+        <div class="field"><label>ผู้บันทึก</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+            <button type="button" onclick="setRecorder('พ.ณัฏฐา')" class="rec-btn" id="rec-btn-1">พ.ณัฏฐา</button>
+            <button type="button" onclick="setRecorder('พ.พรอนงค์')" class="rec-btn" id="rec-btn-2">พ.พรอนงค์</button>
+          </div>
+          <input type="text" id="recorder" placeholder="หรือพิมพ์ชื่อเอง">
+        </div>
+        <div class="field"></div>
       </div>
     </div>
 
     <!-- Advice -->
     <div class="card">
       <div class="card-title">💡 คำแนะนำจากแพทย์</div>
-
-      <!-- AI Generate button -->
-      <button class="advice-gen-btn" id="genAdviceBtn" onclick="generateAdvice()">
-        ✨ สร้างคำแนะนำเบื้องต้นจากข้อมูลที่กรอก
-      </button>
-
-      <!-- Preview panel -->
+      <button class="advice-gen-btn" onclick="generateAdvice()">✨ สร้างคำแนะนำเบื้องต้นอัตโนมัติ</button>
       <div class="advice-preview" id="advicePreview">
-        <div class="ap-title">✨ คำแนะนำที่สร้างขึ้นอัตโนมัติ — แพทย์สามารถปรับแก้ก่อนบันทึก</div>
-        <div class="ap-section">
-          <div class="ap-section-title">🥗 โภชนาการ</div>
-          <div class="ap-text" id="previewDiet"></div>
+        <div class="ap-title">✨ คำแนะนำอัตโนมัติ — แพทย์ปรับแก้ได้</div>
+        <div class="ap-section"><div class="ap-section-title">🥗 โภชนาการ</div><div class="ap-text" id="previewDiet"></div></div>
+        <div class="ap-section"><div class="ap-section-title">🏃 การออกกำลังกาย</div><div class="ap-text" id="previewExercise"></div></div>
+        <div class="ap-section" id="smokeSec" style="display:none;background:#FFF0F0;border-left:3px solid #B01D1D;padding:8px 12px;border-radius:0 6px 6px 0">
+          <div class="ap-section-title" style="color:#B01D1D">🚭 การเลิกบุหรี่</div><div class="ap-text" id="previewSmoke"></div>
         </div>
-        <div class="ap-section">
-          <div class="ap-section-title">🏃 การออกกำลังกาย</div>
-          <div class="ap-text" id="previewExercise"></div>
-        </div>
-        <div class="ap-section" id="smokeSec" style="display:none;background:#FFF0F0;border-left:3px solid #B01D1D;padding:8px 12px;border-radius:0 6px 6px 0;">
-          <div class="ap-section-title" style="color:#B01D1D">🚭 การเลิกบุหรี่</div>
-          <div class="ap-text" id="previewSmoke"></div>
-        </div>
-        <div class="ap-section" style="background:var(--teal-light);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0;">
-          <div class="ap-section-title" style="color:var(--teal-dark)">💉 วัคซีนที่แนะนำ</div>
-          <div class="ap-text" id="previewVax"></div>
+        <div class="ap-section" style="background:var(--teal-light);border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 6px 6px 0">
+          <div class="ap-section-title" style="color:var(--teal-dark)">💉 วัคซีนที่แนะนำ</div><div class="ap-text" id="previewVax"></div>
         </div>
         <div class="ap-actions">
           <button class="ap-use-btn ap-use-both" onclick="useAdvice('both')">ใช้ทั้งหมด</button>
-          <button class="ap-use-btn ap-use-diet" onclick="useAdvice('diet')">โภชนาการ</button>
-          <button class="ap-use-btn ap-use-exercise" onclick="useAdvice('exercise')">ออกกำลังกาย</button>
           <button class="ap-use-btn ap-discard" onclick="document.getElementById('advicePreview').classList.remove('show')">ยกเลิก</button>
         </div>
       </div>
-
       <div class="form-grid">
-        <div class="field span2"><label>คำแนะนำด้านโภชนาการ</label><textarea id="dietAdvice" rows="3" style="resize:vertical;" placeholder="เช่น ลดแป้ง น้ำตาล เพิ่มโปรตีน..."></textarea></div>
-        <div class="field span2"><label>คำแนะนำด้านการออกกำลังกาย</label><textarea id="exerciseAdvice" rows="3" style="resize:vertical;" placeholder="เช่น เดินเร็ว 30 นาที/วัน..."></textarea></div>
-        <div class="field span2"><label>คำแนะนำวัคซีน <span class="unit">(จะถูกสร้างอัตโนมัติเมื่อกด ✨ สร้างคำแนะนำ)</span></label><textarea id="vaxAdvice" rows="3" style="resize:vertical;" placeholder="เช่น แนะนำฉีดวัคซีนไข้หวัดใหญ่ทุกปี ลดโอกาสนอน รพ. ได้ 40%..."></textarea></div>
-        <div class="field"><label>นัดครั้งถัดไป</label><input type="date" id="nextVisit"></div>
-        <div class="field"><label>ผู้บันทึก</label><input type="text" id="recorder" placeholder="ชื่อผู้บันทึก"></div>
+        <div class="field span2"><label>คำแนะนำด้านโภชนาการ</label><textarea id="dietAdvice" rows="3" style="resize:vertical" placeholder="คำแนะนำอาหาร..."></textarea></div>
+        <div class="field span2"><label>คำแนะนำด้านการออกกำลังกาย</label><textarea id="exerciseAdvice" rows="3" style="resize:vertical" placeholder="คำแนะนำออกกำลังกาย..."></textarea></div>
+        <div class="field span2"><label>คำแนะนำวัคซีน</label><textarea id="vaxAdvice" rows="2" style="resize:vertical" placeholder="วัคซีนที่แนะนำ..."></textarea></div>
+      </div>
+
+      <!-- Summary + Doctor Note -->
+      <div class="sec-sep">📋 สรุปผล & Doctor's Note</div>
+      <div class="form-grid cols1">
+        <div class="field">
+          <label>📋 สรุปผลตรวจ (แสดงในรายงาน)</label>
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;flex-wrap:wrap;">
+            <button type="button" onclick="genAutoSummary()" 
+              style="padding:8px 14px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+              🔄 สร้างสรุปอัตโนมัติ
+            </button>
+            <button type="button" onclick="setVal('customSummary','')" 
+              style="padding:8px 12px;background:var(--cream2);color:var(--text2);border:1px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;flex-shrink:0;">
+              🗑 ล้าง
+            </button>
+            <span style="font-size:11px;color:var(--text2);min-width:0;">ถ้าว่าง report จะสร้างอัตโนมัติ</span>
+          </div>
+          <textarea id="customSummary" rows="5" style="resize:vertical;width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-family:'Sarabun',sans-serif;font-size:14px;" placeholder="กด 'สร้างสรุปอัตโนมัติ' หรือพิมพ์เอง..."></textarea>
+        </div>
+        <div class="field">
+          <label style="color:#4A3A8A;font-weight:700">✍️ Doctor's Note — ข้อความเฉพาะสำหรับผู้ป่วยรายนี้</label>
+          <textarea id="doctorNote" rows="3" style="resize:vertical;width:100%;border:2px solid #4A3A8A;border-radius:8px;padding:10px;font-family:'Sarabun',sans-serif;font-size:14px;" placeholder="Personalized message จากแพทย์..."></textarea>
+        </div>
       </div>
     </div>
 
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="clearForm()">🗑 ล้างข้อมูล</button>
-      <button class="btn btn-primary" onclick="saveRecord()">💾 บันทึกข้อมูล</button>
+      <button class="btn btn-primary" onclick="saveRecord()">💾 บันทึกลง Firebase</button>
     </div>
   </div>
 
-  <!-- ════ LIST TAB ════ -->
+  <!-- ══ LIST TAB ══ -->
   <div class="tab-panel" id="tab-list">
     <div class="card">
       <div class="card-title">📋 รายชื่อผู้ป่วยทั้งหมด</div>
-      <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="🔍  ค้นหาชื่อ, HN, วันที่..." oninput="renderList()">
-      </div>
-      <div id="patientListContainer"><div class="empty-state"><div class="big">📂</div>ยังไม่มีข้อมูลผู้ป่วย</div></div>
+      <div class="search-bar"><input type="text" id="searchInput" placeholder="🔍 ค้นหาชื่อ, รหัส, วันที่..." oninput="renderList()"></div>
+      <div id="patientListContainer"><div class="empty-state"><div class="big">📂</div>ยังไม่มีข้อมูล</div></div>
     </div>
-
-    <!-- Export / Import toolbar -->
     <div class="data-toolbar">
-      <div class="dt-label">🔗 แชร์ข้อมูลระหว่างเครื่อง (LAN / USB)</div>
+      <div class="dt-label">🔗 สำรองข้อมูล (Export/Import)</div>
       <button class="dt-btn dt-export" onclick="exportJSON()">⬇ Export JSON</button>
       <button class="dt-btn dt-import" onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
-      <button class="dt-btn dt-server" onclick="showServerHelp()">🌐 วิธีใช้ Local Server</button>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Vaccines list ──
-const VACCINES = [
-  { id:'flu',       name:'ไข้หวัดใหญ่',         sub:'Influenza — แนะนำทุกปี',              freq:'ปีละครั้ง' },
-  { id:'covid',     name:'COVID-19',             sub:'โควิด-19 — Booster ทุก 6–12 เดือน',   freq:'6–12 เดือน' },
-  { id:'pneumo23',  name:'ปอดบวม (Pneumo 23)',   sub:'Pneumococcal PPSV23',                 freq:'ทุก 5 ปี' },
-  { id:'pneumo13',  name:'ปอดบวม (PCV13)',        sub:'Pneumococcal Conjugate PCV13',        freq:'ครั้งเดียว' },
-  { id:'hepb',      name:'ตับอักเสบ บี',          sub:'Hepatitis B — 3 เข็ม',               freq:'3 doses' },
-  { id:'rsv',       name:'RSV',                   sub:'Respiratory Syncytial Virus — อายุ ≥60 ปี หรือ โรคหัวใจ/ปอด', freq:'ครั้งเดียว' },
-  { id:'shingles',  name:'งูสวัด (Shingrix)',     sub:'Herpes Zoster — อายุ ≥50 ปี',        freq:'2 doses' },
-  { id:'tetanus',   name:'บาดทะยัก (Td/Tdap)',   sub:'Tetanus Diphtheria',                  freq:'ทุก 10 ปี' },
-  { id:'hpv',       name:'HPV',                   sub:'Human Papillomavirus',                freq:'2–3 doses' },
+'use strict';
+
+/* ── VALVES ── */
+var VALVES = ['Mitral','Aortic','Tricuspid','Pulmonary'];
+
+/* ── VACCINES (5 only, Thai guideline with age ranges) ── */
+var VACCINES = [
+  {id:'flu',     name:'ไข้หวัดใหญ่',       ageNote:'ทุกกลุ่มอายุ',              sub:'วัคซีนไข้หวัดใหญ่ — ฉีดทุกปี'},
+  {id:'pcv20',   name:'ปอดอักเสบ PCV20',   ageNote:'อายุ ≥65 ปี หรือมีโรคเรื้อรัง', sub:'Pneumococcal 20-valent — ฉีดครั้งเดียว'},
+  {id:'rsv',     name:'RSV',               ageNote:'อายุ ≥60 ปี',               sub:'วัคซีน RSV — โรคหัวใจ/ปอด ฉีดครั้งเดียว'},
+  {id:'shingles',name:'งูสวัด (Shingrix)', ageNote:'อายุ ≥50 ปี',               sub:'วัคซีนงูสวัด — ฉีด 2 เข็ม ห่างกัน 2–6 เดือน'},
+  {id:'hpv',     name:'HPV',               ageNote:'อายุ 9–45 ปี (หญิง)', sub:'วัคซีน HPV — ป้องกันมะเร็งปากมดลูก'},
 ];
 
-function renderVaxGrid() {
-  const g = document.getElementById('vaxGrid');
-  g.innerHTML = VACCINES.map(v => `
+/* ── FIREBASE ── */
+var db=null, cachedRecords=[], unsubscribeList=null;
+
+function initFirebase(){
+  try{
+    firebase.initializeApp({apiKey:"AIzaSyD5bvjywkSfJhDOPywei401hJfFz7lgNf4",authDomain:"cardiopluz-health-check-up.firebaseapp.com",projectId:"cardiopluz-health-check-up",storageBucket:"cardiopluz-health-check-up.firebasestorage.app",messagingSenderId:"936833651637",appId:"1:936833651637:web:b2f9b5136d0a997f3d7ffc"});
+    db=firebase.firestore(); setDbStatus('connecting'); startListener();
+  }catch(e){setDbStatus('offline');}
+}
+function setDbStatus(s){
+  var el=document.getElementById('dbStatus'); if(!el)return;
+  var M={connecting:{t:'🔄 กำลังเชื่อมต่อ...',c:'#FFF8EC'},online:{t:'🟢 เชื่อมต่อแล้ว',c:'#EDF7F2'},offline:{t:'🔴 ออฟไลน์',c:'#FFF2F2'},saving:{t:'💾 กำลังบันทึก...',c:'var(--teal-light)'},saved:{t:'✅ บันทึกแล้ว',c:'#EDF7F2'}};
+  var v=M[s]||M.offline; el.textContent=v.t; el.style.background=v.c; el.style.padding='3px 10px'; el.style.borderRadius='12px'; el.style.fontSize='11px';
+}
+function startListener(){
+  if(!db)return; if(unsubscribeList)unsubscribeList();
+  unsubscribeList=db.collection('visits').orderBy('savedAt','desc').onSnapshot(snap=>{
+    cachedRecords=snap.docs.map(d=>({...d.data(),_docId:d.id}));
+    updateCount();
+    var lp=document.getElementById('tab-list'); if(lp&&lp.classList.contains('active'))renderList();
+    setDbStatus('online');
+  },err=>{console.error(err);setDbStatus('offline');});
+}
+
+/* ── TABS ── */
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='list')renderList();
+}
+
+/* ── RENDER VAX GRID ── */
+function renderVaxGrid(){
+  var g=document.getElementById('vaxGrid'); if(!g)return;
+  g.innerHTML=VACCINES.map(v=>`
     <div class="vax-item">
+      <div class="vax-age">${v.ageNote}</div>
       <div class="vax-name">${v.name}</div>
       <div class="vax-sub">${v.sub}</div>
       <div class="vax-row">
@@ -479,119 +714,205 @@ function renderVaxGrid() {
     </div>
   `).join('');
 }
-renderVaxGrid();
 
-// ── Doctor selector ──
-let selectedDoctor = '';
-function selectDoctor(name, btn) {
-  selectedDoctor = name;
-  document.getElementById('doctor').value = name;
-  document.querySelectorAll('.doc-btn').forEach(b => b.classList.remove('selected'));
+/* ── RENDER VALVE GRIDS ── */
+function renderValveGrids(){
+  var stSel='', regSel='';
+  VALVES.forEach(v=>{
+    var row=`<div style="display:contents">
+      <div style="font-size:12px;padding:6px 0;font-weight:600">${v}</div>
+      <div style="text-align:center"><input type="checkbox" id="sten_${v}_mild" style="width:16px;height:16px;accent-color:var(--warn)"></div>
+      <div style="text-align:center"><input type="checkbox" id="sten_${v}_mod" style="width:16px;height:16px;accent-color:var(--high)"></div>
+      <div style="text-align:center"><input type="checkbox" id="sten_${v}_sev" style="width:16px;height:16px;accent-color:var(--bad)"></div>
+    </div>`;
+    stSel+=row;
+    var row2=`<div style="display:contents">
+      <div style="font-size:12px;padding:6px 0;font-weight:600">${v}</div>
+      <div style="text-align:center"><input type="checkbox" id="reg_${v}_mild" style="width:16px;height:16px;accent-color:var(--warn)"></div>
+      <div style="text-align:center"><input type="checkbox" id="reg_${v}_mod" style="width:16px;height:16px;accent-color:var(--high)"></div>
+      <div style="text-align:center"><input type="checkbox" id="reg_${v}_sev" style="width:16px;height:16px;accent-color:var(--bad)"></div>
+    </div>`;
+    regSel+=row2;
+  });
+  // Wrap in grid
+  var wrapper1=document.getElementById('stenosisRows');
+  var wrapper2=document.getElementById('regurgRows');
+  if(wrapper1){
+    wrapper1.style.display='contents';
+    wrapper1.innerHTML=stSel;
+  }
+  if(wrapper2){
+    wrapper2.style.display='contents';
+    wrapper2.innerHTML=regSel;
+  }
+}
+
+/* ── DOCTOR SELECTOR ── */
+var selectedDoctor='';
+function selectDoc(name,btn){
+  selectedDoctor=name; document.getElementById('doctor').value=name;
+  document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
 }
 
-// ── Firebase Firestore Storage ──
-// SDK loaded via CDN in <head> — using compat version for simplicity in plain HTML
-
-let db = null;
-let unsubscribeList = null;   // real-time listener handle
-let cachedRecords = [];        // local cache for fast access
-
-function initFirebase() {
-  const firebaseConfig = {
-    apiKey: "AIzaSyD5bvjywkSfJhDOPywei401hJfFz7lgNf4",
-    authDomain: "cardiopluz-health-check-up.firebaseapp.com",
-    projectId: "cardiopluz-health-check-up",
-    storageBucket: "cardiopluz-health-check-up.firebasestorage.app",
-    messagingSenderId: "936833651637",
-    appId: "1:936833651637:web:b2f9b5136d0a997f3d7ffc",
-    measurementId: "G-5DW4RLVKF0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-  setDbStatus('connecting');
-  // Real-time listener — updates list whenever Firestore changes
-  startRealtimeListener();
-}
-
-function setDbStatus(state) {
-  const el = document.getElementById('dbStatus');
-  if (!el) return;
-  const states = {
-    connecting: { text:'🔄 กำลังเชื่อมต่อ Firebase...', color:'var(--warn)' },
-    online:     { text:'🟢 Firebase — เชื่อมต่อแล้ว (sync ทุกเครื่อง)', color:'var(--ok)' },
-    offline:    { text:'🔴 ออฟไลน์ — ใช้ข้อมูลสำรอง', color:'var(--bad)' },
-    saving:     { text:'💾 กำลังบันทึก...', color:'var(--teal)' },
-    saved:      { text:'✅ บันทึกใน Firebase แล้ว', color:'var(--ok)' },
-  };
-  const s = states[state] || states.offline;
-  el.textContent = s.text;
-  el.style.color = s.color;
-}
-
-function startRealtimeListener() {
-  if (!db) return;
-  if (unsubscribeList) unsubscribeList();
-  unsubscribeList = db.collection('visits')
-    .orderBy('savedAt', 'desc')
-    .onSnapshot(snapshot => {
-      cachedRecords = snapshot.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
-      updateCount();
-      // Re-render list if list tab is active
-      const listPanel = document.getElementById('tab-list');
-      if (listPanel && listPanel.classList.contains('active')) renderList();
-      setDbStatus('online');
-    }, err => {
-      console.error('Firestore listener error:', err);
-      setDbStatus('offline');
-    });
-}
-
-// ── Tabs ──
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  if(btn) btn.classList.add('active');
-  if(name==='list') renderList();
-}
-
-const BASE_FIELDS = ['hn','visitDate','fullName','dob','gender','doctor','note',
-  'height','weight','bmi','smm','slm','bfm','pbf','vfl','bmr','whr',
-  'muscle','boneMass','cid','bodyTypeGrid','bodyBalance',
-  'inbodyScore','inbodyScoreDelta',
-  'dWeight','dSmm','dBfm','dPbf','dBmr','dVfl',
-  'fbs','a1c','ldl','cr','ast','alt',
-  'tc','hdl','tg','upcr','tsh','albumin','psa','tmNote',
+/* ── FIELDS ── */
+var BASE_FIELDS=['hn','visitDate','fullName','dob','gender','doctor','note',
+  'height','weight','bmi','smm','slm','muscle','bfm','pbf','vfl','bmr','whr',
+  'cid','bodyTypeGrid','bodyBalance','inbodyScore',
+  'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','tsh','albumin','psa','tmNote',
+  'ascvdRisk','hasASCVD','hasFH','hasDMRisk','ckdStage','onStatin','ldlGoalCustom',
   'sbp','dbp','bpTarget','smoker',
-  'dietAdvice','exerciseAdvice','vaxAdvice','nextVisit','recorder'];
+  'ekgDate','ekgComment','lvef','echoDate','echoComment',
+  'labFreq','ekgFreq','echoFreq',
+  'dietAdvice','exerciseAdvice','vaxAdvice','nextVisit','recorder',
+  'customSummary','doctorNote',
+  'hasASCVD','nonHdlGoalCustom','echoSummary'
+];
 
-function val(id) { return document.getElementById(id)?.value?.trim()||''; }
-function setVal(id,v) { if(document.getElementById(id)) document.getElementById(id).value=v||''; }
+function val(id){return document.getElementById(id)?.value?.trim()||'';}
+function setVal(id,v){if(document.getElementById(id))document.getElementById(id).value=v||'';}
+function getRadio(name){var r=document.querySelector('input[name="'+name+'"]:checked');return r?r.value:'';}
+function setRadio(name,v){var r=document.querySelector('input[name="'+name+'"][value="'+v+'"]');if(r)r.checked=true;}
+function getCBs(){
+  var obj={};
+  VALVES.forEach(v=>{
+    ['mild','mod','sev'].forEach(s=>{
+      ['sten','reg'].forEach(t=>{
+        var el=document.getElementById(t+'_'+v+'_'+s);
+        if(el)obj[t+'_'+v+'_'+s]=el.checked;
+      });
+    });
+  });
+  return obj;
+}
+function setCBs(obj){
+  if(!obj)return;
+  Object.keys(obj).forEach(k=>{var el=document.getElementById(k);if(el)el.checked=!!obj[k];});
+}
 
-function clearForm() {
-  BASE_FIELDS.forEach(id => setVal(id,''));
-  selectedDoctor='';
-  document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));
-  VACCINES.forEach(v => { setVal('vax_status_'+v.id,''); setVal('vax_date_'+v.id,''); });
+function setLdlGoalManual(val_){
+  setVal('ldlGoalCustom',val_);
+  document.getElementById('ldlGoalDisplay').textContent='< '+val_+' mg/dL (แพทย์กำหนด)';
+  document.getElementById('ldlGoalBasis').textContent='แพทย์กำหนดเอง — override ค่าอัตโนมัติ';
+  document.querySelectorAll('.ldl-preset-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.ldl-preset-btn').forEach(function(b){
+    if(b.textContent.includes(val_))b.classList.add('active');
+  });
+  setTimeout(updateNonHdlDisplay,50);
+}
+function clearLdlManual(){
+  setVal('ldlGoalCustom','');
+  document.querySelectorAll('.ldl-preset-btn').forEach(function(b){b.classList.remove('active');});
+  updateLdlGoal();
+}
+
+function genEchoSummary(){
+  var lines=[];
+  var lvef=parseFloat(val('lvef')||0);
+  if(lvef>0){
+    var sys_status=lvef>=53?'ปกติ':lvef>=40?'ลดลงเล็กน้อย-ปานกลาง (HFmrEF)':'ลดลงมาก (HFrEF ต้องติดตาม Echo ซ้ำ)';
+    lines.push('• การบีบตัวของหัวใจ (Systolic function): '+sys_status);
+  }
+  var echoRes=getRadio('echoResult')||val('echoResult')||'';
+  var comment=val('echoComment')||'';
+  if(echoRes==='Normal'&&!comment.toLowerCase().includes('diastolic')){
+    lines.push('• การคลายตัวของหัวใจ (Diastolic function): ปกติ');
+  } else if(comment){
+    var dm=comment.match(/diastolic[^,;.]*/i);
+    if(dm) lines.push('• การคลายตัวของหัวใจ (Diastolic function): '+dm[0]);
+  }
+  var VALVES=[{k:'Mitral',th:'ลิ้นไมตรัล'},{k:'Aortic',th:'ลิ้นเอออร์ติก'},{k:'Tricuspid',th:'ลิ้นไตรคัสปิด'},{k:'Pulmonary',th:'ลิ้นพัลโมนิก'}];
+  var SEV={mild:'เล็กน้อย',moderate:'ปานกลาง',severe:'รุนแรง'};
+  VALVES.forEach(function(v){
+    var sten=getCheckboxValue('stenosis_'+v.k);
+    var reg=getCheckboxValue('regurg_'+v.k);
+    if(!sten&&!reg){lines.push('• '+v.th+' ('+v.k+' valve): ทำงานปกติ');}
+    else{
+      var issues=[];
+      if(sten)issues.push('ตีบ '+(SEV[sten]||sten));
+      if(reg)issues.push('รั่ว '+(SEV[reg]||reg));
+      lines.push('• '+v.th+' ('+v.k+' valve): '+issues.join(', '));
+    }
+  });
+  setVal('echoSummary',lines.join('\n'));
+  var btn=event.target; var orig=btn.textContent;
+  btn.textContent='✅ สร้างแล้ว!'; btn.style.background='var(--ok)';
+  setTimeout(function(){btn.textContent=orig;btn.style.background='var(--teal)';},1500);
+}
+function getCheckboxValue(groupId){
+  var radios=document.querySelectorAll('input[name="'+groupId+'"]');
+  for(var i=0;i<radios.length;i++){if(radios[i].checked)return radios[i].value;}
+  return '';
+}
+
+function clearForm(){
+  BASE_FIELDS.forEach(id=>setVal(id,''));
+  var dd=document.getElementById('dobDate');if(dd)dd.value='';
+  var ddisp=document.getElementById('dobDisplay');if(ddisp)ddisp.textContent='';
+  selectedDoctor=''; document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));
+  VACCINES.forEach(v=>{setVal('vax_status_'+v.id,'');setVal('vax_date_'+v.id,'');});
+  setRadio('ekgResult','NA'); setRadio('echoResult','NA');
+  VALVES.forEach(v=>['sten','reg'].forEach(t=>['mild','mod','sev'].forEach(s=>{var el=document.getElementById(t+'_'+v+'_'+s);if(el)el.checked=false;})));
+  setVal('ldlGoalDisplay','—'); setVal('ldlGoalBasis','');
+  calcIdeal(); updateLdlGoal();
+}
+
+document.getElementById('visitDate').valueAsDate=new Date();
+
+/* ── DOB PICKER ── */
+function setRecorder(name){
+  setVal('recorder',name);
+  document.querySelectorAll('.rec-btn').forEach(b=>b.classList.remove('active'));
+  if(name==='พ.ณัฏฐา') document.getElementById('rec-btn-1').classList.add('active');
+  if(name==='พ.พรอนงค์') document.getElementById('rec-btn-2').classList.add('active');
+}
+function updateDobField(){
+  var d=document.getElementById('dobDate').value;
+  if(!d){document.getElementById('dob').value='';document.getElementById('dobDisplay').textContent='';return;}
+  var parts=d.split('-');
+  var year=parseInt(parts[0]),month=parseInt(parts[1]),day=parseInt(parts[2]);
+  var thYear=year<2400?year+543:year;
+  var M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  var today=new Date();
+  var age=today.getFullYear()-year;
+  if(today.getMonth()+1<month||(today.getMonth()+1===month&&today.getDate()<day))age--;
+  var thaiStr=day+' '+M[month-1]+' '+thYear+' (อายุ '+age+' ปี)';
+  document.getElementById('dob').value=thaiStr;
+  document.getElementById('dobDisplay').textContent='📅 '+thaiStr;
+  calcIdeal(); updateLdlGoal();
+}
+function setDobFromText(text){
+  /* Try to parse stored Thai text back to date for the picker */
+  if(!text)return;
+  document.getElementById('dob').value=text;
+  /* Extract AD year and month/day for picker */
+  var mAge=text.match(/(\d+)\s*ม\.ค\.|(\d+)\s*ก\.พ\.|(\d+)\s*มี\.ค\.|(\d+)\s*เม\.ย\.|(\d+)\s*พ\.ค\.|(\d+)\s*มิ\.ย\.|(\d+)\s*ก\.ค\.|(\d+)\s*ส\.ค\.|(\d+)\s*ก\.ย\.|(\d+)\s*ต\.ค\.|(\d+)\s*พ\.ย\.|(\d+)\s*ธ\.ค\./);
+  var thMonths={'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
+  var dayM=text.match(/^(\d+)/), yearM=text.match(/25\d\d|19\d\d|20\d\d/);
+  var monM=null;
+  Object.keys(thMonths).forEach(function(k){if(text.indexOf(k)>=0)monM=thMonths[k];});
+  if(dayM&&monM&&yearM){
+    var adYear=parseInt(yearM[0])>2400?parseInt(yearM[0])-543:parseInt(yearM[0]);
+    var isoDate=adYear+'-'+(monM<10?'0':'')+monM+'-'+(parseInt(dayM[0])<10?'0':'')+parseInt(dayM[0]);
+    document.getElementById('dobDate').value=isoDate;
+    document.getElementById('dobDisplay').textContent='📅 '+text;
+  }
+}
+
+/* ── AUTO BMI ── */
+function autoBMI(){
+  var h=parseFloat(val('height')),w=parseFloat(val('weight'));
+  if(h>0&&w>0)setVal('bmi',(w/((h/100)**2)).toFixed(1));
   calcIdeal();
 }
 
-document.getElementById('visitDate').valueAsDate = new Date();
-
-function autoBMI() {
-  const h=parseFloat(val('height')), w=parseFloat(val('weight'));
-  if(h>0&&w>0) setVal('bmi',(w/((h/100)**2)).toFixed(1));
-  calcIdeal();
-}
-
-function calcIdeal() {
-  const h=parseFloat(val('height')), g=val('gender'), hm=h/100;
-  // Show/hide PSA (male only)
-  const psaField=document.getElementById('psa-field');
-  if(psaField) psaField.style.display = (!g||g==='ชาย') ? '' : 'none';
+/* ── CALC IDEAL ── */
+function calcIdeal(){
+  var h=parseFloat(val('height')),g=val('gender'),hm=h/100;
+  var pf=document.getElementById('psa-field');
+  if(pf)pf.style.display=(!g||g==='ชาย')?'':'none';
   if(h>0){
-    const wL=(18.5*hm*hm).toFixed(1), wH=(22.9*hm*hm).toFixed(1), wM=((18.5+22.9)/2*hm*hm).toFixed(1);
+    var wL=(18.5*hm*hm).toFixed(1),wH=(22.9*hm*hm).toFixed(1),wM=((18.5+22.9)/2*hm*hm).toFixed(1);
     document.getElementById('idealWeightVal').textContent=wM+' kg';
     document.getElementById('idealWeightRange').textContent='ช่วง '+wL+'–'+wH+' kg';
   } else {
@@ -599,298 +920,338 @@ function calcIdeal() {
     document.getElementById('idealWeightRange').textContent='กรอกส่วนสูงก่อน';
   }
   if(h>0&&g){
-    const idealBW=20.7*hm*hm;
-    const[pL,pH]=g==='หญิง'?[0.28,0.39]:[0.38,0.54];
-    const mL=(idealBW*pL).toFixed(1), mH=(idealBW*pH).toFixed(1), mM=((parseFloat(mL)+parseFloat(mH))/2).toFixed(1);
+    var iBW=20.7*hm*hm;
+    var pL=g==='หญิง'?.28:.38,pH=g==='หญิง'?.39:.54;
+    var mL=(iBW*pL).toFixed(1),mH=(iBW*pH).toFixed(1),mM=((+mL+ +mH)/2).toFixed(1);
     document.getElementById('idealMuscleVal').textContent=mM+' kg';
     document.getElementById('idealMuscleRange').textContent='ช่วง '+mL+'–'+mH+' kg';
   } else {
     document.getElementById('idealMuscleVal').textContent='—';
-    document.getElementById('idealMuscleRange').textContent='กรอกส่วนสูง+เพศก่อน';
+    document.getElementById('idealMuscleRange').textContent='กรอกส่วนสูง+เพศ';
   }
   if(g){
     document.getElementById('idealFatVal').textContent=g==='หญิง'?'18–28%':'10–20%';
-    document.getElementById('idealFatRange').textContent=g==='หญิง'?'ปกติ <35%':'ปกติ <25%';
+    document.getElementById('idealFatRange').textContent=g==='หญิง'?'ปกติ&lt;35%':'ปกติ&lt;25%';
   } else {
     document.getElementById('idealFatVal').textContent='—';
     document.getElementById('idealFatRange').textContent='กรอกเพศก่อน';
   }
 }
 
-async function saveRecord() {
-  if(!val('fullName')||!val('hn')){ alert('กรุณากรอกชื่อผู้ป่วยและรหัส HN'); return; }
-  if(!db){ alert('ยังไม่ได้เชื่อมต่อ Firebase กรุณารอสักครู่แล้วลองใหม่'); return; }
-  const rec = { savedAt: new Date().toISOString(), createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-  BASE_FIELDS.forEach(f => rec[f] = val(f));
-  rec.vaccines = {};
-  VACCINES.forEach(v => { rec.vaccines[v.id] = { status: val('vax_status_'+v.id), date: val('vax_date_'+v.id) }; });
-  try {
-    setDbStatus('saving');
-    await db.collection('visits').add(rec);
-    setDbStatus('saved');
-    showToast('✅ บันทึกลง Firebase เรียบร้อยแล้ว');
-    clearForm();
-    setTimeout(()=>setDbStatus('online'), 2000);
-  } catch(err) {
-    console.error(err);
-    alert('บันทึกไม่สำเร็จ: ' + err.message);
-    setDbStatus('offline');
+/* ── LDL GOAL (Thai DLP / ESC 2021 / ACC 2025) ── */
+function updateNonHdlDisplay(){
+  var custom=parseFloat(document.getElementById('nonHdlGoalCustom').value);
+  var disp=document.getElementById('nonHdlGoalDisplay');
+  var ldlDisp=document.getElementById('ldlGoalDisplay');
+  var tc=parseFloat(document.getElementById('tc').value)||0;
+  var hdl=parseFloat(document.getElementById('hdl').value)||0;
+  if(!isNaN(custom)&&custom>0){
+    if(disp)disp.textContent='< '+custom+' mg/dL';
+  } else {
+    // auto: LDL goal + 30
+    var ldlText=ldlDisp?ldlDisp.textContent:'';
+    var m=ldlText.match(/(\d+)/);
+    if(m)disp.textContent='< '+(parseInt(m[1])+30)+' mg/dL';
+    else if(disp)disp.textContent='—';
   }
+  var nonHdlCur=document.getElementById('nonHdlCurrent');
+  if(nonHdlCur)nonHdlCur.textContent=(tc>0&&hdl>0)?(tc-hdl)+' mg/dL':'—';
+}
+function toggleLdlEditPanel(){
+  var panel=document.getElementById('ldlEditPanel');
+  if(panel) panel.style.display=panel.style.display==='none'?'block':'none';
 }
 
-function renderList() {
-  const q=(document.getElementById('searchInput')?.value||'').toLowerCase();
-  const records=cachedRecords.filter(r=>
-    (r.fullName||'').toLowerCase().includes(q) ||
-    (r.hn||'').toLowerCase().includes(q) ||
-    (r.visitDate||'').includes(q)
-  );
-  const c=document.getElementById('patientListContainer');
-  if(!records.length){
-    c.innerHTML=`<div class="empty-state"><div class="big">${cachedRecords.length===0?'📂':'🔍'}</div>${cachedRecords.length===0?'ยังไม่มีข้อมูลผู้ป่วย':'ไม่พบข้อมูล'}</div>`;
+function genAutoSummary(){
+  var lines=[];
+  var sc=val('inbodyScore'), bmi=parseFloat(val('bmi')), w=val('weight'), pbf=val('pbf');
+  var fbs=val('fbs'),a1c=val('a1c'),ldl=val('ldl'),sbp=val('sbp'),dbp=val('dbp');
+  var lvef=parseFloat(val('lvef')||0);
+  var ldlGoalEl=document.getElementById('ldlGoalDisplay');
+  var ldlGoalTxt=ldlGoalEl?ldlGoalEl.textContent.replace('— กรอกข้อมูลด้านบนก่อน',''):null;
+  var age=extractAge(val('dob'))||50;
+  var g=val('gender')||'';
+
+  if(sc){var n=+sc; lines.push('⚖️ InBody Score: '+n+'/100 — '+(n>=70?'ดี ร่างกายแข็งแรง':n>=50?'พอใช้ ควรปรับพฤติกรรม':'ต่ำ ควรปรับปรุงเร่งด่วน'));}
+  if(bmi){lines.push('📏 BMI: '+bmi+' กก./ม.² — '+(bmi<18.5?'น้ำหนักน้อยเกิน':bmi<23?'ปกติ':bmi<27.5?'น้ำหนักเกิน':'อ้วน'));}
+  if(fbs||a1c){var ok=(+fbs<=125||!fbs)&&(+a1c<7.0||!a1c);lines.push('🩸 น้ำตาล: '+(fbs?'FBS '+fbs+' มก./ดล. ':'')+(a1c?'HbA1c '+a1c+'% ':'')+' — '+(ok?'อยู่ในเกณฑ์ดี':'ยังสูงกว่าเป้าหมาย ควรปรับยาและอาหาร'));}
+  if(ldl&&ldlGoalTxt){
+    var goalNum=parseInt((ldlGoalTxt||'130').replace(/[^0-9]/g,''))||130;
+    var ach=+ldl<goalNum;
+    lines.push('🫀 LDL: '+ldl+' มก./ดล. — เป้าหมาย '+ldlGoalTxt+' ('+(ach?'บรรลุ ✓':'ยังไม่บรรลุ ควรปรับยา/อาหาร')+')');
+  }
+  if(sbp){var bpOk=+sbp<140&&+dbp<90;lines.push('💉 ความดัน: '+sbp+'/'+(dbp||'—')+' มมปรอท — '+(bpOk?'อยู่ในเกณฑ์':'ยังสูง ควรวัดซ้ำและปรับยา'));}
+  if(lvef>0&&lvef<53)lines.push('🔊 LVEF '+lvef+'% — มี LV Dysfunction ต้องติดตาม Echo ซ้ำทุก '+(lvef<40?'3':'3–6')+' เดือน');
+
+  var txt=lines.join('\n');
+  setVal('customSummary', txt);
+  /* Visual feedback */
+  var btn=event.target;
+  var orig=btn.textContent;
+  btn.textContent='✅ สร้างแล้ว!';
+  btn.style.background='var(--ok)';
+  setTimeout(function(){btn.textContent=orig;btn.style.background='var(--teal)';},1500);
+}
+
+function toggleLdlInsufficient(){
+  var cb=document.getElementById('ldlInsufficient');
+  var disp=document.getElementById('ldlGoalDisplay');
+  var basis=document.getElementById('ldlGoalBasis');
+  if(cb&&cb.checked){
+    disp.textContent='ไม่สามารถประเมินได้ (ข้อมูลไม่เพียงพอ)';
+    if(basis)basis.textContent='กรุณาเพิ่มข้อมูล: ประวัติ ASCVD, เบาหวาน, ความดัน, และค่าไขมัน';
+  } else { updateLdlGoal(); }
+}
+function updateLdlGoal(){
+  var custom=val('ldlGoalCustom');
+  if(custom){
+    document.getElementById('ldlGoalDisplay').textContent='< '+custom+' mg/dL (แพทย์กำหนด)';
+    document.getElementById('ldlGoalBasis').textContent='';
     return;
   }
+  var ascvd=val('ascvdRisk');
+  var hasASCVD=val('hasASCVD')==='yes';
+  var hasFH=val('hasFH')==='yes';
+  var hasDM=val('hasDMRisk');
+  var ckd=val('ckdStage');
+  var note=(val('note')||'').toLowerCase();
+  var ldl=parseFloat(val('ldl'))||0;
+  var goal='',basis='';
+
+  /* Auto-determine if not manually selected */
+  var level=ascvd;
+  if(!level){
+    if(hasASCVD||(hasFH&&hasASCVD)||ckd==='ckd5'||(hasDM==='dm-organ'))level='very-high';
+    else if(hasFH||ckd==='ckd4'||ckd==='ckd3'||(hasDM==='dm-simple'))level='high';
+    else level='moderate';
+    /* Note-based override */
+    if(note.includes('ascvd')||note.includes('mi ')||note.includes('stroke')||note.includes('pad'))level='very-high';
+    if(note.includes('dm')&&!level)level='high';
+  }
+
+  if(level==='very-high')     {goal='< 55 mg/dL'; basis='Very High Risk (ESC 2021 / Thai DLP): ASCVD, DM+Organ Damage, HeFH+ASCVD, CKD G5';}
+  else if(level==='high')     {goal='< 70 mg/dL'; basis='High Risk: DM, HeFH, CKD G3-4, SCORE2 ≥10%';}
+  else if(level==='moderate') {goal='< 100 mg/dL';basis='Moderate Risk: SCORE2 5–9.9%';}
+  else                         {goal='< 130 mg/dL';basis='Low Risk: SCORE2 <5%';}
+
+  /* If on max statin and LDL still above goal — flag */
+  if(val('onStatin')==='max'&&ldl>0){
+    var goalNum=parseInt(goal.replace(/[^0-9]/g,''));
+    if(ldl>goalNum) basis+=' ⚠️ LDL ยังไม่ถึงเป้า — พิจารณาเพิ่ม Ezetimibe/PCSK9i';
+  }
+
+  document.getElementById('ldlGoalDisplay').textContent=goal;
+  document.getElementById('ldlGoalBasis').textContent=basis;
+  setTimeout(updateNonHdlDisplay,50);
+}
+
+/* ── SAVE ── */
+async function saveRecord(){
+  if(!val('fullName')||!val('hn')){alert('กรุณากรอกชื่อและรหัส');return;}
+  if(!db){alert('ยังไม่ได้เชื่อมต่อ Firebase');return;}
+  var rec={savedAt:new Date().toISOString()};
+  BASE_FIELDS.forEach(f=>rec[f]=val(f));
+  rec.ekgResult=getRadio('ekgResult');
+  rec.echoResult=getRadio('echoResult');
+  rec.valveCBs=getCBs();
+  rec.vaccines={}; VACCINES.forEach(v=>{rec.vaccines[v.id]={status:val('vax_status_'+v.id),date:val('vax_date_'+v.id)};});
+  /* Computed LDL goal */
+  var ldlDisp=document.getElementById('ldlGoalDisplay');
+  rec.ldlGoalFinal=ldlDisp?ldlDisp.textContent:'';
+  try{
+    setDbStatus('saving');
+    await db.collection('visits').add(rec);
+    setDbStatus('saved'); showToast('✅ บันทึกเรียบร้อย'); clearForm();
+    setTimeout(()=>setDbStatus('online'),2500);
+  }catch(e){alert('ผิดพลาด: '+e.message);setDbStatus('offline');}
+}
+
+/* ── LIST ── */
+function renderList(){
+  var q=(document.getElementById('searchInput')?.value||'').toLowerCase();
+  var recs=cachedRecords.filter(r=>(r.fullName||'').toLowerCase().includes(q)||(r.hn||'').toLowerCase().includes(q)||(r.visitDate||'').includes(q));
+  var c=document.getElementById('patientListContainer');
+  if(!recs.length){c.innerHTML='<div class="empty-state"><div class="big">🔍</div>ไม่พบข้อมูล</div>';return;}
   c.innerHTML=`<table class="pt-table">
-    <thead><tr><th>HN</th><th>ชื่อ-นามสกุล</th><th>วันที่</th><th>ส่วนสูง</th><th>น้ำหนัก</th><th>Score</th><th>FBS</th><th>HbA1c</th><th>แพทย์</th><th>การจัดการ</th></tr></thead>
-    <tbody>${records.map(r=>`<tr>
-      <td class="hn">${r.hn}</td>
-      <td><strong>${r.fullName}</strong><br><small style="color:var(--text2)">${r.note||''}</small></td>
+    <thead><tr><th>รหัส</th><th>ชื่อ</th><th>วันที่</th><th>น้ำหนัก</th><th>Score</th><th>FBS</th><th>HbA1c</th><th>แพทย์</th><th>จัดการ</th></tr></thead>
+    <tbody>${recs.map(r=>`<tr>
+      <td class="hn">${r.hn||'-'}</td>
+      <td><strong>${r.fullName||'-'}</strong><br><small style="color:var(--text2)">${r.note||''}</small></td>
       <td>${r.visitDate||'-'}</td>
-      <td style="font-family:monospace">${r.height?r.height+' cm':'-'}</td>
       <td style="font-family:monospace">${r.weight?r.weight+' kg':'-'}</td>
-      <td style="font-family:monospace;font-weight:700;color:${sc(r.inbodyScore)}">${r.inbodyScore||'-'}</td>
+      <td style="font-family:monospace;font-weight:700;color:${+r.inbodyScore>=70?'var(--ok)':+r.inbodyScore>=50?'var(--warn)':'var(--bad)'}">${r.inbodyScore||'-'}</td>
       <td style="font-family:monospace">${r.fbs||'-'}</td>
       <td style="font-family:monospace">${r.a1c||'-'}</td>
-      <td style="font-size:12px">${r.doctor?r.doctor.replace('พญ.','').split(' ')[0]:'-'}</td>
+      <td style="font-size:12px">${(r.doctor||'').replace('พญ.','').split(' ')[0]||'-'}</td>
       <td><div style="display:flex;gap:5px">
-        <button class="btn-sm edit" onclick="editRecord('${r._docId}')">แก้ไข</button>
-        <button class="btn-sm print" onclick="printReport('${r._docId}')">🖨 พิมพ์</button>
-        <button class="btn-sm del" onclick="deleteRecord('${r._docId}')">ลบ</button>
+        <button class="btn-sm edit" onclick="editRec('${r._docId}')">แก้ไข</button>
+        <button class="btn-sm print" onclick="printRec('${r._docId}')">🖨 พิมพ์</button>
+        <button class="btn-sm del" onclick="delRec('${r._docId}')">ลบ</button>
       </div></td>
     </tr>`).join('')}</tbody>
   </table>`;
 }
 
-function sc(s){if(!s)return'var(--text2)';return parseInt(s)>=70?'var(--ok)':parseInt(s)>=50?'var(--warn)':'var(--bad)';}
+function updateCount(){document.getElementById('recCount').textContent=cachedRecords.length+' ผู้ป่วย';}
 
-async function deleteRecord(docId){
-  if(!confirm('ต้องการลบข้อมูลนี้?'))return;
-  try {
-    await db.collection('visits').doc(docId).delete();
-    showToast('🗑 ลบข้อมูลแล้ว');
-  } catch(err){ alert('ลบไม่สำเร็จ: '+err.message); }
+async function delRec(id){
+  if(!confirm('ลบข้อมูลนี้?'))return;
+  try{await db.collection('visits').doc(id).delete();showToast('🗑 ลบแล้ว');}catch(e){alert(e.message);}
 }
 
-function editRecord(docId){
-  const rec=cachedRecords.find(r=>r._docId===docId);
-  if(!rec)return;
+function editRec(id){
+  var rec=cachedRecords.find(r=>r._docId===id); if(!rec)return;
   BASE_FIELDS.forEach(f=>setVal(f,rec[f]));
-  // restore doctor buttons
+  if(rec.dob)setDobFromText(rec.dob);
   selectedDoctor=rec.doctor||'';
   document.querySelectorAll('.doc-btn').forEach(btn=>{
-    btn.classList.toggle('selected', btn.textContent.includes(selectedDoctor.split(' ')[0]?.replace('พญ.','')||'__NONE__'));
+    btn.classList.toggle('selected',btn.textContent.includes(selectedDoctor.split(' ')[0]?.replace('พญ.','')||'__'));
   });
-  // restore vaccines
-  if(rec.vaccines) VACCINES.forEach(v=>{
-    setVal('vax_status_'+v.id, rec.vaccines[v.id]?.status||'');
-    setVal('vax_date_'+v.id,   rec.vaccines[v.id]?.date||'');
-  });
-  calcIdeal();
-  // Store docId to overwrite on save (optional: delete old then save new)
-  window._editingDocId = docId;
+  if(rec.ekgResult)setRadio('ekgResult',rec.ekgResult);
+  if(rec.echoResult)setRadio('echoResult',rec.echoResult);
+  if(rec.valveCBs)setCBs(rec.valveCBs);
+  if(rec.vaccines)VACCINES.forEach(v=>{setVal('vax_status_'+v.id,rec.vaccines[v.id]?.status||'');setVal('vax_date_'+v.id,rec.vaccines[v.id]?.date||'');});
+  calcIdeal(); updateLdlGoal();
   switchTab('entry',document.querySelectorAll('.tab-btn')[0]);
-  showToast('📝 โหลดข้อมูลเพื่อแก้ไข — กรุณาบันทึกอีกครั้ง','#1A5A8A');
+  showToast('📝 โหลดข้อมูลแล้ว กรุณาบันทึกอีกครั้ง','#1A5A8A');
 }
 
-function printReport(docId){
-  const rec=cachedRecords.find(r=>r._docId===docId);
-  if(!rec)return;
-  const history=cachedRecords
-    .filter(r=>r.hn===rec.hn)
-    .sort((a,b)=>(a.visitDate||'').localeCompare(b.visitDate||''))
-    .slice(-5);
+function printRec(id){
+  var rec=cachedRecords.find(r=>r._docId===id); if(!rec)return;
+  var hist=cachedRecords.filter(r=>r.hn===rec.hn).sort((a,b)=>(a.visitDate||'').localeCompare(b.visitDate||'')).slice(-5);
   localStorage.setItem('cardio_print_rec',JSON.stringify(rec));
-  localStorage.setItem('cardio_print_history',JSON.stringify(history));
+  localStorage.setItem('cardio_print_history',JSON.stringify(hist));
   window.open('clinic_report.html','_blank');
 }
 
-function updateCount(){
-  document.getElementById('recCount').textContent=cachedRecords.length+' ผู้ป่วย';
-}
+/* ── GENERATE ADVICE ── */
+function generateAdvice(){
+  var bmi=parseFloat(val('bmi'))||0, vfl=parseFloat(val('vfl'))||0;
+  var w=parseFloat(val('weight'))||60, h=parseFloat(val('height'))||160;
+  var hm=h/100, ibw=+(22*hm*hm).toFixed(1);
+  var note=(val('note')||'').toLowerCase();
+  var hasDM=note.includes('dm')||parseFloat(val('a1c'))>=6.5;
+  var hasHT=note.includes('ht')||parseFloat(val('sbp'))>=140;
+  var hasCKD=note.includes('ckd')||parseFloat(val('cr'))>1.3;
+  var age=extractAge(val('dob'))||50;
+  var g=val('gender')||'';
+  var bmr=parseFloat(val('bmr'))||0;
+  var tdee=bmr?Math.round(bmr*1.3):Math.round(w*25);
 
-// ══ AI ADVICE GENERATOR (rule-based, no internet needed) ══
-function generateAdvice() {
-  const bmi=parseFloat(val('bmi'));
-  const pbf=parseFloat(val('pbf'));
-  const vfl=parseFloat(val('vfl'));
-  const fbs=parseFloat(val('fbs'));
-  const a1c=parseFloat(val('a1c'));
-  const ldl=parseFloat(val('ldl'));
-  const ast=parseFloat(val('ast'));
-  const alt=parseFloat(val('alt'));
-  const inbodyScore=parseInt(val('inbodyScore'));
-  const gender=val('gender');
-  const note=val('note').toLowerCase();
-  const hasDM=note.includes('dm')||a1c>=6.5||fbs>=126;
-  const hasHT=note.includes('ht');
-  const hasDyslip=note.includes('dyslip')||ldl>=160;
-  const hasLiver=ast>80||alt>80;
+  /* ── PROTEIN target ── */
+  var pMin,pMax,pWt,pBasis;
+  if(hasCKD&&parseFloat(val('cr'))>1.5){pMin=0.6;pMax=0.8;pWt=w;pBasis='โรคไต CKD (KDIGO)';}
+  else if(age>=65&&bmi>=25){pMin=1.2;pMax=1.5;pWt=w;pBasis='ผู้สูงอายุ ≥65 ปี (ESPEN)';}
+  else if(bmi>=27.5){pMin=1.2;pMax=1.5;pWt=ibw;pBasis='ภาวะอ้วน BMI ≥27.5 (ESPEN Obesity) — ใช้ IBW='+ibw+' กก.';}
+  else{pMin=0.8;pMax=1.2;pWt=w;pBasis='ทั่วไป (WHO/DRI)';}
+  var pGrMin=Math.round(pMin*pWt), pGrMax=Math.round(pMax*pWt);
+  var meals=Math.ceil(pGrMin/30);
 
-  // ── DIET ──
-  const diet=[];
-  // Calories / weight
-  if(bmi>=27.5) diet.push('ควบคุมพลังงานรวมต่อวัน โดยลดแคลอรีประมาณ 500 kcal/วัน เพื่อลดน้ำหนัก 0.5 kg/สัปดาห์');
-  else if(bmi>=23) diet.push('ควบคุมปริมาณอาหารให้เหมาะสม หลีกเลี่ยงอาหารที่มีพลังงานสูง');
-  else diet.push('รักษาน้ำหนักในระดับที่ดีอยู่แล้ว รับประทานอาหารสมดุลทุกหมู่ 3 มื้อต่อวัน');
-  // Carb / sugar
-  if(hasDM||fbs>99||a1c>=5.7) diet.push('ลดอาหารแป้งขัดสีและน้ำตาล เช่น ข้าวขาว ขนมปังขาว ของหวาน น้ำอัดลม เลือกคาร์โบไฮเดรตเชิงซ้อน เช่น ข้าวกล้อง ธัญพืชไม่ขัดสี');
-  // Fat / LDL
-  if(hasDyslip||ldl>=130) diet.push('ลดอาหารไขมันอิ่มตัวและไขมันทรานส์ เช่น เนื้อสัตว์ติดมัน กะทิ ของทอด เพิ่มไขมันดี เช่น ปลาทะเล อโวคาโด ถั่วไม่อบเกลือ');
-  // Visceral fat
-  if(vfl>10) diet.push('เน้นลดไขมันช่องท้อง โดยหลีกเลี่ยงแอลกอฮอล์ อาหารแปรรูป อาหารโซเดียมสูง และของว่างยามดึก');
-  // Liver
-  if(hasLiver) diet.push('หลีกเลี่ยงแอลกอฮอล์ทุกชนิด งดอาหารไขมันสูงและอาหารสำเร็จรูป เพื่อลดภาระตับ');
-  // Protein
-  if(gender==='ชาย'&&inbodyScore&&inbodyScore<70) diet.push('เพิ่มโปรตีนคุณภาพสูง เช่น ปลา ไข่ขาว เต้าหู้ อกไก่ไม่ติดหนัง เพื่อเสริมสร้างมวลกล้ามเนื้อ ≥ 1.2 g/kg/วัน');
-  else if(gender==='หญิง') diet.push('เพิ่มโปรตีนจากปลา ไข่ ถั่วเมล็ดแห้ง เพื่อเสริมกล้ามเนื้อ ≥ 1.0–1.2 g/kg/วัน');
-  // General
-  diet.push('รับประทานผักและผลไม้ที่มีน้ำตาลต่ำ ≥ 5 ทัพพี/วัน ดื่มน้ำเปล่า 6–8 แก้ว/วัน หลีกเลี่ยงเครื่องดื่มรสหวาน');
+  var diet=[];
+  /* Protein section */
+  diet.push('🥩 โปรตีน: '+pGrMin+'–'+pGrMax+' กรัม/วัน (อิง '+pBasis+')');
+  diet.push('   แหล่งโปรตีนแนะนำ: ปลา อกไก่ ไข่ขาว เต้าหู้ ถั่วเหลือง กุ้ง');
+  diet.push('   กระจาย '+meals+' มื้อ มื้อละ 25–35 กรัม เพื่อสังเคราะห์กล้ามเนื้อดีที่สุด');
+  /* Calorie */
+  diet.push('🔥 พลังงานที่ต้องการ: ~'+tdee+' แคลอรี/วัน'+(bmi>=27.5?' (เป้าลดน้ำหนัก: '+(tdee-Math.round(tdee*0.15))+' แคลอรี/วัน)':''));
+  /* Carb */
+  if(hasDM){diet.push('🌾 คาร์บ: จำกัด ≤130 กรัม/วัน เลือกข้าวกล้อง ข้าวโอ๊ต ถั่ว ผัก');}
+  else{diet.push('🌾 คาร์บ: ลดแป้งขัดสีและน้ำตาล เพิ่มธัญพืชไม่ขัดสีและผัก');}
+  /* Fat */
+  diet.push('🫒 ไขมัน: เน้นน้ำมันมะกอก ปลาทะเล ถั่ว หลีกเลี่ยงของทอด กะทิ ไขมันทรานส์');
+  /* Sodium */
+  if(hasHT||hasCKD)diet.push('🧂 โซเดียม: < 2,000 มก./วัน (< 1 ช้อนชาเกลือ/วัน) หลีกเลี่ยงอาหารแปรรูป');
+  diet.push('💧 น้ำดื่ม: 6–8 แก้ว/วัน หลีกเลี่ยงเครื่องดื่มรสหวาน น้ำอัดลม ชานม');
 
-  // ── EXERCISE ──
-  const ex=[];
-  // Cardio base
-  if(bmi>=27.5||vfl>10) ex.push('ออกกำลังกายแบบแอโรบิกความหนักปานกลาง เช่น เดินเร็ว ว่ายน้ำ ปั่นจักรยาน ≥ 150–300 นาที/สัปดาห์ (5 วัน วันละ 30–60 นาที)');
-  else ex.push('รักษาการออกกำลังกายแบบแอโรบิก ≥ 150 นาที/สัปดาห์ เช่น เดินเร็ว วิ่งเบา ว่ายน้ำ');
-  // Strength
-  if(inbodyScore&&inbodyScore<70) ex.push('เพิ่มการออกกำลังกายสร้างกล้ามเนื้อ (Resistance Training) 2–3 ครั้ง/สัปดาห์ เช่น ยกน้ำหนัก ยางยืด บอดี้เวท เพื่อเพิ่มมวลกล้ามเนื้อและอัตราเผาผลาญ');
-  // HT
-  if(hasHT) ex.push('หลีกเลี่ยงการออกกำลังกายหนักมากหรือที่ต้องกลั้นหายใจ เช่น ยกน้ำหนักสูงสุด ควรอยู่ในระดับ Moderate Intensity (พูดได้แต่ไม่สบาย)');
-  // DM
-  if(hasDM) ex.push('ตรวจวัดระดับน้ำตาลก่อน-หลังออกกำลังกาย พกลูกอมหรือน้ำหวานติดตัว หากน้ำตาลต่ำกว่า 100 mg/dL ก่อนออกกำลังกาย ควรรับประทานอาหารก่อน');
-  // Sedentary
-  ex.push('ลดพฤติกรรมเนือยนิ่ง ไม่นั่งต่อเนื่องเกิน 60 นาที ลุกขึ้นเดินหรือยืดเส้นยืดสายทุกชั่วโมง');
+  var ex=[];
+  if(bmi>=27.5||vfl>10){
+    ex.push('🚶 เดินเร็ว 45–60 นาที ≥5 วัน/สัปดาห์ (~'+Math.round(w*.065*50)+' แคลอรี/ครั้ง)');
+    ex.push('🚴 ว่ายน้ำหรือปั่นจักรยาน 30 นาที/ครั้ง (~'+Math.round(w*.08*30)+' แคลอรี/ครั้ง)');
+  } else {
+    ex.push('🚶 เดินเร็วหรือวิ่งเบา 30 นาที 5 วัน/สัปดาห์ (~'+Math.round(w*.06*30)+' แคลอรี/ครั้ง)');
+  }
+  ex.push('💪 เสริมสร้างกล้ามเนื้อ 2–3 ครั้ง/สัปดาห์ (สควอท พุชอัพ แพลงก์ ยางยืด)');
+  ex.push('   → เผาผลาญ ~'+Math.round(w*.05*40)+' แคลอรี/ครั้ง (40 นาที)');
+  if(hasDM)ex.push('🩺 ผู้ป่วยเบาหวาน: ตรวจน้ำตาลก่อนและหลังออกกำลังกาย');
+  if(bmr>0){var def=Math.round(tdee*0.15);ex.push('🔥 TDEE ประมาณ '+tdee+' แคลอรี/วัน'+(bmi>=27.5?' เป้าลดน้ำหนัก ลด '+def+' แคลอรี/วัน':''));}
+  ex.push('⏱ หลีกเลี่ยงการนั่งนิ่งนานเกิน 60 นาที ลุกขึ้นเดินทุกชั่วโมง');
 
-  // ── SMOKING CESSATION ──
-  const smoke = [];
+  var smoke=[];
   if(val('smoker')==='yes'){
-    smoke.push('🚭 หยุดสูบบุหรี่ — การสูบบุหรี่เพิ่มความเสี่ยงโรคหัวใจและหลอดเลือดถึง 2–4 เท่า และเพิ่มความเสี่ยงมะเร็งปอด 15–30 เท่า');
-    smoke.push('การหยุดสูบบุหรี่ภายใน 1 ปี ลดความเสี่ยงโรคหัวใจได้ถึง 50% และภายใน 15 ปี ความเสี่ยงใกล้เคียงกับผู้ที่ไม่เคยสูบ');
-    smoke.push('ปรึกษาแพทย์เรื่องยาช่วยเลิกบุหรี่ (Varenicline, NRT) หรือโปรแกรมเลิกบุหรี่ที่คลินิก เพิ่มโอกาสสำเร็จ 2–3 เท่า');
+    smoke.push('การสูบบุหรี่เพิ่มความเสี่ยงโรคหัวใจ 2–4 เท่า และมะเร็งปอด 15–30 เท่า');
+    smoke.push('หยุดสูบภายใน 1 ปี ลดความเสี่ยงโรคหัวใจได้ถึง 50%');
+    smoke.push('กรุณาปรึกษาแพทย์เพื่อขอความช่วยเหลือในการเลิกบุหรี่');
   }
+  var vax=[];
+  vax.push('• ไข้หวัดใหญ่: แนะนำทุกปี ลดโอกาสนอน รพ. 40%');
+  if(age>=65)vax.push('• ปอดอักเสบ PCV20: แนะนำสำหรับอายุ ≥65 ปี หรือมีโรคเรื้อรัง');
+  if(age>=60)vax.push('• RSV: แนะนำสำหรับอายุ ≥60 ปี หรือมีโรคหัวใจ/ปอด');
+  if(age>=50)vax.push('• งูสวัด (Shingrix): แนะนำอายุ ≥50 ปี ฉีด 2 เข็ม ประสิทธิภาพ 90%');
+  if(g==='หญิง'&&age<=45)vax.push('• HPV: แนะนำในหญิงอายุ 9–45 ปี');
 
-  // ── VACCINE RECOMMENDATIONS ──
-  const age = extractAgeFromDob(val('dob'));
-  const hasDM2 = val('note').toLowerCase().includes('dm') || parseFloat(val('a1c'))>=6.5 || parseFloat(val('fbs'))>=126;
-  const hasHT2 = val('note').toLowerCase().includes('ht') || parseFloat(val('sbp'))>=140;
-  const gender2 = val('gender');
-  const vax = [];
-
-  vax.push('💉 คำแนะนำวัคซีนสำหรับผู้ป่วยรายนี้:');
-  vax.push('• ไข้หวัดใหญ่ (Influenza) — ฉีดทุกปี ลดโอกาสนอนโรงพยาบาลได้ 40% และลดโอกาสเกิดภาวะหัวใจวายเฉียบพลัน 30–40% ในผู้ป่วยโรคหัวใจ');
-  vax.push('• COVID-19 Booster — ฉีดกระตุ้นทุก 6–12 เดือน ลดความรุนแรงของโรคและการนอนโรงพยาบาลได้ 70–90%');
-
-  if(hasDM2||hasHT2||age>=65){
-    vax.push('• ปอดอักเสบ (Pneumococcal) — แนะนำเป็นพิเศษในผู้ป่วย DM, HT หรืออายุ ≥65 ปี ลดโอกาสปอดบวมรุนแรงและการเสียชีวิตได้ 45–75%');
-  }
-  if(age>=50){
-    vax.push('• งูสวัด (Shingrix) — แนะนำในผู้มีอายุ ≥50 ปี ประสิทธิภาพ 90% ป้องกัน Postherpetic Neuralgia ซึ่งเป็นอาการปวดเรื้อรังที่รักษายาก');
-  }
-  if(age>=60||hasDM2){
-    vax.push('• RSV — แนะนำในผู้มีอายุ ≥60 ปี หรือมีโรคหัวใจ/ปอด ลดการนอนโรงพยาบาลจาก RSV ได้ 83%');
-  }
-  vax.push('• บาดทะยัก (Td/Tdap) — ฉีดกระตุ้นทุก 10 ปี');
-
-  // Fill preview
-  document.getElementById('previewDiet').textContent=diet.map((d,i)=>`${i+1}. ${d}`).join('\n');
-  document.getElementById('previewExercise').textContent=ex.map((e,i)=>`${i+1}. ${e}`).join('\n');
-  const smokeTxt = smoke.length ? smoke.join('\n') : '';
-  const previewSmoke = document.getElementById('previewSmoke');
-  const smokeSection = document.getElementById('smokeSec');
-  if(previewSmoke) previewSmoke.textContent = smokeTxt;
-  if(smokeSection) smokeSection.style.display = smoke.length?'block':'none';
+  document.getElementById('previewDiet').textContent=diet.join('\n');
+  document.getElementById('previewExercise').textContent=ex.join('\n');
+  var sm=document.getElementById('previewSmoke');
+  var smsec=document.getElementById('smokeSec');
+  if(sm)sm.textContent=smoke.join('\n');
+  if(smsec)smsec.style.display=smoke.length?'block':'none';
   document.getElementById('previewVax').textContent=vax.join('\n');
   document.getElementById('advicePreview').classList.add('show');
-  document.getElementById('genAdviceBtn').textContent='🔄 สร้างใหม่';
 }
 
-function extractAgeFromDob(dobStr){
-  if(!dobStr)return 0;
-  const m=dobStr.match(/(\d+)\s*ปี/);if(m)return parseInt(m[1]);
-  const m2=dobStr.match(/\d{4}/);if(m2){const y=parseInt(m2[0]);const birth=y>2400?y-543:y;return new Date().getFullYear()-birth;}
-  return 0;
+function extractAge(s){
+  if(!s)return null;
+  var m=s.match(/(\d+)\s*ปี/);if(m)return+m[1];
+  var m2=s.match(/\d{4}/);if(m2){var y=+m2[0];return new Date().getFullYear()-(y>2400?y-543:y);}
+  return null;
 }
 
-function useAdvice(type) {
-  const diet=document.getElementById('previewDiet').textContent;
-  const ex=document.getElementById('previewExercise').textContent;
-  if(type==='both'||type==='diet') setVal('dietAdvice',diet);
-  if(type==='both'||type==='exercise') setVal('exerciseAdvice',ex);
-  if(type==='both') setVal('vaxAdvice', document.getElementById('previewVax')?.textContent||'');
+function useAdvice(type){
+  setVal('dietAdvice',document.getElementById('previewDiet').textContent);
+  setVal('exerciseAdvice',document.getElementById('previewExercise').textContent);
+  setVal('vaxAdvice',document.getElementById('previewVax').textContent);
   document.getElementById('advicePreview').classList.remove('show');
-  showToast('✅ นำคำแนะนำไปใส่ในช่องแล้ว — แพทย์สามารถปรับแก้ได้');
+  showToast('✅ นำคำแนะนำไปใส่แล้ว');
+}
+
+/* ── EXPORT / IMPORT ── */
+function exportJSON(){
+  var blob=new Blob([JSON.stringify({exported:new Date().toISOString(),records:cachedRecords},null,2)],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='cardio_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+async function importJSON(ev){
+  var f=ev.target.files[0]; if(!f)return;
+  var reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      var data=JSON.parse(e.target.result);
+      var incoming=data.records||[];
+      var existHN=new Set(cachedRecords.map(r=>r.hn+'_'+r.visitDate));
+      var added=0;
+      for(var rec of incoming){
+        if(!existHN.has(rec.hn+'_'+rec.visitDate)){
+          var {_docId,...clean}=rec;
+          await db.collection('visits').add(clean); added++;
+        }
+      }
+      showToast('✅ Import แล้ว '+added+' รายการ');
+    }catch(er){alert('ผิดพลาด: '+er.message);}
+  };
+  reader.readAsText(f); ev.target.value='';
 }
 
 function showToast(msg,bg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.style.background=bg||'';
-  t.classList.add('show');
-  setTimeout(()=>{t.classList.remove('show');t.style.background='';},3000);
+  var t=document.getElementById('toast'); t.textContent=msg; t.style.background=bg||'';
+  t.classList.add('show'); setTimeout(()=>{t.classList.remove('show');t.style.background='';},3000);
 }
 
-// ══ EXPORT / IMPORT JSON (backup) ══
-function exportJSON() {
-  const records=cachedRecords;
-  const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),count:records.length,records},null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`cardio_data_${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  showToast('⬇ Export สำเร็จ');
-}
-
-async function importJSON(event) {
-  const file=event.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    try {
-      const data=JSON.parse(e.target.result);
-      const incoming=data.records||[];
-      if(!incoming.length){alert('ไม่พบข้อมูลในไฟล์');return;}
-      const existingHNDates=new Set(cachedRecords.map(r=>r.hn+'_'+r.visitDate));
-      let added=0;
-      for(const rec of incoming){
-        const key=(rec.hn||'')+'_'+(rec.visitDate||'');
-        if(!existingHNDates.has(key)){
-          const {_docId, id, createdAt, ...clean}=rec;
-          clean.savedAt=clean.savedAt||new Date().toISOString();
-          clean.importedAt=new Date().toISOString();
-          await db.collection('visits').add(clean);
-          added++;
-        }
-      }
-      showToast(`✅ Import สำเร็จ — เพิ่ม ${added} รายการลง Firebase`);
-    } catch(err){alert('ไฟล์ไม่ถูกต้อง: '+err.message);}
-  };
-  reader.readAsText(file);
-  event.target.value='';
-}
-
-function showServerHelp(){
-  alert(
-    `ตอนนี้ใช้ Firebase Firestore แล้ว!\n\n` +
-    `✅ ข้อมูล sync อัตโนมัติทุกเครื่องที่เปิดหน้านี้\n` +
-    `✅ ไม่ต้อง Export/Import ระหว่างเครื่องอีกแล้ว\n` +
-    `✅ เปิดจากเครื่องไหนก็เห็นข้อมูลเดียวกัน real-time\n\n` +
-    `วิธีใช้งาน:\n` +
-    `• Host ไฟล์บน GitHub Pages\n` +
-    `• เปิด URL เดียวกันบนทั้งสองเครื่อง\n` +
-    `• ข้อมูลที่กรอกจะปรากฏทันทีบนเครื่องอื่น\n\n` +
-    `Export JSON ยังใช้ได้เพื่อสำรองข้อมูลเท่านั้น`
-  );
-}
-
-// ══ START ══
+/* ── INIT ── */
+renderVaxGrid();
+renderValveGrids();
 initFirebase();
+calcIdeal();
+updateLdlGoal();
 </script>
 </body>
 </html>
