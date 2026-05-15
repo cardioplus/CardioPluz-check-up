@@ -368,27 +368,65 @@ canvas{display:block;width:100%!important;}
   /* ── Advice ── */
   .ac .ab{font-size:11px!important;line-height:1.5!important;}
 
-  /* ── Page break: only major sections ── */
-  .lw{page-break-inside:avoid!important;}
-  .ekg-card{page-break-inside:avoid!important;}
-  .fu-grid{page-break-inside:avoid!important;}
-  .vg{page-break-inside:avoid!important;}
-  /* Allow sections to break freely */
-  .sec,.cc,.cv-card,.ibsec{page-break-inside:auto!important;}
-  /* Echo anatomy image - hide in print, show text only */
+  /* ── PAGE BREAK: avoid splitting these elements ── */
+
+  /* Lab table: each row stays together, table as a whole avoids break */
+  .lw,table,thead,tbody{page-break-inside:avoid!important;}
+  tr{page-break-inside:avoid!important;page-break-after:auto!important;}
+
+  /* Section header (sh) must stay with its first content */
+  .sh{page-break-after:avoid!important;}
+  
+  /* Each major card/section: avoid break inside */
+  .cc,.ekg-card,.cv-card,.ldl-goal-card,.bpc,.sw,.rcard,
+  .ibsec,.ibg,.score-wrap,
+  .fu-grid,.fu-item,
+  .vg,.vi,.vg-section,
+  .ac,.ab,
+  .ideal-row,.ideal-item,
+  .nxt,
+  .ldl-goal-grid,
+  .cv-goals,.cv-goal,
+  .cv-main,.cv-factors,
+  .valve-grid,.valve-row,
+  .bptgts,
+  .ekg-body{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+  }
+
+  /* Sections (.sec) can break but not inside their header */
+  .sec{page-break-inside:auto!important;break-inside:auto!important;}
+
+  /* Force page break BEFORE major sections if needed */
+  .sec+.sec{page-break-before:auto!important;}
+
+  /* Compact extras */
   .heart-anatomy-print-hide{display:none!important;}
-  /* Compact score wrap InBody */
   .sw{margin-bottom:6px!important;}
-  /* Remove chart canvases */
   canvas{max-height:120px!important;}
-  /* Compact section headers */
-  .sdiv+.sec .sh,.sec:first-child .sh{margin-top:0!important;}
-  /* LDL goal card compact */
   .ldl-goal-card{padding:6px 8px!important;}
   .lgd-val{font-size:20px!important;}
-  /* Heart anatomy diagram: show compact version */
   img[id="heartImgNew"],#heartImgDataNew{display:none!important;}
-  [style*="heartImgNew"]{display:none!important;}
+
+  /* Keep section header attached to first child content */
+  .sec > .sh + div,
+  .sec > .sh + table,
+  .sec > .sh + .lw,
+  .sec > .sh + .cc,
+  .sec > .sh + .ekg-card,
+  .sec > .sh + .cv-card{
+    page-break-before:avoid!important;
+    break-before:avoid!important;
+  }
+  /* Lab table header row never splits from data */
+  .lt thead tr{page-break-after:avoid!important;break-after:avoid!important;}
+  /* Patient header strip never splits */
+  .hdr{page-break-inside:avoid!important;break-inside:avoid!important;}
+  /* InBody score wrap never splits */
+  .ibsec .sw{page-break-inside:avoid!important;}
+  /* Trend chart row */
+  .cc{page-break-inside:avoid!important;break-inside:avoid!important;}
 }
 @media screen and (max-width:700px){
   .ps{grid-template-columns:1fr 1fr;}
