@@ -41,7 +41,7 @@ body{font-family:'Sarabun',sans-serif;background:#D5D0C8;color:var(--text);paddi
 .cn{font-size:19px;font-weight:700;letter-spacing:.4px;}
 .cs{font-size:11px;opacity:.78;margin-top:2px;}
 .hdr-meta{text-align:right;font-size:11px;opacity:.8;line-height:1.8;font-family:'IBM Plex Mono',monospace;}
-.ps{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);border-radius:10px;padding:12px 17px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;overflow:hidden;}
+.ps{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);border-radius:10px;padding:10px 16px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;overflow:hidden;}
 .ps-l{font-size:9px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;opacity:.65;margin-bottom:2px;}
 .ps-v{font-size:13px;font-weight:600;}
 .mono{font-family:'IBM Plex Mono',monospace;}
@@ -271,24 +271,124 @@ canvas{display:block;width:100%!important;}
 .ss{font-size:11px;color:var(--text2);margin-top:1px;}
 
 @media print{
-  body{background:white!important;padding:0;font-size:12px;}
+  /* ── Page setup ── */
+  @page{margin:6mm 8mm;size:A4 portrait;}
+  body{background:white!important;padding:0;font-size:11px;line-height:1.4;}
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-  .pc{display:none!important;}
+
+  /* ── Hide screen-only elements ── */
+  .pc,.sdiv{display:none!important;}
+  /* Hide heart anatomy diagram and flow chart (saves ~2 pages) */
+  #heartImgDataNew,#heartImgData_old{display:none!important;}
+  /* Hide large decorative SVG gauge (CV risk gauge) */
+  .cv-gauge-side svg{max-height:120px!important;}
+
+  /* ── Report wrapper ── */
   .report{box-shadow:none;max-width:100%;border-radius:0;}
-  .body{padding:8px 16px;background:white!important;}
-  .hdr{padding:12px 22px 10px;background:linear-gradient(135deg,#147A6E,#1A9B8C)!important;}
-  .foot{padding:9px 22px;}
-  /* White background for all cards */
-  .ibsec,.lw,.bpc,.ldl-goal-card,.ekg-card,.cc,.cidb,.bbr,.bt-wrap,
-  .cv-card,.fu-item,.vi,.rcard,.nxt,.ac .ab,.sw{background:white!important;border-color:#CCC!important;}
-  .body,.sdiv ~ .sec{background:white!important;}
-  .ib,.cv-goal,.cv-fac,.fu-item,.ldl-gi,.bpti{background:#F5F5F5!important;}
-  .cream2,.cream{background:white!important;}
-  /* Page break control */
-  .cc,.cv-card,.lw,.ibsec,.cidb,.ekg-card,.sec,.ac,.ldl-goal-card,.bpc,
-  .fu-grid,.vg,.nxt,.rcard,.ideal-row,.score-wrap{page-break-inside:avoid!important;}
-  .sdiv{page-break-before:avoid!important;margin:10px 0!important;}
-  @page{margin:8mm 8mm;size:A4 portrait;}
+  .body{padding:4px 10px;background:white!important;}
+  .hdr{padding:8px 14px 6px;background:linear-gradient(135deg,#147A6E,#1A9B8C)!important;}
+  .foot{padding:5px 14px;font-size:10px;}
+
+  /* ── Section spacing ── */
+  .sec{margin-bottom:6px!important;}
+  .sh{margin-bottom:4px!important;padding-bottom:3px!important;}
+  .sh h2{font-size:13px!important;}
+  .sh p{display:none!important;}
+  .si{width:26px!important;height:26px!important;font-size:12px!important;}
+
+  /* ── Cards: no background, minimal border ── */
+  .cc,.ekg-card,.cv-card,.ldl-goal-card,.bpc,.rcard,.ac,.sw,.ibsec{
+    background:white!important;border:1px solid #DDD!important;
+    border-radius:4px!important;padding:6px 8px!important;margin-bottom:4px!important;}
+  .lw{background:white!important;border:1px solid #DDD!important;border-radius:4px!important;margin-bottom:4px!important;}
+  .fu-item,.vi{background:white!important;border:1px solid #DDD!important;border-radius:4px!important;padding:5px 7px!important;}
+  .nxt{background:white!important;border:1px solid #DDD!important;border-radius:4px!important;padding:5px 8px!important;}
+  .ib,.cv-goal,.cv-fac,.ldl-gi,.bpti{background:#F5F5F5!important;padding:4px 6px!important;}
+  .cream2,.cream,.body{background:white!important;}
+  .ab{padding:6px 8px!important;font-size:12px!important;line-height:1.6!important;}
+
+  /* ── InBody gauges: compact ── */
+  .ibg{margin-bottom:6px!important;}
+  .ibg-r{margin-bottom:2px!important;}
+  .ibg-tk{height:8px!important;margin-bottom:2px!important;}
+  .ibg-v{font-size:16px!important;}
+  .ibg-n{font-size:11px!important;}
+  .ibg-lb{font-size:9px!important;}
+  /* InBody 3-col layout */
+  .ibsec .cols3,.ibsec .cols4{grid-template-columns:repeat(3,1fr)!important;gap:6px!important;}
+
+  /* ── Lab table compact ── */
+  .lt td{padding:4px 8px!important;font-size:11px!important;}
+  .lt th{padding:3px 8px!important;font-size:9px!important;}
+  .lv{font-size:14px!important;}
+  .chip{font-size:9px!important;padding:1px 5px!important;}
+  .ln{font-size:11px!important;}
+  .lf{font-size:9px!important;}
+
+  /* ── CV Risk ── */
+  .cv-main{flex-direction:row!important;}
+  .cv-gauge-side{padding:4px!important;max-width:180px!important;}
+  .cv-risk-side{padding:8px 10px!important;}
+  .cv-goals{grid-template-columns:repeat(4,1fr)!important;gap:4px!important;padding:6px!important;}
+  .cv-goal{padding:5px 6px!important;}
+  .cv-factors{grid-template-columns:repeat(3,1fr)!important;gap:4px!important;}
+  .cv-fac{padding:4px 6px!important;}
+
+  /* ── Follow-up: 3 cols ── */
+  .fu-grid{grid-template-columns:repeat(3,1fr)!important;gap:6px!important;margin-bottom:6px!important;}
+  .fu-icon{font-size:20px!important;}
+  .fu-val{font-size:14px!important;}
+
+  /* ── Vaccines: 3 cols ── */
+  .vg{grid-template-columns:repeat(3,1fr)!important;gap:4px!important;}
+  .vi{padding:5px 7px!important;}
+  .vi-name{font-size:11px!important;}
+  .vi-sub,.vi-date{font-size:9px!important;}
+
+  /* ── EKG/Echo ── */
+  .ekg-body{padding:6px 8px!important;}
+  .ekg-header{padding:6px 10px!important;font-size:11px!important;}
+  .ekg-result{font-size:11px!important;padding:3px 8px!important;}
+  .ekg-comment{font-size:11px!important;margin-top:4px!important;}
+  /* Hide heart anatomy large image in print */
+  img[id="heartImgNew"]{display:none!important;}
+  /* Show compact text summary instead */
+  
+  /* ── Patient strip ── */
+  .ps{padding:6px 10px!important;gap:6px!important;}
+  .ps-l{font-size:12px!important;}
+  .ps-v{font-size:13px!important;}
+
+  /* ── Score wrap ── */
+  .sw{padding:8px 10px!important;gap:10px!important;}
+
+  /* ── Ideal row ── */
+  .ideal-row{grid-template-columns:repeat(3,1fr)!important;gap:6px!important;margin-top:4px!important;}
+
+  /* ── Advice ── */
+  .ac .ab{font-size:11px!important;line-height:1.5!important;}
+
+  /* ── Page break: only major sections ── */
+  .lw{page-break-inside:avoid!important;}
+  .ekg-card{page-break-inside:avoid!important;}
+  .fu-grid{page-break-inside:avoid!important;}
+  .vg{page-break-inside:avoid!important;}
+  /* Allow sections to break freely */
+  .sec,.cc,.cv-card,.ibsec{page-break-inside:auto!important;}
+  /* Echo anatomy image - hide in print, show text only */
+  .heart-anatomy-print-hide{display:none!important;}
+  /* Compact score wrap InBody */
+  .sw{margin-bottom:6px!important;}
+  /* Remove chart canvases */
+  canvas{max-height:120px!important;}
+  /* Compact section headers */
+  .sdiv+.sec .sh,.sec:first-child .sh{margin-top:0!important;}
+  /* LDL goal card compact */
+  .ldl-goal-card{padding:6px 8px!important;}
+  .lgd-val{font-size:20px!important;}
+  /* Heart anatomy diagram: show compact version */
+  img[id="heartImgNew"],#heartImgDataNew{display:none!important;}
+  [style*="heartImgNew"]{display:none!important;}
 }
 @media screen and (max-width:700px){
   .ps{grid-template-columns:1fr 1fr;}
@@ -1496,7 +1596,7 @@ function render(){
   }
   O+=echoSummaryHTML;
   /* ── Heart anatomy diagram ── */
-  O+='<div style="padding:0 0 0 0;">'+heartAnatomySVG()+'</div>';
+  O+='<div class="heart-anatomy-print-hide" style="padding:0 0 0 0;">'+heartAnatomySVG()+'</div>';
   O+='</div></div>';
 
   /* ── INBODY NA note ── */
