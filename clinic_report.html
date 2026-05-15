@@ -49,6 +49,7 @@ body{font-family:'Sarabun',sans-serif;background:#D5D0C8;color:var(--text);paddi
 /* BODY */
 .body{padding:18px 30px;background:var(--cream);}
 .sec{margin-bottom:16px;}
+.sec-hg{display:block;}
 .sh{display:flex;align-items:center;gap:9px;margin-bottom:12px;padding-bottom:7px;border-bottom:2px solid var(--teal-lt);}
 .si{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 .si-t{background:var(--teal);color:white;} .si-b{background:var(--acc);color:white;}
@@ -378,7 +379,17 @@ canvas{display:block;width:100%!important;}
   tr{page-break-inside:avoid!important;page-break-after:auto!important;}
 
   /* Section header (sh) must stay with its first content */
-  .sh{page-break-after:avoid!important;}
+  /* ── Section header MUST stay with card below ── */
+  .sh{
+    page-break-after:avoid!important;
+    break-after:avoid!important;
+    display:block!important;
+  }
+  /* Every direct child after .sh: no break before it */
+  .sec > .sh ~ *{
+    break-before:avoid!important;
+    page-break-before:avoid!important;
+  }
   
   /* Each major card/section: avoid break inside */
   .cc,.ekg-card,.cv-card,.ldl-goal-card,.bpc,.sw,.rcard,
@@ -398,8 +409,18 @@ canvas{display:block;width:100%!important;}
     break-inside:avoid!important;
   }
 
-  /* Sections (.sec) can break but not inside their header */
-  .sec{page-break-inside:auto!important;break-inside:auto!important;}
+  /* Each section stays together where possible */
+  .sec{page-break-inside:avoid!important;break-inside:avoid!important;}
+  /* .sec-hg = heading+first card locked together, never splits */
+  .sec-hg{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+    display:block!important;
+  }
+  /* Only allow breaks inside very large sections (trend charts, advice) */
+  .sec:has(.chart-pair),.sec:has(.dtw),.sec:has(.ab){
+    page-break-inside:auto!important;break-inside:auto!important;
+  }
 
   /* Force page break BEFORE major sections if needed */
   .sec+.sec{page-break-before:auto!important;}
@@ -412,13 +433,18 @@ canvas{display:block;width:100%!important;}
   .lgd-val{font-size:20px!important;}
   img[id="heartImgNew"],#heartImgDataNew{display:none!important;}
 
-  /* Keep section header attached to first child content */
+  /* Keep section header attached to ALL content below */
+  .sec > .sh + *,
   .sec > .sh + div,
   .sec > .sh + table,
   .sec > .sh + .lw,
   .sec > .sh + .cc,
   .sec > .sh + .ekg-card,
-  .sec > .sh + .cv-card{
+  .sec > .sh + .cv-card,
+  .sec > .sh + .chart-pair,
+  .sec > .sh + .dtw,
+  .sec > .sh + .vg,
+  .sec > .sh + .fu-grid{
     page-break-before:avoid!important;
     break-before:avoid!important;
   }
@@ -1311,7 +1337,7 @@ function render(){
   /* CV HTML */
   var cvHTML='';
   if(cv){
-    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — Framingham-based RAMA-EGAT</p></div></div>'+
+    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — Framingham-based RAMA-EGAT</p></div></div>'+
     '<div class="cv-card">'+
     '<div class="cv-main">'+
     (cv.isASCVD?
@@ -1381,7 +1407,7 @@ function render(){
   O+='<div class="body">';
 
   /* ── INBODY ── */
-  O+='<div class="sec"><div class="sh"><div class="si si-t">⚖️</div><div><h2>ผลการวัดองค์ประกอบร่างกาย</h2><p>InBody Analysis — Body Composition</p></div></div>';
+  O+='<div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-t">⚖️</div><div><h2>ผลการวัดองค์ประกอบร่างกาย</h2><p>InBody Analysis — Body Composition</p></div></div>';
   var hasInBody=r.weight||r.smm||r.bfm||r.pbf||r.vfl||r.inbodyScore;
   if(!hasInBody){
     O+='<div style="background:var(--cream2);border:1px solid var(--bl);border-radius:10px;padding:16px;text-align:center;margin-bottom:10px;">'+
@@ -1458,7 +1484,7 @@ function render(){
   var hasAnyLab=hasCoreLab||hasLipid||hasExtra||hasPSA||r.sbp;
 
   if(hasAnyLab){
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-b">🔬</div><div><h2>ผลการตรวจเลือดและความดัน</h2></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-b">🔬</div><div><h2>ผลการตรวจเลือดและความดัน</h2></div></div>';
 
   if(r.sbp){
     var bpGoalTxt=cv?cv.bpGoal:'< 140/90 มมปรอท';
@@ -1588,7 +1614,7 @@ function render(){
   /* ── EKG ── */
   var ekgRes=r.ekgResult||'NA';
   var hasEKG=r.ekgDate||r.ekgComment||(ekgRes!=='NA');
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-ek">🫀</div><div><h2>ผลตรวจคลื่นไฟฟ้าหัวใจ (EKG)</h2>'+
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-ek">🫀</div><div><h2>ผลตรวจคลื่นไฟฟ้าหัวใจ (EKG)</h2>'+
     (r.ekgDate?'<p>วันที่ตรวจ: '+thDate(r.ekgDate)+'</p>':'')+
     '</div></div>'+
     '<div class="ekg-card"><div class="ekg-header ekg-h-teal">🫀 <span>ผล EKG '+(r.ekgDate?'— '+thDate(r.ekgDate):'')+'</span></div>'+
@@ -1608,7 +1634,7 @@ function render(){
   var hasLVDys=lvefV>0&&lvefV<53; /* LV dysfunction = LVEF < 53% */
   var hasEcho=r.echoDate||r.echoComment||(echoRes!=='NA')||lvefV>0;
 
-  O+='<div class="sec"><div class="sh"><div class="si si-ec">'+PROBE_SM+'</div><div><h2>ผลตรวจคลื่นเสียงสะท้อนหัวใจ (Echo)</h2>'+
+  O+='<div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-ec">'+PROBE_SM+'</div><div><h2>ผลตรวจคลื่นเสียงสะท้อนหัวใจ (Echo)</h2>'+
     (r.echoDate?'<p>วันที่ตรวจ: '+thDate(r.echoDate)+'</p>':'')+
     '</div></div>'+
     '<div class="ekg-card"><div class="ekg-header ekg-h-echo">🔊 <span>ผล Echo '+(r.echoDate?'— '+thDate(r.echoDate):'')+'</span></div>'+
@@ -1740,7 +1766,7 @@ function render(){
   }
 
   /* ── TREND CHARTS ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-p">📈</div><div><h2>แนวโน้มการเปลี่ยนแปลง</h2><p>ย้อนหลัง '+hist.length+' ครั้ง</p></div></div>'+
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-p">📈</div><div><h2>แนวโน้มการเปลี่ยนแปลง</h2><p>ย้อนหลัง '+hist.length+' ครั้ง</p></div></div>'+
     /* Lab: chart (screen only) + table (always) */
     '<div class="chart-pair">'+
       '<div class="cc chart-only"><div class="ctr"><div class="cdo" style="background:var(--acc)"></div><div><div class="ctt">ผลเลือด — Lab Trends</div><div class="csb">แกนซ้าย: FBS/LDL/AST/ALT | แกนขวา: HbA1c</div></div></div>'+
@@ -1756,7 +1782,7 @@ function render(){
     '</div>';
 
   /* ── VACCINES ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-g">💉</div><div><h2>วัคซีนที่แนะนำ</h2><p>Thai Vaccination Guideline 2024</p></div></div><div class="vg">';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-g">💉</div><div><h2>วัคซีนที่แนะนำ</h2><p>Thai Vaccination Guideline 2024</p></div></div><div class="vg">';
   var vSt={done:{i:'✅',cls:'vs-done',t:'ฉีดแล้ว'},partial:{i:'⚠️',cls:'vs-partial',t:'ฉีดบางส่วน'},plan:{i:'📋',cls:'vs-plan',t:'วางแผนฉีด'},na:{i:'—',cls:'',t:'ไม่จำเป็น'},'':{i:'○',cls:'',t:'ยังไม่ฉีด'}};
   VACCINES.forEach(function(v){
     var d=(r.vaccines&&r.vaccines[v.id])||{};
@@ -1773,7 +1799,7 @@ function render(){
   /* ── FOLLOW-UP ── */
   var echoFreqDisplay=echoFreqOverride?(freqLabel[echoFreqOverride]||freqLabel[+echoFreqOverride]||('ทุก '+echoFreqOverride+' เดือน')):'—';
 
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-f">📅</div><div><h2>แผนการติดตามผล</h2><p>Follow-up Schedule & Recommendations</p></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-f">📅</div><div><h2>แผนการติดตามผล</h2><p>Follow-up Schedule & Recommendations</p></div></div>';
   O+='<div class="fu-grid">'+
     '<div class="fu-item"><div class="fu-icon">🔬</div><div class="fu-label">ตรวจเลือด</div><div class="fu-val">'+(r.labFreq?freqLabel[+r.labFreq]||('ทุก '+r.labFreq+' เดือน'):'—')+'</div></div>'+
     '<div class="fu-item"><div class="fu-icon">🫀</div><div class="fu-label">ตรวจ EKG</div><div class="fu-val">'+(r.ekgFreq?freqLabel[+r.ekgFreq]||('ทุก '+r.ekgFreq+' เดือน'):'—')+'</div></div>'+
@@ -1786,7 +1812,7 @@ function render(){
   O+='</div>';
 
   /* ── SUMMARY CARD (Item 6) ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si" style="background:#2C5F8A;color:white">📋</div><div><h2>สรุปผลการตรวจสุขภาพ</h2><p>สรุปเข้าใจง่ายสำหรับผู้ป่วย</p></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si" style="background:#2C5F8A;color:white">📋</div><div><h2>สรุปผลการตรวจสุขภาพ</h2><p>สรุปเข้าใจง่ายสำหรับผู้ป่วย</p></div></div>';
   O+='<div style="background:white;border:1px solid var(--bl);border-radius:12px;padding:16px 18px;margin-bottom:10px;">';
   /* Auto-build summary */
   var summaryLines=[];
@@ -1806,7 +1832,7 @@ function render(){
   O+='</div></div>';
 
   /* ── DOCTORS NOTE (Item 7) ── */
-  O+='<div class="sec"><div class="sh"><div class="si" style="background:#4A3A8A;color:white">✍️</div><div><h2>Doctor\'s Note — บันทึกจากแพทย์</h2><p>ข้อความเฉพาะสำหรับผู้ป่วยรายนี้</p></div></div>';
+  O+='<div class="sec"><div class="sec-hg"><div class="sh"><div class="si" style="background:#4A3A8A;color:white">✍️</div><div><h2>Doctor\'s Note — บันทึกจากแพทย์</h2><p>ข้อความเฉพาะสำหรับผู้ป่วยรายนี้</p></div></div>';
   O+='<div style="background:white;border:2px solid #4A3A8A;border-radius:12px;padding:16px 18px;margin-bottom:10px;min-height:80px;">';
   if(r.doctorNote){
     O+='<div style="font-size:14px;line-height:1.8;color:var(--text)">'+r.doctorNote.replace(/\n/g,'<br>')+'</div>';
@@ -1816,7 +1842,7 @@ function render(){
   O+='</div></div>';
 
   /* ── ADVICE ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-g">💡</div><div><h2>คำแนะนำจากแพทย์</h2></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-g">💡</div><div><h2>คำแนะนำจากแพทย์</h2></div></div>';
   /* Diet advice header with protein grams extracted */
   var proteinLine='';
   var pm=dietAdv.match(/▸\s*([\d–]+)\s*กรัม\/วัน/);
