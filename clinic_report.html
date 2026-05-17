@@ -379,16 +379,40 @@ canvas{display:block;width:100%!important;}
   tr{page-break-inside:avoid!important;page-break-after:auto!important;}
 
   /* Section header (sh) must stay with its first content */
-  /* ── Section header MUST stay with card below ── */
+  /* ── Section header: MUST stay with content below ── */
   .sh{
     page-break-after:avoid!important;
     break-after:avoid!important;
     display:block!important;
+    orphans:3!important;
+    widows:3!important;
   }
-  /* Every direct child after .sh: no break before it */
-  .sec > .sh ~ *{
-    break-before:avoid!important;
+  /* Content immediately after .sh: cannot start a new page */
+  .sec > .sh + *,
+  .sec > .sh + div,
+  .sec > .sh + .cc,
+  .sec > .sh + .lw,
+  .sec > .sh + .ekg-card,
+  .sec > .sh + .cv-card,
+  .sec > .sh + .chart-pair,
+  .sec > .sh + .fu-grid,
+  .sec > .sh + .vg{
     page-break-before:avoid!important;
+    break-before:avoid!important;
+  }
+  /* Whole section avoids internal break where possible */
+  .sec{
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+    orphans:3!important;
+    widows:3!important;
+  }
+  /* Large sections (with tables/charts) can break between items */
+  .sec:has(.dtw),
+  .sec:has(.chart-pair),
+  .sec:has(.lt){
+    page-break-inside:auto!important;
+    break-inside:auto!important;
   }
   
   /* Each major card/section: avoid break inside */
@@ -411,12 +435,7 @@ canvas{display:block;width:100%!important;}
 
   /* Each section stays together where possible */
   .sec{page-break-inside:avoid!important;break-inside:avoid!important;}
-  /* .sec-hg = heading+first card locked together, never splits */
-  .sec-hg{
-    page-break-inside:avoid!important;
-    break-inside:avoid!important;
-    display:block!important;
-  }
+  /* sec-hg removed — using CSS break rules instead */
   /* Only allow breaks inside very large sections (trend charts, advice) */
   .sec:has(.chart-pair),.sec:has(.dtw),.sec:has(.ab){
     page-break-inside:auto!important;break-inside:auto!important;
@@ -603,8 +622,20 @@ var DEMO={
   inbodyScore:'71',
   fbs:'118',a1c:'6.8',ldl:'145',tc:'210',hdl:'38',tg:'185',
   cr:'1.05',upcr:'120',ast:'32',alt:'38',tsh:'2.1',albumin:'4.2',psa:'2.1',
+  lpa:'42',
   tmNote:'ติดตาม PSA ทุกปี',
-  ascvdRisk:'high',hasASCVD:'no',hasFH:'no',hasDMRisk:'dm-organ',
+  ascvdRisk:'high',hasASCVD:'no',
+  hasFH:'no',hasDMRisk:'no',ckdStage:'ปกติ / G1-2',onStatin:'ไม่ได้รับ Statin',
+  ldlGoalCustom:'70',ldlInsufficient:'false',nonHdlGoalCustom:'',
+  sbp:'142',dbp:'88',bpTarget:'<130/80',smoker:'no',
+  ekgResult:'Normal',ekgDate:'2568-05-10',ekgComment:'Normal sinus rhythm',
+  lvef:'62',echoResult:'Normal',echoDate:'2568-05-10',
+  echoComment:'Mild LVH, Diastolic dysfunction grade I',
+  valveCBs:{reg_Mitral_mild:true,reg_Tricuspid_mild:true},
+  echoSummary:'• การบีบตัวของหัวใจ (Systolic function): ปกติ\n• การคลายตัวของหัวใจ (Diastolic function): Diastolic dysfunction grade I\n• ลิ้นไมตรัล (Mitral valve): รั่ว เล็กน้อย\n• ลิ้นเอออร์ติก (Aortic valve): ทำงานปกติ\n• ลิ้นไตรคัสปิด (Tricuspid valve): รั่ว เล็กน้อย\n• ลิ้นพัลโมนิก (Pulmonary valve): ทำงานปกติ',
+  customSummary:'ผลตรวจสุขภาพปีนี้พบ: น้ำตาลสะสมสูงเล็กน้อย ไขมัน LDL ยังต้องลดเพิ่ม ความดันโลหิตยังสูงอยู่ Lp(a) อยู่ในช่วงเฝ้าระวัง แนะนำปรับยาและพฤติกรรม',
+  doctorNote:'ติดตาม HbA1c และ LDL ทุก 3 เดือน ปรับ Statin เป็น High intensity',
+  recorder:'พญ.ณัฏฐา',hasFH:'no',hasDMRisk:'dm-organ',
   ckdStage:'ckd3',onStatin:'yes-moderate',
   ldlGoalCustom:'<70',
   sbp:'138',dbp:'88',bpTarget:'< 130/80',smoker:'yes',
@@ -689,45 +720,132 @@ function labSt(t,v,g){
 
 /* ── LDL GOAL: Thai DLP / ESC 2021 / ACC 2025 ── */
 function calcLdlGoal(r){
-  var risk=r.ascvdRisk||'';
-  var hasASCVD=r.hasASCVD==='yes';
-  var hasFH=r.hasFH==='yes';
-  var dm=r.hasDMRisk||'';
-  var ckd=r.ckdStage||'';
+  var ldlVal=+r.ldl||0, tc=+r.tc||0, lpa=+r.lpa||0, tg=+r.tg||0, sbp=+r.sbp||0;
   var custom=r.ldlGoalCustom||'';
+  var hasASCVD_v=r.hasASCVD||'no';
+  var ascvdVH=(hasASCVD_v==='very-high');
+  var ascvdYes=(hasASCVD_v==='yes'||ascvdVH);
+  var hasFH=(r.hasFH==='yes');
+  var dmRisk=r.hasDMRisk||'no';
+  var ckd=r.ckdStage||'normal';
+  var score2=r.score2val||'';
+  var prevent=r.preventRisk||'';
+  var lpaHigh=(r.lpaHigh==='yes')||(lpa>=50);
+  var tgHigh=(r.hasTG==='yes')||(tg>=150);
+  var ldlOver190=ldlVal>=190;
 
-  /* Very High Risk criteria */
-  var isVeryHigh=risk==='very-high'||hasASCVD||(hasFH&&hasASCVD)||ckd==='ckd5'||dm==='dm-organ';
-  /* High Risk criteria */
-  var isHigh=risk==='high'||hasFH||dm==='dm-simple'||ckd==='ckd3'||ckd==='ckd4';
-  /* Moderate */
-  var isMod=risk==='moderate';
-
-  var goal, pctReduce, basis, lvlTh;
-  if(custom){
-    goal=custom; basis='กำหนดโดยแพทย์'; pctReduce=''; lvlTh='กำหนดเอง';
-  } else if(isVeryHigh){
-    goal='< 55 mg/dL';pctReduce='≥ 50%';
-    basis='Very High Risk: มีโรค ASCVD / DM+organ damage / CKD stage 5 / HeFH+ASCVD';
-    lvlTh='ความเสี่ยงสูงมาก';
-  } else if(isHigh){
-    goal='< 70 mg/dL';pctReduce='≥ 50%';
-    basis='High Risk: DM ไม่มี organ damage / HeFH / CKD stage 3–4 / SCORE2 ≥10%';
-    lvlTh='ความเสี่ยงสูง';
-  } else if(isMod){
-    goal='< 100 mg/dL';pctReduce='≥ 30%';
-    basis='Moderate Risk: SCORE2 5–9.9%';
-    lvlTh='ความเสี่ยงปานกลาง';
+  /* ESC 2025 */
+  var escGoal='',escLevel='',escPct='',escBasis='';
+  if(ascvdVH||score2==='gte20'||(ascvdYes&&hasFH)||dmRisk==='dm-organ'||ckd==='ckd5'){
+    escLevel='Very High';escGoal='55';escPct='≥50%';
+    escBasis=ascvdVH?'ASCVD Very High Risk':dmRisk==='dm-organ'?'DM+organ damage':ckd==='ckd5'?'CKD G5':'Very High';
+  } else if(ascvdYes||hasFH||ldlOver190||tc>=310||sbp>=180||dmRisk==='dm-rf'||ckd==='ckd3'||ckd==='ckd4'||score2==='gte10'||lpaHigh){
+    escLevel='High';escGoal='70';escPct='≥50%';
+    var p=[];if(ascvdYes)p.push('ASCVD');if(hasFH)p.push('FH');if(ldlOver190)p.push('LDL≥190');
+    if(lpaHigh)p.push('Lp(a)≥50');if(ckd==='ckd3'||ckd==='ckd4')p.push('CKD G3-4');
+    escBasis=p.join(' · ')||'High Risk';
+  } else if(score2==='2to10'||dmRisk==='dm-simple'){
+    escLevel='Moderate';escGoal='100';escPct='≥30%';
+    escBasis=dmRisk==='dm-simple'?'DM <10y no organ damage':'SCORE2 2–9.9%';
   } else {
-    goal='< 116 mg/dL';pctReduce='';
-    basis='Low Risk: SCORE2 < 5%';
-    lvlTh='ความเสี่ยงต่ำ';
+    escLevel='Low';escGoal='116';escPct='';escBasis='Low Risk';
   }
-  var curr=+r.ldl||0;
-  var achieved=curr>0 && goal ? curr < parseInt(goal.replace(/[<\s]/g,'')) : null;
-  return{goal:goal,pctReduce:pctReduce,basis:basis,lvlTh:lvlTh,achieved:achieved,curr:curr};
+
+  /* AHA/ACC 2026 */
+  var ahaGoal='',ahaLevel='',ahaPct='',ahaBasis='';
+  if(ascvdVH||(ascvdYes&&ckd==='ckd5')){
+    ahaLevel='ASCVD Very High';ahaGoal='55';ahaPct='≥50%';ahaBasis='VHR · +ezetimibe/PCSK9i · Non-HDL <85';
+  } else if(ascvdYes&&ldlOver190){
+    ahaLevel='Severe HC+ASCVD';ahaGoal='55';ahaPct='≥50%';ahaBasis='LDL≥190+ASCVD';
+  } else if(ascvdYes){
+    ahaLevel='Clinical ASCVD';ahaGoal='70';ahaPct='≥50%';ahaBasis='Non-VHR · Non-HDL <100';
+  } else if(ldlOver190&&(hasFH||lpaHigh||tgHigh)){
+    ahaLevel='Severe HC+RF';ahaGoal='70';ahaPct='≥50%';ahaBasis='LDL≥190+FH/Lp(a)/TG';
+  } else if(ldlOver190){
+    ahaLevel='Severe HC';ahaGoal='100';ahaPct='Max statin';ahaBasis='LDL≥190 ไม่มี ASCVD/RF';
+  } else if(dmRisk==='dm-organ'||(dmRisk!=='no'&&(prevent==='gte10'||lpaHigh||tgHigh))){
+    ahaLevel='DM+RF';ahaGoal='70';ahaPct='≥50%';ahaBasis='DM+ASCVD RF/modifiers';
+  } else if(dmRisk!=='no'){
+    ahaLevel='DM';ahaGoal='100';ahaPct='Moderate statin';ahaBasis='DM 40–75y ไม่มี RF';
+  } else if(prevent==='gte10'||score2==='gte10'){
+    ahaLevel='Primary High';ahaGoal='70';ahaPct='≥50%';ahaBasis='PREVENT≥10%';
+  } else if(prevent==='5to10'||score2==='2to10'||lpaHigh||tgHigh||hasFH){
+    ahaLevel='Primary Intermediate';ahaGoal='100';ahaPct='≥30–50%';ahaBasis='Risk enhancers';
+  } else {
+    ahaLevel='Primary Low';ahaGoal='100';ahaPct='Lifestyle';ahaBasis='Low risk';
+  }
+
+  var escNum=parseInt(escGoal)||200, ahaNum=parseInt(ahaGoal)||200;
+  var finalNum=custom?parseInt(custom)||Math.min(escNum,ahaNum):Math.min(escNum,ahaNum);
+  var goal='< '+finalNum+' mg/dL';
+  var basis=custom?('แพทย์กำหนด: '+custom+' mg/dL'):('ESC: <'+escGoal+' · AHA: <'+ahaGoal);
+  var curr=ldlVal, achieved=curr>0?curr<finalNum:null;
+
+  return{
+    goal:goal, pctReduce:escPct, basis:basis, lvlTh:escLevel,
+    achieved:achieved, curr:curr, finalNum:finalNum,
+    escGoal:'< '+escGoal, escLevel:escLevel, escBasis:escBasis, escPct:escPct,
+    ahaGoal:'< '+ahaGoal, ahaLevel:ahaLevel, ahaBasis:ahaBasis, ahaPct:ahaPct,
+    upgradedByLdl190:ldlOver190&&escLevel!=='Very High',
+    upgradedByLpa:lpaHigh&&escLevel!=='Very High'
+  };
 }
 
+
+/* ── SCORE2 / SCORE2-OP (ESC 2021, Moderate Risk Region) ── */
+function calcScore2Report(age, gender, sbp, tc, hdl, smoker){
+  if(!age || !gender || !sbp || !tc || !hdl) return null;
+  var tcMmol = tc/38.67, hdlMmol = hdl/38.67, nonHdl = tcMmol - hdlMmol;
+  var female = (gender === 'หญิง'), lp, s0, baseline;
+  if(!female){
+    lp = 0.3742*(Math.log(age)-3.8816)
+       + 0.6012*(smoker?1:0)
+       + 0.2777*(Math.log(sbp)-4.8366)
+       + 0.6457*(nonHdl>0?Math.log(nonHdl):0)
+       - 0.1999*(hdlMmol>0?Math.log(hdlMmol):0);
+    baseline = Math.exp(-Math.exp(-0.2154-10.1875));
+    s0 = Math.exp(-Math.exp(lp-10.1875));
+  } else {
+    lp = 0.4648*(Math.log(age)-3.8816)
+       + 0.7744*(smoker?1:0)
+       + 0.3131*(Math.log(sbp)-4.8366)
+       + 0.8096*(nonHdl>0?Math.log(nonHdl):0)
+       - 0.1895*(hdlMmol>0?Math.log(hdlMmol):0);
+    baseline = Math.exp(-Math.exp(-0.3580-11.5920));
+    s0 = Math.exp(-Math.exp(lp-11.5920));
+  }
+  var risk = (1 - s0/baseline) * 100 * 1.10; /* moderate-region calibration */
+  return Math.min(Math.max(risk, 0.1), 99.9);
+}
+
+/* ── PREVENT-ASCVD 10y (AHA/ACC 2024) ── */
+function calcPreventReport(age, gender, tc, hdl, sbp, sbpTx, dm, smoker, ckd){
+  if(!age || !gender || !tc || !hdl || !sbp) return null;
+  var female = (gender === 'หญิง'), lh;
+  if(!female){
+    lh = -9.655
+      + 0.456*Math.log(age)
+      + 0.326*Math.log(sbp)
+      + (sbpTx ? 0.132 : 0)
+      + 0.281*(smoker?1:0)
+      + 0.216*(dm?1:0)
+      + 0.141*(ckd?1:0)
+      + 0.300*Math.log(tc)
+      - 0.214*Math.log(hdl);
+  } else {
+    lh = -11.921
+      + 0.625*Math.log(age)
+      + 0.418*Math.log(sbp)
+      + (sbpTx ? 0.152 : 0)
+      + 0.335*(smoker?1:0)
+      + 0.282*(dm?1:0)
+      + 0.138*(ckd?1:0)
+      + 0.295*Math.log(tc)
+      - 0.263*Math.log(hdl);
+  }
+  var risk = (1 - Math.exp(-Math.exp(lh))) * 100;
+  return Math.min(Math.max(risk, 0.1), 99.9);
+}
 
 /* ── GFR / CKD ── */
 function calcGFR(cr, age, g){
@@ -1008,6 +1126,14 @@ function cvRisk(r){
   var smoker=r.smoker==='yes';
   var dyslip=note.indexOf('dyslip')>=0||ldl>=160||tc>=240;
   if(!age||!g)return null;
+  /* Check mandatory fields for valid CV risk score */
+  var missing=[];
+  if(!sbp) missing.push('ความดันโลหิต (SBP)');
+  if(!tc&&!ldl) missing.push('ไขมันรวม (TC) หรือ LDL');
+  if(!hdl) missing.push('ไขมันดี (HDL)');
+  if(missing.length>0){
+    return{incomplete:true,missing:missing,age:age,gender:g};
+  }
   var tcE=tc>0?tc:(ldl>0?ldl+(hdl||40)+(tg>0?tg/5:30):0);
   var hdlE=hdl>0?hdl:(g==='หญิง'?55:45);
   var pts=0;
@@ -1143,7 +1269,8 @@ function buildLabTable(hist,ldlG){
     {k:'a1c',l:'HbA1c (%)',ref:5.7,goal:'< 5.7 (< 7.0 DM)'},
     {k:'ldl',l:'LDL (มก./ดล.)',ref:100,goal:ldlG||'< 100'},
     {k:'ast',l:'AST (ยูนิต/ลิตร)',ref:40,goal:'< 40'},
-    {k:'alt',l:'ALT (ยูนิต/ลิตร)',ref:40,goal:'< 40'}
+    {k:'alt',l:'ALT (ยูนิต/ลิตร)',ref:40,goal:'< 40'},
+    {k:'lpa',l:'Lp(a) (มก./ดล.)',ref:30,goal:'< 30'}
   ];
   var cols=hist.map(function(h){return thDateSh(h.visitDate);});
   var html='<table class="dt"><thead><tr><th class="rh">ค่าตรวจ</th>';
@@ -1277,6 +1404,15 @@ function render(){
   var ideal=calcIdeal(r.height,g);
   var cv=cvRisk(r);
   var D=computeDeltas(r,hist);
+  /* Compute risk scores */
+  var age4s=cv?cv.age:(extractAge(r.dob)||0);
+  var smk4s=(r.smoker||'')!=='no';
+  var dm4s=(r.hasDMRisk||'no')!=='no'||(+r.a1c>=6.5)||(+r.fbs>=126);
+  var ckd4s=(r.ckdStage==='ckd3'||r.ckdStage==='ckd4'||r.ckdStage==='ckd5');
+  var isOP=(age4s>=70);
+  var s2Raw=calcScore2Report(age4s,g,+r.sbp||0,+r.tc||0,+r.hdl||0,smk4s);
+  var s2Score=s2Raw!==null?s2Raw*(isOP?1.15:1):null;
+  var prevScore=calcPreventReport(age4s,g,+r.tc||0,+r.hdl||0,+r.sbp||0,false,dm4s,smk4s,ckd4s);
   var ldlGoalData=calcLdlGoal(r);
 
   /* Lab statuses */
@@ -1285,6 +1421,9 @@ function render(){
   var tc=labSt('tc',r.tc,g),hdl=labSt('hdl',r.hdl,g),tg=labSt('tg',r.tg,g);
   var upcr=labSt('upcr',r.upcr,g),tsh=labSt('tsh',r.tsh,g),alb=labSt('albumin',r.albumin,g);
   var psa=g!=='หญิง'?labSt('psa',r.psa,g):null;
+  var lpaV=+r.lpa||0;
+  var lpaCls=lpaV<=0?'':lpaV<30?'ok':lpaV<50?'wn':'bd';
+  var lpaTxt=lpaV<=0?'':lpaV<30?'ปกติ':lpaV<50?'เฝ้าระวัง':'เสี่ยง ASCVD สูง';
 
   /* BP */
   var sbpV=+r.sbp||0,dbpV=+r.dbp||0;
@@ -1336,8 +1475,135 @@ function render(){
 
   /* CV HTML */
   var cvHTML='';
-  if(cv){
-    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — Framingham-based RAMA-EGAT</p></div></div>'+
+  /* ══════════════════════════════════════════════════════
+     RISK SCORE SUMMARY BOX
+     - isPrimaryPrev: ไม่มี ASCVD (primary prevention)
+     - isDataComplete: มี age+gender+sbp+tc+hdl ครบ
+     ══════════════════════════════════════════════════════ */
+  var hasASCVD_r=(r.hasASCVD==='yes'||r.hasASCVD==='very-high');
+  var isPrimaryPrev=!hasASCVD_r;
+  var isDataComplete=(age4s>0&&g&&(+r.sbp>0)&&(+r.tc>0)&&(+r.hdl>0));
+  var scoreBoxHTML='';
+  var scoreSummaryHTML=''; /* patient-facing Thai explanation */
+  var missingScoreFields=[];
+  if(isPrimaryPrev&&!isDataComplete){
+    if(!age4s||!g) missingScoreFields.push('วันเกิด / เพศ');
+    if(!(+r.sbp>0)) missingScoreFields.push('ความดันโลหิต (SBP)');
+    if(!(+r.tc>0)) missingScoreFields.push('ไขมันรวม (TC)');
+    if(!(+r.hdl>0)) missingScoreFields.push('ไขมันดี (HDL)');
+  }
+
+  if(!isPrimaryPrev){
+    /* ASCVD: no primary prevention score needed — show ASCVD badge only */
+    scoreBoxHTML='<div style="background:var(--bad-bg);border:1.5px solid #DDB0B0;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">'+
+      '<span style="font-size:24px;">🚨</span>'+
+      '<div><div style="font-size:12px;font-weight:800;color:var(--bad);">Secondary Prevention — มี ASCVD</div>'+
+      '<div style="font-size:11px;color:var(--bad);">ไม่ใช้ Risk Score สำหรับ Primary Prevention — ดู LDL Goal ด้านล่าง</div></div></div>';
+  } else if(isPrimaryPrev&&!isDataComplete){
+    /* Primary prevention but missing data */
+    scoreBoxHTML='<div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:10px;padding:14px 16px;margin-bottom:10px;">'+
+      '<div style="display:flex;align-items:flex-start;gap:10px;">'+
+      '<span style="font-size:26px;flex-shrink:0;">⚠️</span>'+
+      '<div>'+
+      '<div style="font-size:13px;font-weight:800;color:#B45309;margin-bottom:6px;">ไม่สามารถประเมินความเสี่ยงโรคหัวใจได้</div>'+
+      '<div style="font-size:12px;color:#92400E;margin-bottom:6px;">เนื่องจากขาดข้อมูลสำคัญ:</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
+      missingScoreFields.map(function(f){return'<span style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:#92400E;">❌ '+f+'</span>';}).join('')+
+      '</div>'+
+      '<div style="font-size:11px;color:#6B7280;margin-top:8px;">กรุณาเพิ่มข้อมูลเพื่อประเมิน Thai CV Risk, SCORE2, PREVENT-ASCVD</div>'+
+      '</div></div></div>';
+  } else {
+    /* Primary prevention + data complete — show all 3 scores */
+    var thaiR=(cv&&!cv.incomplete&&cv.risk)?cv.risk:null;
+    var s2R=s2Score; var prevR=prevScore;
+    var thaiCls=thaiR===null?'var(--text2)':thaiR<10?'var(--ok)':thaiR<20?'var(--warn)':'var(--bad)';
+    var s2cls=s2R===null?'var(--text2)':s2R<5?'var(--ok)':s2R<10?'var(--warn)':'var(--bad)';
+    var prevCls=prevR===null?'var(--text2)':prevR<5?'var(--ok)':prevR<10?'var(--warn)':'var(--bad)';
+
+    /* Score cards */
+    scoreBoxHTML=
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px;">'+
+      /* Thai CV Risk */
+      '<div style="background:white;border:1.5px solid '+(thaiR===null?'#E2E8F0':thaiR<10?'#86EFAC':thaiR<20?'#FCD34D':'#FCA5A5')+'  ;border-radius:10px;padding:10px;text-align:center;">'+
+        '<div style="font-size:9px;font-weight:800;color:#64748B;margin-bottom:2px;">🇹🇭 Thai CV Risk</div>'+
+        '<div style="font-size:22px;font-weight:900;color:'+thaiCls+';">'+(thaiR!==null?thaiR+'%':'—')+'</div>'+
+        '<div style="font-size:9px;color:'+thaiCls+';margin-top:2px;">'+(thaiR!==null?(thaiR<10?'ความเสี่ยงต่ำ':thaiR<20?'ความเสี่ยงปานกลาง':'ความเสี่ยงสูง'):'')+'</div>'+
+        '<div style="font-size:8px;color:#94A3B8;">RAMA-EGAT 10y</div>'+
+      '</div>'+
+      /* SCORE2 */
+      '<div style="background:white;border:1.5px solid '+(s2R===null?'#E2E8F0':s2R<5?'#86EFAC':s2R<10?'#FCD34D':'#FCA5A5')+'  ;border-radius:10px;padding:10px;text-align:center;">'+
+        '<div style="font-size:9px;font-weight:800;color:#64748B;margin-bottom:2px;">'+(isOP?'🇪🇺 SCORE2-OP (อายุ≥70)':'🇪🇺 SCORE2')+'</div>'+
+        '<div style="font-size:22px;font-weight:900;color:'+s2cls+';">'+(s2R!==null?s2R.toFixed(1)+'%':'—')+'</div>'+
+        '<div style="font-size:9px;color:'+s2cls+';margin-top:2px;">'+(s2R!==null?(s2R<5?'ต่ำ':s2R<10?'ปานกลาง-สูง':'สูงมาก'):'')+'</div>'+
+        '<div style="font-size:8px;color:#94A3B8;">ESC 10y fatal+non-fatal CVD</div>'+
+      '</div>'+
+      /* PREVENT-ASCVD */
+      '<div style="background:white;border:1.5px solid '+(prevR===null?'#E2E8F0':prevR<5?'#86EFAC':prevR<10?'#FCD34D':'#FCA5A5')+'  ;border-radius:10px;padding:10px;text-align:center;">'+
+        '<div style="font-size:9px;font-weight:800;color:#64748B;margin-bottom:2px;">🇺🇸 PREVENT-ASCVD</div>'+
+        '<div style="font-size:22px;font-weight:900;color:'+prevCls+';">'+(prevR!==null?prevR.toFixed(1)+'%':'—')+'</div>'+
+        '<div style="font-size:9px;color:'+prevCls+';margin-top:2px;">'+(prevR!==null?(prevR<3?'ต่ำ':prevR<5?'ต่ำ-ปานกลาง':prevR<10?'ปานกลาง':'สูง'):'')+'</div>'+
+        '<div style="font-size:8px;color:#94A3B8;">AHA/ACC 10y ASCVD</div>'+
+      '</div>'+
+      '</div>';
+
+    /* ── Patient-facing Thai summary ── */
+    /* Pick worst score to explain */
+    var worstScore=Math.max(thaiR||0, s2R||0, prevR||0);
+    var riskColor=worstScore<10?'#16A34A':worstScore<20?'#D97706':'#DC2626';
+    var riskIcon=worstScore<10?'🟢':worstScore<20?'🟡':'🔴';
+    var riskThai=worstScore<10?'ความเสี่ยงต่ำ — ดูแลสุขภาพต่อไปได้เลย':
+                 worstScore<20?'ความเสี่ยงปานกลาง — ควรปรับพฤติกรรมและติดตามใกล้ชิด':
+                               'ความเสี่ยงสูง — แนะนำปรึกษาแพทย์เพื่อพิจารณายา';
+
+    /* Build explanation per score */
+    var explainParts=[];
+    if(s2R!==null){
+      var s2explain=isOP?
+        'SCORE2-OP (ยุโรป/เอเชีย อายุ≥70 ปี)':
+        'SCORE2 (ยุโรป/เอเชีย กลุ่มความเสี่ยงปานกลาง)';
+      var s2th=s2R<5?'ต่ำ — โอกาสเกิดโรคหัวใจและหลอดเลือดใน 10 ปีน้อย':
+               s2R<10?'ปานกลาง-สูง — มีโอกาสเกิดโรคหัวใจพอควร ควรปรับพฤติกรรม':
+                      'สูงมาก — ความเสี่ยงสูง แนะนำพิจารณายาลดไขมัน';
+      explainParts.push('<strong>'+s2explain+'</strong>: '+s2R.toFixed(1)+'% → '+s2th);
+    }
+    if(prevR!==null){
+      var prevth=prevR<3?'ต่ำ — โอกาสเกิด ASCVD ใน 10 ปีน้อย':
+                 prevR<5?'ต่ำ-ปานกลาง — ควรดูแลปัจจัยเสี่ยง':
+                 prevR<10?'ปานกลาง — แนะนำปรับพฤติกรรม พิจารณา Statin':
+                          'สูง — แนะนำเริ่ม Statin และติดตามอย่างใกล้ชิด';
+      explainParts.push('<strong>PREVENT-ASCVD (AHA/ACC 2024)</strong>: '+prevR.toFixed(1)+'% → '+prevth);
+    }
+    if(thaiR!==null){
+      var thaith=thaiR<10?'ต่ำ — ความเสี่ยงในคนไทยน้อย':
+                 thaiR<20?'ปานกลาง — ควรติดตามและปรับพฤติกรรม':
+                          'สูง — ควรปรึกษาแพทย์เพื่อรับการรักษา';
+      explainParts.push('<strong>Thai CV Risk (RAMA-EGAT)</strong>: '+thaiR+'% → '+thaith);
+    }
+
+    scoreSummaryHTML=
+      '<div style="background:linear-gradient(135deg,#F8FAFC,#EFF6FF);border:1.5px solid #CBD5E1;border-radius:12px;padding:14px 16px;margin-top:4px;">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'+
+        '<span style="font-size:24px;">'+riskIcon+'</span>'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:800;color:'+riskColor+';">'+riskThai+'</div>'+
+          '<div style="font-size:11px;color:#64748B;">ประเมินจาก 3 เกณฑ์สากล — คะแนนสูงสุด '+worstScore.toFixed(1)+'%</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="font-size:12px;line-height:2.0;color:#374151;">'+
+        explainParts.map(function(p){return'<div>'+p+'</div>';}).join('')+
+      '</div>'+
+      '<div style="margin-top:10px;padding:8px 12px;background:white;border-radius:8px;border:1px solid #E2E8F0;font-size:11px;color:#64748B;line-height:1.6;">'+
+        '📌 <strong>หมายเหตุ:</strong> คะแนนความเสี่ยงนี้ประเมินจากปัจจัยที่วัดได้ เป็นการประมาณการณ์ ไม่ใช่การวินิจฉัย กรุณาปรึกษาแพทย์เสมอ'+
+      '</div>'+
+      '</div>';
+  }
+
+  if(cv&&cv.incomplete){
+    /* Primary prevention + missing DOB/gender — scoreBoxHTML handles SBP/TC/HDL warning */
+    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score · SCORE2 · PREVENT-ASCVD</p></div></div>'+
+    '<div class="cv-card">'+scoreBoxHTML+'</div></div>';
+  } else if(cv){
+    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — Framingham-based RAMA-EGAT</p></div></div>'+
     '<div class="cv-card">'+
     '<div class="cv-main">'+
     (cv.isASCVD?
@@ -1360,20 +1626,47 @@ function render(){
     )+
     '</div></div>'+
     '<div class="cv-goals">'+
-    '<div class="cv-goal">'+
-    '<div class="cv-gl">🎯 เป้าหมาย LDL</div>'+
-    '<div class="cv-gv">'+ldlGoalData.goal+' มก./ดล.</div>'+
-    '<div class="cv-gc">ปัจจุบัน: '+(r.ldl||'—')+' มก./ดล.</div></div>'+ 
+    /* Dual LDL Goal: ESC + AHA side by side */
+    (r.ldlInsufficient==='true'?
+      '<div class="cv-goal" style="grid-column:1/-1">'+
+        '<div class="cv-gl">🎯 LDL Goal</div>'+
+        '<div class="cv-gv" style="color:var(--warn);font-size:14px;">ประเมินไม่ได้</div>'+
+        '<div class="cv-gc" style="color:var(--warn);">ข้อมูลไม่เพียงพอ</div>'+
+      '</div>'
+    :
+      '<div class="cv-goal" style="background:linear-gradient(135deg,#EEF2FF,#E8EAFB);">'+
+        '<div class="cv-gl" style="color:#4338CA;">🇪🇺 ESC 2025</div>'+
+        '<div class="cv-gv" style="color:#4338CA;">'+(ldlGoalData.escGoal||ldlGoalData.goal)+' มก./ดล.</div>'+
+        '<div class="cv-gc" style="color:#4338CA;">'+ldlGoalData.escLevel+'</div>'+
+        '<div class="cv-gc" style="font-size:9px;">'+ldlGoalData.escPct+(ldlGoalData.escBasis?' · '+ldlGoalData.escBasis:'')+'</div>'+
+      '</div>'+
+      '<div class="cv-goal" style="background:linear-gradient(135deg,#FFF1F2,#FFEEF0);">'+
+        '<div class="cv-gl" style="color:#BE123C;">🇺🇸 AHA/ACC 2026</div>'+
+        '<div class="cv-gv" style="color:#BE123C;">'+(ldlGoalData.ahaGoal||ldlGoalData.goal)+' มก./ดล.</div>'+
+        '<div class="cv-gc" style="color:#BE123C;">'+ldlGoalData.ahaLevel+'</div>'+
+        '<div class="cv-gc" style="font-size:9px;">'+ldlGoalData.ahaPct+(ldlGoalData.ahaBasis?' · '+ldlGoalData.ahaBasis:'')+'</div>'+
+      '</div>'
+    )+
+    '<div class="cv-goal" style="background:#F0FDF4;border-color:#86EFAC;">'+
+      '<div class="cv-gl" style="color:#16A34A;">🎯 เป้าหมาย (Stricter)</div>'+
+      '<div class="cv-gv" style="color:#16A34A;">'+ldlGoalData.goal+'</div>'+
+      '<div class="cv-gc">ปัจจุบัน: '+(r.ldl||'—')+' มก./ดล.</div>'+
+      (ldlGoalData.upgradedByLdl190?'<div style="font-size:9px;color:#D97706;">&#8679; LDL ≥190 → High</div>':'')+
+      (ldlGoalData.upgradedByLpa?'<div style="font-size:9px;color:#D97706;">&#8679; Lp(a) ≥50 → High</div>':'')+
+    '</div>'+ 
     '<div class="cv-goal"><div class="cv-gl">💉 ความดันโลหิตเป้าหมาย</div><div class="cv-gv">'+(cv.bpGoal||'< 140/90')+'</div><div class="cv-gc">ปัจจุบัน: '+(r.sbp||'—')+'/'+(r.dbp||'—')+' มมปรอท</div></div>'+
     '<div class="cv-goal"><div class="cv-gl">🩸 HbA1c เป้าหมาย</div><div class="cv-gv">'+(cv.dm?'< 7.0 %':'< 5.7 %')+'</div><div class="cv-gc">ปัจจุบัน: '+(r.a1c||'—')+' %</div></div>'+
     (function(){
       var ldlNum=parseInt((ldlGoalData.goal||'130').replace(/[^0-9]/g,''))||130;
       var nhGoal=r.nonHdlGoalCustom?('< '+r.nonHdlGoalCustom):'< '+(ldlNum+30);
-      var nhCur=(+r.tc>0&&+r.hdl>0)?(+r.tc-+r.hdl)+' มก./ดล.':'—';
+      var nhCurVal=(+r.tc>0&&+r.hdl>0)?(+r.tc-+r.hdl):null;
+      var nhGoalNum=r.nonHdlGoalCustom?+r.nonHdlGoalCustom:(ldlNum+30);
+      var nhColor=nhCurVal===null?'var(--text3)':nhCurVal<nhGoalNum?'var(--ok)':'var(--bad)';
+      var nhStatus=nhCurVal===null?'—':(nhCurVal<nhGoalNum?nhCurVal+' ✓':nhCurVal+' ↑');
       return '<div class="cv-goal" style="background:linear-gradient(135deg,var(--acc-bg),#EBF4FF);border-color:#B8CCE0;">'+
         '<div class="cv-gl" style="color:#2C5F8A;">📊 เป้าหมาย Non-HDL</div>'+
         '<div class="cv-gv" style="color:#2C5F8A;">'+nhGoal+' มก./ดล.</div>'+
-        '<div class="cv-gc">ปัจจุบัน: '+nhCur+'<br><span style="font-size:9px;color:var(--text3)">= LDL Goal + 30</span></div>'+
+        '<div class="cv-gc">ปัจจุบัน: <span style="color:'+nhColor+';font-weight:700;">'+nhStatus+'</span> มก./ดล.<br><span style="font-size:9px;color:var(--text3)">= TC − HDL | Goal = LDL+30</span></div>'+
         '</div>';
     })()+
     '</div>'+
@@ -1407,7 +1700,7 @@ function render(){
   O+='<div class="body">';
 
   /* ── INBODY ── */
-  O+='<div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-t">⚖️</div><div><h2>ผลการวัดองค์ประกอบร่างกาย</h2><p>InBody Analysis — Body Composition</p></div></div>';
+  O+='<div class="sec"><div class="sh"><div class="si si-t">⚖️</div><div><h2>ผลการวัดองค์ประกอบร่างกาย</h2><p>InBody Analysis — Body Composition</p></div></div>';
   var hasInBody=r.weight||r.smm||r.bfm||r.pbf||r.vfl||r.inbodyScore;
   if(!hasInBody){
     O+='<div style="background:var(--cream2);border:1px solid var(--bl);border-radius:10px;padding:16px;text-align:center;margin-bottom:10px;">'+
@@ -1484,7 +1777,7 @@ function render(){
   var hasAnyLab=hasCoreLab||hasLipid||hasExtra||hasPSA||r.sbp;
 
   if(hasAnyLab){
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-b">🔬</div><div><h2>ผลการตรวจเลือดและความดัน</h2></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-b">🔬</div><div><h2>ผลการตรวจเลือดและความดัน</h2></div></div>';
 
   if(r.sbp){
     var bpGoalTxt=cv?cv.bpGoal:'< 140/90 มมปรอท';
@@ -1600,6 +1893,21 @@ function render(){
       '<td><span class="lv" style="color:'+psa.color+'">'+r.psa+'</span> <small>นก./มล.</small></td><td><span class="lr">'+psa.ref+'</span></td><td>'+psa.chip+'</td></tr>'+
       '</tbody></table></div>';
   }
+  /* ── Lp(a) section ── */
+  if(lpaV>0){
+    O+='<div class="lw"><div class="lst">🔬 Lipoprotein(a) — ความเสี่ยง ASCVD เพิ่มเติม</div>'+
+      '<table class="lt"><thead><tr><th>การตรวจ</th><th>ค่าที่ได้</th><th>ค่าอ้างอิง</th><th>ผล</th></tr></thead><tbody>'+
+      '<tr style="background:'+(lpaCls==='bd'?'var(--bad-bg)':lpaCls==='wn'?'#FFFBEB':'')+';">'+
+      '<td><div class="ln">ไลโปโปรตีน(เอ) — เสี่ยง ASCVD</div><div class="lf">Lipoprotein(a) / Lp(a)</div></td>'+
+      '<td><span class="lv" style="color:'+(lpaCls==='bd'?'var(--bad)':lpaCls==='wn'?'var(--warn)':'var(--ok)')+'">'+lpaV+'</span> <small>มก./ดล.</small></td>'+
+      '<td><span class="lr">< 30 ปกติ<br>30–49 เฝ้าระวัง<br>≥50 เสี่ยงสูง</span></td>'+
+      '<td><span class="chip '+(lpaCls==='bd'?'bd':lpaCls==='wn'?'wn':'ok')+'">'+lpaTxt+'</span></td></tr>'+
+      '</tbody></table>'+
+      (lpaCls==='bd'?'<div style="padding:8px 12px;font-size:11px;background:var(--bad-bg);color:var(--bad);border-top:1px solid var(--bl);">'+
+        '&#9888; Lp(a) ≥50 mg/dL: ความเสี่ยง ASCVD สูง — ESC/ACC แนะนำ LDL goal High Risk (&lt;70) + พิจารณา PCSK9i'+
+        '</div>':'')+
+      '</div>';
+  }
   if(tcHDL){
     var rcCls=+tcHDL<5?'ok':+tcHDL<6?'wn':'bd';
     var rcCol=+tcHDL<5?'var(--ok)':+tcHDL<6?'var(--warn)':'var(--bad)';
@@ -1610,11 +1918,12 @@ function render(){
   } /* end if(hasAnyLab) */
 
   O+=cvHTML;
+  if(scoreSummaryHTML) O+=scoreSummaryHTML;
 
   /* ── EKG ── */
   var ekgRes=r.ekgResult||'NA';
   var hasEKG=r.ekgDate||r.ekgComment||(ekgRes!=='NA');
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-ek">🫀</div><div><h2>ผลตรวจคลื่นไฟฟ้าหัวใจ (EKG)</h2>'+
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-ek">🫀</div><div><h2>ผลตรวจคลื่นไฟฟ้าหัวใจ (EKG)</h2>'+
     (r.ekgDate?'<p>วันที่ตรวจ: '+thDate(r.ekgDate)+'</p>':'')+
     '</div></div>'+
     '<div class="ekg-card"><div class="ekg-header ekg-h-teal">🫀 <span>ผล EKG '+(r.ekgDate?'— '+thDate(r.ekgDate):'')+'</span></div>'+
@@ -1634,7 +1943,7 @@ function render(){
   var hasLVDys=lvefV>0&&lvefV<53; /* LV dysfunction = LVEF < 53% */
   var hasEcho=r.echoDate||r.echoComment||(echoRes!=='NA')||lvefV>0;
 
-  O+='<div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-ec">'+PROBE_SM+'</div><div><h2>ผลตรวจคลื่นเสียงสะท้อนหัวใจ (Echo)</h2>'+
+  O+='<div class="sec"><div class="sh"><div class="si si-ec">'+PROBE_SM+'</div><div><h2>ผลตรวจคลื่นเสียงสะท้อนหัวใจ (Echo)</h2>'+
     (r.echoDate?'<p>วันที่ตรวจ: '+thDate(r.echoDate)+'</p>':'')+
     '</div></div>'+
     '<div class="ekg-card"><div class="ekg-header ekg-h-echo">🔊 <span>ผล Echo '+(r.echoDate?'— '+thDate(r.echoDate):'')+'</span></div>'+
@@ -1670,10 +1979,11 @@ function render(){
       (echoRes==='Normal'?'✅ ปกติ':echoRes==='Abnormal'?'⚠️ ผิดปกติ':'— NA / ยังไม่ได้ประเมิน')+
       '</div>';
     /* Valve findings */
-    if(r.valves){
+    var valveData=r.valves||r.valveCBs;
+    if(valveData){
       O+='<div class="valve-grid">'+
-        buildValveSection(r.valves,'sten','ลิ้นหัวใจตีบ (Stenosis)')+
-        buildValveSection(r.valves,'reg','ลิ้นหัวใจรั่ว (Regurgitation)')+
+        buildValveSection(valveData,'sten','ลิ้นหัวใจตีบ (Stenosis)')+
+        buildValveSection(valveData,'reg','ลิ้นหัวใจรั่ว (Regurgitation)')+
         '</div>';
     }
     if(r.echoComment)O+='<div class="ekg-comment" style="margin-top:10px"><strong>ผลที่พบ / ความเห็น:</strong><br>'+r.echoComment+'</div>';
@@ -1693,21 +2003,25 @@ function render(){
     echoSummaryLines.push('<li>การคลายตัวของหัวใจ (Diastolic function): <span style="color:var(--ok);font-weight:700;">ปกติ</span></li>');
   } else if(echoRes==='Abnormal'&&r.echoComment){
     var diastolic='ผิดปกติ';
-    if(/diastolic/i.test(r.echoComment)){diastolic=r.echoComment.match(/diastolic[^,.;]*/i)?.[0]||'Diastolic dysfunction';}
+    if(/diastolic/i.test(r.echoComment)){var _dm=r.echoComment.match(/diastolic[^,.;]*/i);diastolic=_dm?_dm[0]:'Diastolic dysfunction';}
     echoSummaryLines.push('<li>การคลายตัวของหัวใจ (Diastolic function): <span style="color:var(--warn);font-weight:700;">'+diastolic+'</span></li>');
   }
   /* Valve results */
-  var VALVES=[{k:'Mitral',th:'ลิ้นไมตรัล'},{k:'Aortic',th:'ลิ้นเอออร์ติก'},{k:'Tricuspid',th:'ลิ้นไตรคัสปิด'},{k:'Pulmonary',th:'ลิ้นพัลโมนิก'}];
-  VALVES.forEach(function(v){
-    var stenKey='stenosis_'+v.k; var regKey='regurg_'+v.k;
-    var sten=r[stenKey]||''; var reg=r[regKey]||'';
-    if(!sten&&!reg){
+  /* Read valve data from valveCBs structure: {sten_Mitral_mild:true, reg_Aortic_mod:true...} */
+  var VALVE_LIST=[{k:'Mitral',th:'ลิ้นไมตรัล'},{k:'Aortic',th:'ลิ้นเอออร์ติก'},{k:'Tricuspid',th:'ลิ้นไตรคัสปิด'},{k:'Pulmonary',th:'ลิ้นพัลโมนิก'}];
+  var SEV_MAP={mild:'เล็กน้อย',mod:'ปานกลาง',sev:'รุนแรง'};
+  var cbs=r.valveCBs||{};
+  VALVE_LIST.forEach(function(v){
+    var issues=[];
+    ['mild','mod','sev'].forEach(function(s){
+      if(cbs['sten_'+v.k+'_'+s]) issues.push('ตีบ '+SEV_MAP[s]);
+      if(cbs['reg_'+v.k+'_'+s])  issues.push('รั่ว '+SEV_MAP[s]);
+    });
+    if(!issues.length){
       echoSummaryLines.push('<li>'+v.th+' ('+v.k+' valve): <span style="color:var(--ok);font-weight:700;">ทำงานปกติ</span></li>');
     } else {
-      var issues=[];
-      if(sten) issues.push('ตีบ '+({mild:'เล็กน้อย',moderate:'ปานกลาง',severe:'รุนแรง'}[sten]||sten));
-      if(reg)  issues.push('รั่ว ' +({mild:'เล็กน้อย',moderate:'ปานกลาง',severe:'รุนแรง'}[reg] ||reg));
-      var col=issues.some(function(x){return x.includes('รุนแรง');})?'var(--bad)':issues.some(function(x){return x.includes('ปานกลาง');})?'var(--warn)':'var(--high)';
+      var col=issues.some(function(x){return x.includes('รุนแรง');})?'var(--bad)':
+              issues.some(function(x){return x.includes('ปานกลาง');})?'var(--warn)':'var(--high)';
       echoSummaryLines.push('<li>'+v.th+' ('+v.k+' valve): <span style="color:'+col+';font-weight:700;">'+issues.join(', ')+'</span></li>');
     }
   });
@@ -1766,7 +2080,7 @@ function render(){
   }
 
   /* ── TREND CHARTS ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-p">📈</div><div><h2>แนวโน้มการเปลี่ยนแปลง</h2><p>ย้อนหลัง '+hist.length+' ครั้ง</p></div></div>'+
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-p">📈</div><div><h2>แนวโน้มการเปลี่ยนแปลง</h2><p>ย้อนหลัง '+hist.length+' ครั้ง</p></div></div>'+
     /* Lab: chart (screen only) + table (always) */
     '<div class="chart-pair">'+
       '<div class="cc chart-only"><div class="ctr"><div class="cdo" style="background:var(--acc)"></div><div><div class="ctt">ผลเลือด — Lab Trends</div><div class="csb">แกนซ้าย: FBS/LDL/AST/ALT | แกนขวา: HbA1c</div></div></div>'+
@@ -1782,7 +2096,7 @@ function render(){
     '</div>';
 
   /* ── VACCINES ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-g">💉</div><div><h2>วัคซีนที่แนะนำ</h2><p>Thai Vaccination Guideline 2024</p></div></div><div class="vg">';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-g">💉</div><div><h2>วัคซีนที่แนะนำ</h2><p>Thai Vaccination Guideline 2024</p></div></div><div class="vg">';
   var vSt={done:{i:'✅',cls:'vs-done',t:'ฉีดแล้ว'},partial:{i:'⚠️',cls:'vs-partial',t:'ฉีดบางส่วน'},plan:{i:'📋',cls:'vs-plan',t:'วางแผนฉีด'},na:{i:'—',cls:'',t:'ไม่จำเป็น'},'':{i:'○',cls:'',t:'ยังไม่ฉีด'}};
   VACCINES.forEach(function(v){
     var d=(r.vaccines&&r.vaccines[v.id])||{};
@@ -1799,7 +2113,7 @@ function render(){
   /* ── FOLLOW-UP ── */
   var echoFreqDisplay=echoFreqOverride?(freqLabel[echoFreqOverride]||freqLabel[+echoFreqOverride]||('ทุก '+echoFreqOverride+' เดือน')):'—';
 
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-f">📅</div><div><h2>แผนการติดตามผล</h2><p>Follow-up Schedule & Recommendations</p></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-f">📅</div><div><h2>แผนการติดตามผล</h2><p>Follow-up Schedule & Recommendations</p></div></div>';
   O+='<div class="fu-grid">'+
     '<div class="fu-item"><div class="fu-icon">🔬</div><div class="fu-label">ตรวจเลือด</div><div class="fu-val">'+(r.labFreq?freqLabel[+r.labFreq]||('ทุก '+r.labFreq+' เดือน'):'—')+'</div></div>'+
     '<div class="fu-item"><div class="fu-icon">🫀</div><div class="fu-label">ตรวจ EKG</div><div class="fu-val">'+(r.ekgFreq?freqLabel[+r.ekgFreq]||('ทุก '+r.ekgFreq+' เดือน'):'—')+'</div></div>'+
@@ -1812,7 +2126,7 @@ function render(){
   O+='</div>';
 
   /* ── SUMMARY CARD (Item 6) ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si" style="background:#2C5F8A;color:white">📋</div><div><h2>สรุปผลการตรวจสุขภาพ</h2><p>สรุปเข้าใจง่ายสำหรับผู้ป่วย</p></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si" style="background:#2C5F8A;color:white">📋</div><div><h2>สรุปผลการตรวจสุขภาพ</h2><p>สรุปเข้าใจง่ายสำหรับผู้ป่วย</p></div></div>';
   O+='<div style="background:white;border:1px solid var(--bl);border-radius:12px;padding:16px 18px;margin-bottom:10px;">';
   /* Auto-build summary */
   var summaryLines=[];
@@ -1832,7 +2146,7 @@ function render(){
   O+='</div></div>';
 
   /* ── DOCTORS NOTE (Item 7) ── */
-  O+='<div class="sec"><div class="sec-hg"><div class="sh"><div class="si" style="background:#4A3A8A;color:white">✍️</div><div><h2>Doctor\'s Note — บันทึกจากแพทย์</h2><p>ข้อความเฉพาะสำหรับผู้ป่วยรายนี้</p></div></div>';
+  O+='<div class="sec"><div class="sh"><div class="si" style="background:#4A3A8A;color:white">✍️</div><div><h2>Doctor\'s Note — บันทึกจากแพทย์</h2><p>ข้อความเฉพาะสำหรับผู้ป่วยรายนี้</p></div></div>';
   O+='<div style="background:white;border:2px solid #4A3A8A;border-radius:12px;padding:16px 18px;margin-bottom:10px;min-height:80px;">';
   if(r.doctorNote){
     O+='<div style="font-size:14px;line-height:1.8;color:var(--text)">'+r.doctorNote.replace(/\n/g,'<br>')+'</div>';
@@ -1842,7 +2156,7 @@ function render(){
   O+='</div></div>';
 
   /* ── ADVICE ── */
-  O+='<div class="sdiv"></div><div class="sec"><div class="sec-hg"><div class="sh"><div class="si si-g">💡</div><div><h2>คำแนะนำจากแพทย์</h2></div></div>';
+  O+='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-g">💡</div><div><h2>คำแนะนำจากแพทย์</h2></div></div>';
   /* Diet advice header with protein grams extracted */
   var proteinLine='';
   var pm=dietAdv.match(/▸\s*([\d–]+)\s*กรัม\/วัน/);
@@ -1864,7 +2178,7 @@ function render(){
     '</div>';
 
   O+='</div>'; /* end report */
-  document.getElementById('rpt').innerHTML=O;
+  var rptEl=document.getElementById('rpt');if(rptEl)rptEl.innerHTML=O;
   setTimeout(function(){drawCharts(hist);},150);
 }
 
@@ -1912,7 +2226,7 @@ function drawCharts(hist){
   }
 }
 
-render();
+try{render();}catch(e){console.error('CardioPluz render error:',e);var el=document.getElementById('rpt');if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:red;">⚠️ เกิดข้อผิดพลาด: '+e.message+'<br><small>กรุณารีเฟรชหน้า</small></div>';}
 
 /* ── Print: convert Chart.js canvas to static image ── */
 window.addEventListener('beforeprint', function(){

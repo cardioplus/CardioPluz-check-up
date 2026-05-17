@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CardioPluz — ผลตรวจสุขภาพของคุณ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --teal:#1A9B8C; --teal-dark:#147A6E; --teal-light:#E6F6F4;
+  --cream:#F7F4EE; --border:#D4CFC4;
+  --text:#2C2820; --text2:#6B6057;
+  --ok:#1A7A4A; --ok-bg:#EDF7F2;
+  --warn:#C67B00; --warn-bg:#FFF8EC;
+  --bad:#B01D1D; --bad-bg:#FFF2F2;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+.app-header{background:linear-gradient(135deg,#0E6B5E,var(--teal));color:white;padding:20px 16px 16px;text-align:center;}
+.logo-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;}
+.app-name{font-size:20px;font-weight:700;letter-spacing:.5px;}
+.app-sub{font-size:12px;opacity:.8;}
+
+/* ── SCREENS ── */
+.screen{display:none;padding:16px;}
+.screen.active{display:block;}
+
+
+/* ── eGFR ── */
+function calcGFR(cr,age,g){
+  if(!cr||!age)return null;
+  var k=g==='หญิง'?0.7:0.9,a=g==='หญิง'?-0.241:-0.302,s=g==='หญิง'?1.012:1;
+  var rat=+cr/k;
+  return Math.round(142*Math.pow(Math.min(rat,1),a)*Math.pow(Math.max(rat,1),-1.200)*Math.pow(0.9938,age)*s);
+}
+function ckdLabel(gfr){
+  if(gfr===null)return null;
+  if(gfr>=90)return{stage:'G1',txt:'ปกติ',cls:'chip-ok'};
+  if(gfr>=60)return{stage:'G2',txt:'ลดลงเล็กน้อย',cls:'chip-ok'};
+  if(gfr>=45)return{stage:'G3a',txt:'ลดลงเล็กน้อย-ปานกลาง',cls:'chip-warn'};
+  if(gfr>=30)return{stage:'G3b',txt:'ลดลงปานกลาง-มาก',cls:'chip-warn'};
+  if(gfr>=15)return{stage:'G4',txt:'ลดลงมาก',cls:'chip-bad'};
+  return{stage:'G5',txt:'ไตวายเรื้อรัง',cls:'chip-bad'};
+}
+/* ── LOGIN ── */
+.login-card{background:white;border-radius:16px;padding:24px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);max-width:400px;margin:0 auto;}
+.login-title{font-size:18px;font-weight:700;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.form-group input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Sarabun',sans-serif;font-size:15px;color:var(--text);background:var(--cream);outline:none;transition:border-color .2s;}
+.form-group input:focus{border-color:var(--teal);background:white;}
+.btn-login{width:100%;background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:white;border:none;padding:14px;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;transition:opacity .2s;}
+.btn-login:hover{opacity:.88;}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;}
+.login-hint{font-size:12px;color:var(--text2);margin-top:12px;text-align:center;line-height:1.5;}
+.error-msg{background:var(--bad-bg);color:var(--bad);border:1px solid #DDB0B0;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;}
+.error-msg.show{display:block;}
+
+/* ── VISIT LIST ── */
+.patient-banner{background:var(--teal);color:white;padding:14px 16px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.pb-avatar{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.pb-name{font-size:16px;font-weight:700;}
+.pb-sub{font-size:12px;opacity:.8;margin-top:2px;}
+.section-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.visit-card{background:white;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px;}
+.visit-card:hover{border-color:var(--teal);box-shadow:0 2px 12px rgba(26,155,140,0.12);}
+.visit-icon{width:40px;height:40px;border-radius:10px;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.visit-date{font-size:14px;font-weight:700;}
+.visit-doctor{font-size:12px;color:var(--text2);margin-top:2px;}
+.visit-scores{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+.score-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;}
+.btn-back2{background:white;border:1.5px solid var(--border);color:var(--text);padding:10px 16px;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:14px;}
+.logout-btn{width:100%;background:var(--cream);border:1.5px solid var(--border);color:var(--text2);padding:12px;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;margin-top:16px;}
+
+/* ── REPORT VIEW ── */
+.report-section{background:white;border-radius:12px;margin-bottom:12px;overflow:hidden;}
+.rs-header{padding:12px 16px;font-size:13px;font-weight:700;color:white;display:flex;align-items:center;gap:8px;}
+.rs-header.teal{background:var(--teal);}
+.rs-header.blue{background:#2C5F8A;}
+.rs-header.orange{background:#C06000;}
+.rs-header.green{background:#1A7A4A;}
+.rs-body{padding:14px 16px;}
+
+/* InBody values grid */
+.val-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.val-item{background:var(--cream);border-radius:8px;padding:10px 12px;}
+.val-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.val-num{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);}
+.val-unit{font-size:11px;color:var(--text2);}
+.val-delta{font-size:11px;font-weight:700;margin-top:2px;}
+.d-up-bad{color:var(--bad);} .d-up-good{color:var(--ok);}
+.d-dn-bad{color:var(--bad);} .d-dn-good{color:var(--ok);}
+
+/* Mini gauge (mobile-friendly) */
+.m-gauge{margin-bottom:12px;}
+.m-gauge-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
+.m-gauge-name{font-size:13px;color:var(--text2);flex:1;}
+.m-gauge-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.m-gauge-unit{font-size:11px;color:var(--text2);}
+.m-track{height:10px;background:#ECEAE6;border-radius:5px;overflow:hidden;position:relative;margin-bottom:3px;}
+.m-normal{position:absolute;top:0;height:100%;background:#52C497;}
+.m-dot{position:absolute;top:50%;transform:translateY(-50%);width:14px;height:14px;border-radius:50%;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.25);}
+.dot-ok{background:var(--ok);} .dot-over{background:var(--bad);} .dot-under{background:var(--bad);}
+.m-lbls{display:flex;justify-content:space-between;font-size:9px;color:#b0a89e;}
+
+/* Lab rows */
+.lab-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.lab-row:last-child{border-bottom:none;}
+.lab-row-name{flex:1;}
+.lab-row-nm{font-size:14px;font-weight:600;}
+.lab-row-ref{font-size:11px;color:var(--text2);}
+.lab-row-val{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin-right:8px;}
+.chip{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;}
+.chip-ok{background:var(--ok-bg);color:var(--ok);}
+.chip-warn{background:var(--warn-bg);color:var(--warn);}
+.chip-bad{background:var(--bad-bg);color:var(--bad);}
+.chip-na{background:#eee;color:#aaa;}
+
+/* Score gauge */
+.score-display{display:flex;align-items:center;gap:16px;padding:8px 0;}
+.score-big{font-size:48px;font-weight:800;font-family:'IBM Plex Mono',monospace;line-height:1;}
+.score-info .score-desc{font-size:14px;font-weight:600;margin-top:4px;}
+.score-info .score-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+/* Advice */
+.adv-box{background:var(--teal-light);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:10px;font-size:13px;line-height:1.7;white-space:pre-wrap;}
+.adv-box.ex{background:#EEF4FB;border-left-color:#2C5F8A;}
+.adv-box.vax{background:var(--ok-bg);border-left-color:var(--ok);}
+
+/* Vaccine list */
+.fu-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--teal-bg);border:1px solid var(--teal);border-radius:20px;font-size:12px;color:var(--teal-dark);font-weight:600;}
+.fu-chip span{color:var(--text2);font-weight:400;}
+.vax-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.vax-row:last-child{border-bottom:none;}
+.vax-ico{font-size:18px;}
+.vax-name{font-size:13px;font-weight:600;}
+.vax-sub{font-size:11px;color:var(--text2);}
+.vax-date{font-size:11px;color:var(--teal-dark);font-family:'IBM Plex Mono',monospace;margin-top:1px;}
+
+/* CV Risk */
+.cv-risk-banner{border-radius:10px;padding:14px;margin-bottom:12px;}
+.cv-risk-icon{font-size:24px;}
+.cv-risk-level{font-size:18px;font-weight:800;margin-top:4px;}
+.cv-risk-pct{font-size:13px;margin-top:2px;opacity:.85;}
+.cv-goals-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cv-goal-item{background:var(--cream);border-radius:8px;padding:10px 12px;}
+.cv-goal-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.cv-goal-val{font-size:13px;font-weight:700;color:var(--teal-dark);}
+.cv-goal-cur{font-size:11px;color:var(--text2);margin-top:1px;}
+
+/* Next visit */
+.next-banner{background:#FFF8EC;border:1px solid #F0D09A;border-radius:10px;padding:14px;text-align:center;}
+.next-lbl{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.next-date{font-size:20px;font-weight:700;color:#8A6A1A;}
+
+/* Loading */
+.loading{text-align:center;padding:40px 20px;color:var(--text2);}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* BP row */
+.bp-display{display:flex;align-items:baseline;gap:4px;margin-bottom:4px;}
+.bp-num{font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.bp-sep{font-size:18px;color:var(--text2);}
+.bp-unit{font-size:13px;color:var(--text2);}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="logo-wrap">
+    <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="24" fill="rgba(255,255,255,0.15)"/>
+      <path d="M24 38C24 38 10 29 10 19C10 14.582 13.582 11 18 11C20.7 11 23.1 12.4 24 14.5C24.9 12.4 27.3 11 30 11C34.418 11 38 14.582 38 19C38 29 24 38 24 38Z" stroke="white" stroke-width="2" fill="none"/>
+      <polyline points="12,21 16,21 19,15 23,27 27,19 30,23 33,21 37,21" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="app-name">CardioPluz Clinic</div>
+      <div class="app-sub">คลินิกอายุรกรรมโรคหัวใจ — พญ.ณัฏฐา & พญ.พรอนงค์</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: LOGIN -->
+<div class="screen active" id="screen-login">
+  <div style="padding:16px;">
+    <div class="login-card">
+      <div class="login-title">🔍 ดูผลตรวจของคุณ</div>
+      <div class="login-sub">กรุณากรอก HN (รหัสผู้ป่วย) และวันเกิดเพื่อเข้าถึงผลตรวจของท่าน</div>
+      <div class="error-msg" id="loginError">ไม่พบข้อมูล กรุณาตรวจสอบ HN และวันเกิดอีกครั้ง</div>
+      <div class="form-group">
+        <label>HN — รหัสผู้ป่วย</label>
+        <input type="text" id="hnInput" placeholder="เช่น HN-2568-001" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>วันเดือนปีเกิด (ค.ศ.)</label>
+        <input type="date" id="dobInput" placeholder="YYYY-MM-DD">
+      </div>
+      <button class="btn-login" onclick="doLogin()">ดูผลตรวจ →</button>
+      <div class="login-hint">
+        📋 ข้อมูลนี้ปลอดภัย ใช้เพื่อยืนยันตัวตนเท่านั้น<br>
+        หาก HN ไม่ทราบ กรุณาติดต่อเจ้าหน้าที่คลินิก
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: VISITS LIST -->
+<div class="screen" id="screen-list">
+  <div id="patientBanner"></div>
+  <div class="section-title">ประวัติการตรวจ</div>
+  <div id="visitList"></div>
+  <button class="logout-btn" onclick="doLogout()">← ออกจากระบบ</button>
+</div>
+
+<!-- SCREEN: REPORT DETAIL -->
+<div class="screen" id="screen-report">
+  <button class="btn-back2" onclick="showScreen('list')">← รายการตรวจ</button>
+  <div id="reportDetail"></div>
+</div>
+
+<!-- SCREEN: LOADING -->
+<div class="screen" id="screen-loading">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>กำลังโหลดข้อมูล...</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── FIREBASE ── */
+var db;
+try {
+  firebase.initializeApp({
+    apiKey:"AIzaSyD5bvjywkSfJhDOPywei401hJfFz7lgNf4",
+    authDomain:"cardiopluz-health-check-up.firebaseapp.com",
+    projectId:"cardiopluz-health-check-up",
+    storageBucket:"cardiopluz-health-check-up.firebasestorage.app",
+    messagingSenderId:"936833651637",
+    appId:"1:936833651637:web:b2f9b5136d0a997f3d7ffc"
+  });
+  db = firebase.firestore();
+} catch(e) { console.error('Firebase init error:', e); }
+
+var VACCINES = [
+  {id:'flu',     name:'ไข้หวัดใหญ่',       ageNote:'ทุกกลุ่มอายุ',       sub:'วัคซีนไข้หวัดใหญ่ — แนะนำทุกปี'},
+  {id:'pcv20',   name:'ปอดอักเสบ PCV20',  ageNote:'อายุ ≥65 ปี หรือมีโรคเรื้อรัง', sub:'วัคซีนปอดบวม Pneumococcal 20 — ฉีดครั้งเดียว'},
+  {id:'rsv',     name:'RSV',              ageNote:'อายุ ≥60 ปี',          sub:'วัคซีน RSV — แนะนำในผู้มีโรคหัวใจหรือปอด'},
+  {id:'shingles',name:'งูสวัด (Shingrix)',ageNote:'อายุ ≥50 ปี',          sub:'ฉีด 2 เข็ม ห่างกัน 2–6 เดือน'},
+  {id:'hpv',     name:'HPV',             ageNote:'อายุ 9–45 ปี (หญิง)',  sub:'ป้องกันมะเร็งปากมดลูก'}
+];
+
+var currentPatient=null, patientVisits=[];
+
+/* ── UTILS ── */
+function thDate(d) {
+  if(!d)return'-'; var p=d.split('-');
+  if(p.length===3){var M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    var y=parseInt(p[0])<2400?parseInt(p[0])+543:parseInt(p[0]);
+    return parseInt(p[2])+' '+M[parseInt(p[1])-1]+' '+y;}return d;
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function chip(cls,txt) { return '<span class="chip '+cls+'">'+txt+'</span>'; }
+
+function labSt(test,v,g){
+  if(!v)return{chip:chip('chip-na','—'),color:'#aaa',ref:'—'};
+  var n=+v, ok, warn, ref, cls, txt, color;
+  if(test==='fbs'){ok=n<=99;warn=n<=125;ref='70–99';}
+  else if(test==='a1c'){ok=n<5.7;warn=n<6.5;ref='<5.7%';}
+  else if(test==='ldl'){ok=n<130;warn=n<160;ref='<130';}
+  else if(test==='cr'){var mx=g==='หญิง'?1.1:1.2;ok=n<=mx;warn=n<=mx*1.3;ref=g==='หญิง'?'0.5–1.1':'0.7–1.2';}
+  else if(test==='ast'||test==='alt'){ok=n<=40;warn=n<=80;ref='<40';}
+  else if(test==='tc'){ok=n<200;warn=n<240;ref='<200';}
+  else if(test==='hdl'){var mn=g==='หญิง'?50:40;ok=n>=mn;warn=n>=(mn-10);ref=g==='หญิง'?'>50':'>40';
+    cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';txt=ok?'ปกติ':warn?'ต่ำ':'ต่ำมาก';color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:chip(cls,txt),color:color,ref:ref};}
+  else if(test==='tg'){ok=n<150;warn=n<200;ref='<150';}
+  else if(test==='psa'){if(n<4){cls='chip-ok';txt='ปกติ';}else if(n<=10){cls='chip-warn';txt='เฝ้าระวัง';}else{cls='chip-bad';txt='สูง';}
+    return{chip:chip(cls,txt),color:n<4?'var(--ok)':n<=10?'var(--warn)':'var(--bad)',ref:'<4.0'};}
+  else return{chip:chip('chip-na','—'),color:'#aaa',ref:'—'};
+  cls=ok?'chip-ok':warn?'chip-warn':'chip-bad';
+  txt=ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';
+  color=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+  return{chip:chip(cls,txt),color:color,ref:ref};
+}
+
+function mGauge(name,val,unit,nMin,nMax,tMax) {
+  if(!val)return'';
+  var v=+val, tm=tMax||nMax*1.8;
+  function pct(x){return Math.min(100,Math.max(0,x/tm*100));}
+  var nL=pct(nMin),nW=pct(nMax)-pct(nMin),dp=pct(v);
+  var dc=v<nMin?'dot-under':v>nMax?'dot-over':'dot-ok';
+  return '<div class="m-gauge">'+
+    '<div class="m-gauge-row"><span class="m-gauge-name">'+name+'</span><span class="m-gauge-val">'+val+'</span><span class="m-gauge-unit"> '+unit+'</span></div>'+
+    '<div class="m-track"><div class="m-normal" style="left:'+nL+'%;width:'+nW+'%"></div><div class="m-dot '+dc+'" style="left:calc('+dp+'% - 7px)"></div></div>'+
+    '<div class="m-lbls"><span>Under</span><span>Normal</span><span>Over</span></div>'+
+    '</div>';
+}
+
+function scoreColor(sc){return sc>=70?'var(--ok)':sc>=50?'var(--warn)':'var(--bad)';}
+function scoreBg(sc){return sc>=70?'var(--ok-bg)':sc>=50?'var(--warn-bg)':'var(--bad-bg)';}
+function scoreText(sc){return sc>=70?'ดี — ร่างกายแข็งแรง':sc>=50?'พอใช้ — ควรปรับพฤติกรรม':'ควรปรับปรุง — ปรึกษาแพทย์';}
+
+
+/* ── eGFR ── */
+function calcGFR(cr,age,g){
+  if(!cr||!age)return null;
+  var k=g==='หญิง'?0.7:0.9,a=g==='หญิง'?-0.241:-0.302,s=g==='หญิง'?1.012:1;
+  var rat=+cr/k;
+  return Math.round(142*Math.pow(Math.min(rat,1),a)*Math.pow(Math.max(rat,1),-1.200)*Math.pow(0.9938,age)*s);
+}
+function ckdLabel(gfr){
+  if(gfr===null)return null;
+  if(gfr>=90)return{stage:'G1',txt:'ปกติ',cls:'chip-ok'};
+  if(gfr>=60)return{stage:'G2',txt:'ลดลงเล็กน้อย',cls:'chip-ok'};
+  if(gfr>=45)return{stage:'G3a',txt:'ลดลงเล็กน้อย-ปานกลาง',cls:'chip-warn'};
+  if(gfr>=30)return{stage:'G3b',txt:'ลดลงปานกลาง-มาก',cls:'chip-warn'};
+  if(gfr>=15)return{stage:'G4',txt:'ลดลงมาก',cls:'chip-bad'};
+  return{stage:'G5',txt:'ไตวายเรื้อรัง',cls:'chip-bad'};
+}
+/* ── LOGIN ── */
+function doLogin() {
+  var hn=(document.getElementById('hnInput').value||'').trim();
+  var dob=document.getElementById('dobInput').value||'';
+  var err=document.getElementById('loginError');
+  err.classList.remove('show');
+  if(!hn||!dob){err.textContent='กรุณากรอก HN และวันเกิด';err.classList.add('show');return;}
+  if(!db){err.textContent='ขณะนี้ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่';err.classList.add('show');return;}
+  showScreen('loading');
+  db.collection('visits')
+    .where('hn','==',hn)
+    .orderBy('visitDate','desc')
+    .get()
+    .then(function(snap){
+      if(snap.empty){showScreen('login');err.textContent='ไม่พบข้อมูล HN นี้';err.classList.add('show');return;}
+      /* Verify DOB against first record */
+      var visits=[]; snap.forEach(function(d){visits.push(d.data());});
+      /* DOB match: compare year/month/day from dob field (stored as text) or birthDate field */
+      var dobYear=dob.split('-')[0]; /* user entered YYYY-MM-DD */
+      var matched=visits.some(function(v){
+        /* First: exact match on dobDate field (YYYY-MM-DD stored by DB) */
+        if(v.dobDate&&v.dobDate===dob) return true;
+        /* Second: year-only match on dob Thai text */
+        var vDob=v.dob||'';
+        if(vDob.includes(dobYear)) return true;
+        /* Third: Buddhist/AD year conversion */
+        var adYear=parseInt(dobYear);
+        var bYear=adYear+543;
+        return vDob.includes(String(adYear))||vDob.includes(String(bYear))||
+               (v.dobDate&&v.dobDate.startsWith(dobYear));
+      });
+      if(!matched){showScreen('login');err.textContent='วันเกิดไม่ตรงกับข้อมูล กรุณาตรวจสอบอีกครั้ง';err.classList.add('show');return;}
+      currentPatient=visits[0];
+      patientVisits=visits;
+      showVisitList();
+    })
+    .catch(function(e){
+      showScreen('login');
+      err.textContent='เกิดข้อผิดพลาด: '+e.message;err.classList.add('show');
+    });
+}
+
+function doLogout(){
+  currentPatient=null; patientVisits=[];
+  document.getElementById('hnInput').value='';
+  document.getElementById('dobInput').value='';
+  showScreen('login');
+}
+
+/* ── VISIT LIST ── */
+function showVisitList(){
+  var r=currentPatient;
+  /* Banner */
+  document.getElementById('patientBanner').innerHTML=
+    '<div class="patient-banner">'+
+    '<div class="pb-avatar">👤</div>'+
+    '<div><div class="pb-name">'+r.fullName+'</div>'+
+    '<div class="pb-sub">HN: '+r.hn+' | '+(r.gender||'')+(r.dob?' | '+r.dob:'')+'</div></div></div>';
+  /* Visits */
+  var html='';
+  patientVisits.forEach(function(v,i){
+    var sc=+v.inbodyScore||0;
+    var scChip=sc>0?'<span class="score-chip" style="background:'+scoreBg(sc)+';color:'+scoreColor(sc)+'">Score '+sc+'</span>':'';
+    var fbsChip=v.fbs?'<span class="score-chip" style="background:'+(+v.fbs<=99?'var(--ok-bg)':'var(--warn-bg)')+';color:'+(+v.fbs<=99?'var(--ok)':'var(--warn)')+'">FBS '+v.fbs+'</span>':'';
+    html+='<div class="visit-card" onclick="showReport('+i+')">'+
+      '<div class="visit-icon">📋</div>'+
+      '<div style="flex:1">'+
+      '<div class="visit-date">'+thDate(v.visitDate)+'</div>'+
+      '<div class="visit-doctor">แพทย์: '+(v.doctor||'—')+'</div>'+
+      '<div class="visit-scores">'+scChip+fbsChip+'</div>'+
+      '</div>'+
+      '<div style="font-size:20px;color:var(--teal)">›</div>'+
+      '</div>';
+  });
+  document.getElementById('visitList').innerHTML=html;
+  showScreen('list');
+}
+
+/* ── REPORT DETAIL ── */
+function showReport(idx){
+  var r=patientVisits[idx], g=r.gender||'';
+  var html='';
+
+  /* Visit header */
+  html+='<div style="background:var(--teal);color:white;border-radius:12px;padding:14px 16px;margin-bottom:12px;">'+
+    '<div style="font-size:12px;opacity:.75;margin-bottom:2px">ผลตรวจวันที่</div>'+
+    '<div style="font-size:18px;font-weight:700">'+thDate(r.visitDate)+'</div>'+
+    '<div style="font-size:12px;opacity:.8;margin-top:3px">แพทย์: '+(r.doctor||'—')+'</div>'+
+    '</div>';
+
+  /* InBody Score */
+  var sc=+r.inbodyScore||0;
+  if(sc>0){
+    html+='<div class="report-section">'+
+      '<div class="rs-header teal">⚖️ InBody Score</div>'+
+      '<div class="rs-body">'+
+      '<div class="score-display">'+
+      '<div class="score-big" style="color:'+scoreColor(sc)+'">'+sc+'</div>'+
+      '<div class="score-info">'+
+      '<div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase">คะแนน</div>'+
+      '<div class="score-desc" style="color:'+scoreColor(sc)+'">'+scoreText(sc)+'</div>'+
+      (r.bodyTypeGrid?'<div class="score-sub">Body Type: '+r.bodyTypeGrid+'</div>':'')+
+      (r.bodyBalance?'<div class="score-sub">Balance: '+r.bodyBalance+'</div>':'')+
+      '</div></div></div></div>';
+  }
+
+  /* Muscle-Fat */
+  html+='<div class="report-section">'+
+    '<div class="rs-header teal">💪 Muscle-Fat Analysis</div>'+
+    '<div class="rs-body">'+
+    mGauge('น้ำหนัก (Weight)',r.weight,'kg',50,70,100)+
+    mGauge('กล้ามเนื้อโครงร่าง (SMM)',r.smm,'kg',g==='หญิง'?18:24,g==='หญิง'?26:33,45)+
+    mGauge('มวลไขมัน (BFM)',r.bfm,'kg',g==='หญิง'?10:6,g==='หญิง'?20:20,40)+
+    '</div></div>';
+
+  /* Obesity */
+  html+='<div class="report-section">'+
+    '<div class="rs-header teal">📊 Obesity Analysis</div>'+
+    '<div class="rs-body">'+
+    mGauge('BMI',r.bmi,'kg/m²',18.5,23,35)+
+    mGauge('% ไขมันใต้ผิวหนัง',r.pbf,'%',g==='หญิง'?18:10,g==='หญิง'?28:20,45)+
+    mGauge('ไขมันช่องท้อง (VFL)',r.vfl,'Lv',1,10,20)+
+    mGauge('อัตราส่วนเอว/สะโพก (WHR)',r.whr,'',0.7,g==='หญิง'?0.85:0.9,1.15)+
+    (r.bmr?'<div style="padding:10px 0;border-top:1px solid var(--border);margin-top:4px;font-size:13px;color:var(--text2)">BMR (อัตราเผาผลาญ) <strong style="font-family:monospace;font-size:15px;color:var(--text)">'+r.bmr+'</strong> kcal/วัน</div>':'')+
+    '</div></div>';
+
+  /* BP */
+  if(r.sbp){
+    var sbpV=+r.sbp,dbpV=+r.dbp||0;
+    var bpCls=sbpV<120&&dbpV<80?'chip-ok':sbpV>=140||dbpV>=90?'chip-bad':'chip-warn';
+    var bpTxt=sbpV<120&&dbpV<80?'ปกติ':sbpV>=140||dbpV>=90?'ความดันสูง':'เฝ้าระวัง';
+    html+='<div class="report-section">'+
+      '<div class="rs-header blue">🩺 ความดันโลหิต</div>'+
+      '<div class="rs-body">'+
+      '<div class="bp-display">'+
+      '<span class="bp-num" style="color:'+(sbpV>=140?'var(--bad)':'var(--text)')+'">'+r.sbp+'</span>'+
+      '<span class="bp-sep">/</span>'+
+      '<span class="bp-num" style="color:'+(dbpV>=90?'var(--bad)':'var(--text)')+'">'+r.dbp+'</span>'+
+      '<span class="bp-unit">mmHg &nbsp;</span>'+
+      chip(bpCls,bpTxt)+
+      '</div>'+
+      (r.bpTarget?'<div style="font-size:12px;color:var(--text2);margin-top:6px">🎯 เป้าหมาย Office BP: <strong>'+r.bpTarget+'</strong></div>':'')+
+      '</div></div>';
+  }
+
+  /* Lab */
+  var labRows=[
+    {k:'fbs',n:'น้ำตาล FBS',u:'mg/dL'},{k:'a1c',n:'HbA1c',u:'%'},
+    {k:'ldl',n:'LDL Cholesterol',u:'mg/dL'},{k:'tc',n:'Total Cholesterol',u:'mg/dL'},
+    {k:'hdl',n:'HDL Cholesterol',u:'mg/dL'},{k:'tg',n:'Triglyceride',u:'mg/dL'},
+    {k:'cr',n:'Creatinine',u:'mg/dL'},{k:'ast',n:'AST',u:'U/L'},{k:'alt',n:'ALT',u:'U/L'}
+  ];
+  if(g!=='หญิง') labRows.push({k:'psa',n:'PSA',u:'ng/mL'});
+  if(r.lpa) labRows.push({k:'lpa',n:'Lp(a) — ความเสี่ยง ASCVD',u:'mg/dL'});
+  /* eGFR */
+  var _ageP=0;var _dobM=(r.dob||'').match(/(\d+)\s*ปี/);if(_dobM)_ageP=+_dobM[1];
+  var _gfrP=calcGFR(r.cr,_ageP,g);
+  var _ckdP=ckdLabel(_gfrP);
+  var labHTML='';
+  labRows.forEach(function(row){
+    if(!r[row.k])return;
+    var s=labSt(row.k,r[row.k],g);
+    labHTML+='<div class="lab-row">'+
+      '<div class="lab-row-name"><div class="lab-row-nm">'+row.n+'</div><div class="lab-row-ref">อ้างอิง: '+s.ref+' '+row.u+'</div></div>'+
+      '<span class="lab-row-val" style="color:'+s.color+'">'+r[row.k]+'</span>'+
+      s.chip+'</div>';
+  });
+  /* Add eGFR row */
+  if(_gfrP!==null&&r.cr) labHTML+='<div class="lab-row">'+
+    '<div class="lab-row-name"><div class="lab-row-nm">eGFR (CKD-EPI)</div><div class="lab-row-ref">อัตราการกรองไต | ปกติ ≥ 60</div></div>'+
+    '<span class="lab-row-val" style="color:'+(_gfrP>=60?'var(--ok)':_gfrP>=30?'var(--warn)':'var(--bad)')+'">'+_gfrP+'</span>'+
+    '<span class="chip '+_ckdP.cls+'">'+_ckdP.stage+' '+_ckdP.txt+'</span></div>';
+  if(labHTML) html+='<div class="report-section"><div class="rs-header blue">🔬 ผลเลือด</div><div class="rs-body">'+labHTML+'</div></div>';
+
+  /* CV Risk */
+  var cvRiskTxt='', cvRiskBg='', cvRiskColor='';
+  if(r.sbp&&r.ldl){
+    /* Simple display only — full calculation in staff portal */
+    var sbp=+r.sbp, ldl=+r.ldl, a1c=+r.a1c||0, fbs=+r.fbs||0;
+    var dm=(r.note||'').toLowerCase().indexOf('dm')>=0||a1c>=6.5||fbs>=126;
+    var hasMult=(dm&&sbp>=140)||(dm&&ldl>=160)||(sbp>=140&&ldl>=160);
+    if(hasMult){cvRiskTxt='ความเสี่ยงสูง — ควรติดตามอย่างใกล้ชิด';cvRiskBg='var(--warn-bg)';cvRiskColor='var(--warn)';}
+    else if(!dm&&sbp<130&&ldl<130){cvRiskTxt='ความเสี่ยงต่ำ — ดูแลสุขภาพต่อไป';cvRiskBg='var(--ok-bg)';cvRiskColor='var(--ok)';}
+    else{cvRiskTxt='ความเสี่ยงปานกลาง — ควรปรับพฤติกรรม';cvRiskBg='var(--warn-bg)';cvRiskColor='var(--warn)';}
+    html+='<div class="report-section"><div class="rs-header orange">❤️ ความเสี่ยงโรคหัวใจ</div>'+
+      '<div class="rs-body">'+
+      '<div class="cv-risk-banner" style="background:'+cvRiskBg+';border-left:4px solid '+cvRiskColor+';border-radius:8px;padding:12px;">'+
+      '<div style="font-size:14px;font-weight:700;color:'+cvRiskColor+'">'+cvRiskTxt+'</div>'+
+      '<div style="font-size:11px;color:var(--text2);margin-top:4px">สำหรับรายละเอียด ASCVD score กรุณาติดต่อแพทย์</div>'+
+      '</div>'+
+      '</div></div>';
+  } /* end if(r.sbp&&r.ldl) */
+  /* Risk score display in portal */
+  if(r.score2val||r.preventRisk){
+    var s2LabelMap={'lt2':'<2% (ต่ำ)','2to10':'2–9.9% (ปานกลาง)','gte10':'≥10% (สูง)','gte20':'≥20% (สูงมาก)'};
+    var prevLabelMap={'lt3':'<3% (ต่ำ)','3to5':'3–4.9% (ต่ำ-ปานกลาง)','5to10':'5–9.9% (ปานกลาง)','gte10':'≥10% (สูง)'};
+    var s2Color={'lt2':'var(--ok)','2to10':'var(--warn)','gte10':'#EA580C','gte20':'var(--bad)'};
+    var prevColor={'lt3':'var(--ok)','3to5':'#65A30D','5to10':'var(--warn)','gte10':'var(--bad)'};
+    var scHTML='';
+    if(r.score2val&&s2LabelMap[r.score2val]){
+      scHTML+='<div style="text-align:center;padding:10px 8px;background:white;border-radius:10px;border:1.5px solid #E2E8F0;">'+
+        '<div style="font-size:9px;font-weight:700;color:#64748B;margin-bottom:4px;">🇪🇺 SCORE2'+(r.score2val?'':'-OP')+'</div>'+
+        '<div style="font-size:18px;font-weight:800;color:'+(s2Color[r.score2val]||'var(--text)')+';">'+s2LabelMap[r.score2val]+'</div>'+
+        '<div style="font-size:9px;color:#94A3B8;">ESC 10y CVD risk</div></div>';
+    }
+    if(r.preventRisk&&prevLabelMap[r.preventRisk]){
+      scHTML+='<div style="text-align:center;padding:10px 8px;background:white;border-radius:10px;border:1.5px solid #E2E8F0;">'+
+        '<div style="font-size:9px;font-weight:700;color:#64748B;margin-bottom:4px;">🇺🇸 PREVENT-ASCVD</div>'+
+        '<div style="font-size:18px;font-weight:800;color:'+(prevColor[r.preventRisk]||'var(--text)')+';">'+prevLabelMap[r.preventRisk]+'</div>'+
+        '<div style="font-size:9px;color:#94A3B8;">AHA/ACC 10y ASCVD</div></div>';
+    }
+    if(scHTML){
+      html+='<div class="report-section">'+
+        '<div class="rs-header" style="background:#1E3A8A;">📊 ความเสี่ยงโรคหัวใจ (คำนวณล่าสุด)</div>'+
+        '<div class="rs-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+scHTML+'</div>'+
+        '<div style="font-size:11px;color:#6B7280;margin-top:8px;">ค่านี้คำนวณจาก SBP, TC, HDL, อายุ, เพศ — อาจเปลี่ยนแปลงได้ตามการรักษา</div>'+
+        '</div></div>';
+    }
+  } else if(cvMissing.length>0){
+    /* Show "cannot assess" with missing fields */
+    html+='<div class="report-section"><div class="rs-header orange">❤️ ความเสี่ยงโรคหัวใจ</div>'+
+      '<div class="rs-body">'+
+      '<div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:10px;padding:14px 16px;">'+
+      '<div style="display:flex;align-items:flex-start;gap:10px;">'+
+      '<div style="font-size:28px;flex-shrink:0;">⚠️</div>'+
+      '<div>'+
+      '<div style="font-size:14px;font-weight:700;color:#B45309;margin-bottom:6px;">ไม่สามารถประเมินความเสี่ยงโรคหัวใจได้</div>'+
+      '<div style="font-size:12px;color:#78350F;margin-bottom:8px;">ยังขาดข้อมูลที่จำเป็น:</div>'+
+      cvMissing.map(function(m){return '<div style="font-size:12px;font-weight:600;color:#DC2626;margin-bottom:4px;">❌ '+m+'</div>';}).join('')+
+      '<div style="font-size:11px;color:#6B7280;margin-top:8px;">กรุณาแจ้งแพทย์ให้บันทึกข้อมูลให้ครบถ้วน</div>'+
+      '</div></div></div>'+
+      '</div></div>';
+  }
+
+  /* Vaccines */
+  if(r.vaccines){
+    var vaxHTML='';
+    var vSt={done:{i:'✅',t:'ฉีดแล้ว'},partial:{i:'⚠️',t:'บางส่วน'},plan:{i:'📋',t:'วางแผน'},na:{i:'—',t:'ไม่จำเป็น'},'':{i:'○',t:'ยังไม่ฉีด'}};
+    VACCINES.forEach(function(v){
+      var d=r.vaccines[v.id]||{};
+      var st=vSt[d.status||'']||vSt[''];
+      vaxHTML+='<div class="vax-row">'+
+        '<div class="vax-ico">'+st.i+'</div>'+
+        '<div><div class="vax-name">'+v.name+'</div>'+
+        '<div class="vax-sub">'+v.sub+' — '+st.txt+'</div>'+
+        (d.date?'<div class="vax-date">ฉีด '+thDate(d.date)+'</div>':'')+
+        '</div></div>';
+    });
+    html+='<div class="report-section"><div class="rs-header green">💉 วัคซีน</div><div class="rs-body">'+vaxHTML+'</div></div>';
+  }
+
+  /* Advice */
+  if(r.dietAdvice){
+    html+='<div class="report-section"><div class="rs-header green">💡 คำแนะนำจากแพทย์</div><div class="rs-body">'+
+      (r.dietAdvice?'<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:6px">🥗 โภชนาการ</div><div class="adv-box">'+r.dietAdvice+'</div>':'')+
+      (r.exerciseAdvice?'<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;margin:10px 0 6px">🏃 การออกกำลังกาย</div><div class="adv-box ex">'+r.exerciseAdvice+'</div>':'')+
+      (r.vaxAdvice?'<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;margin:10px 0 6px">💉 วัคซีนที่แนะนำ</div><div class="adv-box vax">'+r.vaxAdvice+'</div>':'')+
+      '</div></div>';
+  }
+
+  /* Echo summary card */
+  /* LVEF display */
+  if(r.lvef){
+    var lvef=+r.lvef;
+    var lvefColor=lvef>=53?'var(--ok)':lvef>=40?'var(--warn)':'var(--bad)';
+    var lvefLabel=lvef>=53?'ปกติ':lvef>=40?'ลดลงเล็กน้อย (HFmrEF)':'ลดลงมาก (HFrEF)';
+    html+='<div class="report-section">'+
+      '<div class="rs-header" style="background:#2C5F8A;">🫀 ค่าสูบฉีดหัวใจ (LVEF)</div>'+
+      '<div class="rs-body" style="text-align:center;padding:16px;">'+
+      '<div style="font-size:38px;font-weight:900;color:'+lvefColor+';">'+lvef+'<span style="font-size:18px;">%</span></div>'+
+      '<div style="font-size:13px;font-weight:700;color:'+lvefColor+';margin-top:4px;">'+lvefLabel+'</div>'+
+      '<div style="font-size:11px;color:#6B7280;margin-top:4px;">ค่าปกติ ≥ 53% | หัวใจสูบฉีดเลือดไปเลี้ยงร่างกาย</div>'+
+      '</div></div>';
+  }
+  /* ── Risk Factors chips ── */
+  var rfChips=[];
+  if(r.smoker==='yes') rfChips.push('<span style="background:#DC2626;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">🚬 สูบบุหรี่</span>');
+  if((r.hasDMRisk||'no')!=='no') rfChips.push('<span style="background:#D97706;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">🩸 เบาหวาน</span>');
+  if(r.hasFH==='yes') rfChips.push('<span style="background:#7C3AED;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">🧬 FH</span>');
+  if(r.hasASCVD==='yes'||r.hasASCVD==='very-high') rfChips.push('<span style="background:#B91C1C;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">🚨 มี ASCVD</span>');
+  if(+r.lpa>=50) rfChips.push('<span style="background:#991B1B;color:white;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">Lp(a)≥50</span>');
+  if(rfChips.length>0){
+    html+='<div class="report-section"><div class="rs-header orange">⚠️ ปัจจัยเสี่ยงที่พบ</div>'+
+      '<div class="rs-body"><div style="display:flex;flex-wrap:wrap;gap:6px;">'+rfChips.join('')+'</div></div></div>';
+  }
+
+  /* ── LDL Goal ── */
+  if(r.ldl||r.hasASCVD){
+    var ldlGoalNum=(function(){
+      var aVH=(r.hasASCVD==='very-high'), aY=(r.hasASCVD==='yes'||aVH);
+      var fh=(r.hasFH==='yes'), dm=r.hasDMRisk||'no', ck=r.ckdStage||'normal', lpa2=+r.lpa||0;
+      if(r.ldlGoalCustom) return r.ldlGoalCustom;
+      if(aVH||ck==='ckd5') return '55';
+      if(aY||fh||(+r.ldl>=190)||ck==='ckd3'||ck==='ckd4'||lpa2>=50) return '70';
+      if(dm==='dm-rf'||dm==='dm-organ') return '70';
+      if(dm!=='no') return '100';
+      return '100';
+    })();
+    var ldlN=+r.ldl||0, ldlG=+ldlGoalNum;
+    var ldlOk=ldlN>0&&ldlN<ldlG;
+    var ldlC=ldlN<=0?'var(--text2)':ldlOk?'var(--ok)':'var(--bad)';
+    html+='<div class="report-section">'+
+      '<div class="rs-header" style="background:#1E40AF;">🎯 เป้าหมาย LDL</div>'+
+      '<div class="rs-body">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">'+
+        '<div style="text-align:center;padding:12px;background:#EEF2FF;border-radius:10px;">'+
+          '<div style="font-size:10px;font-weight:700;color:#4338CA;">🎯 เป้าหมาย</div>'+
+          '<div style="font-size:26px;font-weight:900;color:#4338CA;">&lt;'+ldlGoalNum+'</div>'+
+          '<div style="font-size:10px;color:#6366F1;">มก./ดล.</div>'+
+        '</div>'+
+        '<div style="text-align:center;padding:12px;background:'+(ldlN<=0?'#F8FAFC':ldlOk?'#F0FDF4':'#FEF2F2')+';border-radius:10px;">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--text2);">📊 LDL ล่าสุด</div>'+
+          '<div style="font-size:26px;font-weight:900;color:'+ldlC+';">'+(ldlN||'—')+'</div>'+
+          '<div style="font-size:10px;color:'+ldlC+';">'+(ldlN>0?(ldlOk?'✅ บรรลุเป้าหมาย':'❌ ยังสูงกว่าเป้า'):'')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '</div></div>';
+  }
+
+  if(r.echoSummary){
+    var echoLines=r.echoSummary.split('\n').filter(function(l){return l.trim();});
+    var echoLI=echoLines.map(function(l){
+      var txt=l.replace(/^•\s*/,'');
+      var m=txt.match(/(.+):\s*(.+)/);
+      if(m){
+        var col=m[2].includes('ปกติ')?'#16A34A':
+                m[2].includes('รุนแรง')?'#DC2626':
+                m[2].includes('ปานกลาง')||m[2].includes('ลดลง')||m[2].includes('ผิดปกติ')?'#D97706':'#374151';
+        return '<li style="margin-bottom:4px;">'+m[1]+': <strong style="color:'+col+'">'+m[2]+'</strong></li>';
+      }
+      return '<li style="margin-bottom:4px;">'+txt+'</li>';
+    }).join('');
+    html+='<div class="report-section">'+
+      '<div class="rs-header" style="background:#1B5E20;display:flex;align-items:center;gap:10px;">'+
+      '<div style="width:24px;height:24px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+
+      '<span style="color:#1B5E20;font-size:14px;font-weight:900;">&#10003;</span></div>'+
+      '<span>สรุปผล Echo</span></div>'+
+      '<div class="rs-body"><ul style="margin:0;padding-left:18px;line-height:2.0;font-size:13px;">'+echoLI+'</ul></div></div>';
+  }
+  /* Summary card */
+  if(r.customSummary){
+    html+='<div class="report-section"><div class="rs-header" style="background:#2C5F8A">📋 สรุปผลตรวจ</div>'+
+      '<div class="rs-body" style="font-size:13px;line-height:1.8;">'+r.customSummary.replace(/\n/g,'<br>')+'</div></div>';
+  }
+  /* Doctor Note */
+  if(r.doctorNote){
+    html+='<div class="report-section"><div class="rs-header" style="background:#4A3A8A">✍️ Doctor Note</div>'+
+      '<div class="rs-body" style="font-size:13px;line-height:1.7;color:var(--text);">'+r.doctorNote.replace(/\n/g,'<br>')+'</div></div>';
+  }
+  /* Next visit */
+  if(r.nextVisit){
+    html+='<div class="next-banner">'+
+      '<div class="next-lbl">📅 นัดครั้งถัดไป</div>'+
+      '<div class="next-date">'+thDate(r.nextVisit)+'</div>'+
+      '</div>';
+  }
+
+
+  /* ── Follow-up ── */
+  var freqLabelP={'1':'ทุกเดือน','3':'ทุก 3 เดือน','3-6':'ทุก 3–6 เดือน','6':'ทุก 6 เดือน',
+    '12':'ทุกปี','24':'ทุก 2 ปี','36':'ทุก 3 ปี','60':'ทุก 5 ปี','0':'ตามอาการ','doctor':'ตามดุลยพินิจแพทย์'};
+  if(r.labFreq||r.ekgFreq||r.echoFreq){
+    var fuItems='';
+    if(r.labFreq) fuItems+='<div class="fu-chip"><span>🔬 Lab:</span> '+(freqLabelP[r.labFreq]||('ทุก '+r.labFreq+' เดือน'))+'</div>';
+    if(r.ekgFreq) fuItems+='<div class="fu-chip"><span>🫀 EKG:</span> '+(freqLabelP[r.ekgFreq]||('ทุก '+r.ekgFreq+' เดือน'))+'</div>';
+    if(r.echoFreq||hasLVDys) {
+      var eFreq=hasLVDys?(lvefV<40?'3':'3-6'):r.echoFreq;
+      fuItems+='<div class="fu-chip" style="'+(hasLVDys?'background:#FFF8EC;border-color:#F59E0B;color:#92400E':'')+'">'+PROBE_SM_P+'Echo: '+(freqLabelP[eFreq]||('ทุก '+eFreq+' เดือน'))+(hasLVDys?' ⚠️':'')+'</div>';
+    }
+    html+='<div class="report-section"><div class="rs-header" style="background:#4A7A3A;">📅 แผนการติดตามผล</div>'+
+      '<div class="rs-body"><div style="display:flex;flex-wrap:wrap;gap:8px;">'+fuItems+'</div></div></div>';
+  }
+
+  /* Next visit prominent card */
+  if(r.nextVisit){
+    html+='<div class="report-section">'+
+      '<div class="rs-header" style="background:#4338CA;">📅 วันนัดครั้งต่อไป</div>'+
+      '<div class="rs-body" style="text-align:center;padding:16px;">'+
+      '<div style="font-size:32px;margin-bottom:6px;">📅</div>'+
+      '<div style="font-size:22px;font-weight:800;color:#4338CA;margin-bottom:4px;">'+thDate(r.nextVisit)+'</div>'+
+      '<div style="font-size:12px;color:#6B7280;">กรุณานำรายงานนี้มาด้วยทุกครั้ง</div>'+
+      '</div></div>';
+  }
+
+  /* Footer note */
+  html+='<div style="text-align:center;font-size:11px;color:var(--text2);margin:16px 0;line-height:1.6;">'+
+    'เอกสารทางการแพทย์สำหรับการติดตามรักษา<br>'+
+    'ข้อมูลส่วนบุคคล กรุณาเก็บเป็นความลับ<br>'+
+    'นำรายงานนี้มาทุกครั้งที่เข้ารับการตรวจ<br>'+
+    '<strong>CardioPluz Clinic — พญ.ณัฏฐา & พญ.พรอนงค์</strong></div>';
+
+  document.getElementById('reportDetail').innerHTML=html;
+  showScreen('report');
+}
+
+
+/* ── Echo probe icon ── */
+var PROBE_SM_P='<svg width="16" height="16" viewBox="0 0 48 48" fill="none" style="display:inline-block;vertical-align:middle;margin-right:3px;"><rect x="3" y="6" width="26" height="22" rx="3" fill="#546E7A" stroke="#263238" stroke-width="2.5"/><rect x="5" y="8" width="22" height="16" rx="1.5" fill="#78909C"/><path d="M16 20 C16 18 14 16 12 17 C10 18 10 21 14 23 L16 24.5 L18 23 C22 21 22 18 20 17 C18 16 16 18 16 20Z" fill="#EF5350"/><rect x="13" y="28" width="6" height="4" rx="1" fill="#90A4AE"/><rect x="10" y="31" width="12" height="2.5" rx="1" fill="#B0BEC5"/><path d="M32 18 C36 18 36 26 33 28 L30 32 L29 38 L28 42" stroke="#263238" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="30" y="8" width="10" height="18" rx="4" fill="#263238"/><rect x="32" y="10" width="6" height="6" rx="1" fill="#00BCD4"/><rect x="32" y="18" width="6" height="4" fill="#80DEEA"/><path d="M32 26 L35 30 L38 26Z" fill="#263238"/><path d="M41 6 Q44 9 41 12" stroke="#263238" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M43 3 Q48 8 43 14" stroke="#263238" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+/* ── AUTO-LOGIN from URL params (LINE LIFF can pass hn param) ── */
+function checkURLParams(){
+  var params=new URLSearchParams(window.location.search);
+  var hn=params.get('hn');
+  if(hn) document.getElementById('hnInput').value=hn;
+}
+checkURLParams();
+</script>
+</body>
+</html>

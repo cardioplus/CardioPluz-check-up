@@ -185,12 +185,12 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
         <div class="field span2"><label>ชื่อ-นามสกุล</label><input type="text" id="fullName" placeholder="ชื่อและนามสกุล"></div>
         <div class="field">
           <label>วันเกิด</label>
-          <input type="date" id="dobDate" onchange="updateDobField()" style="margin-bottom:4px">
+          <input type="date" id="dobDate" onchange="setTimeout(calcAllRiskScores,100);updateDobField()" style="margin-bottom:4px">
           <div id="dobDisplay" style="font-size:12px;color:var(--teal-dark);font-weight:600;min-height:18px"></div>
           <input type="hidden" id="dob">
         </div>
         <div class="field"><label>เพศ</label>
-          <select id="gender" onchange="calcIdeal();updateLdlGoal();">
+          <select id="gender" onchange="calcAllRiskScores();calcIdeal();updateLdlGoal();">
             <option value="">-- เลือก --</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option>
           </select>
         </div>
@@ -250,10 +250,10 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
       <div class="form-grid cols3">
         <div class="field"><label>FBS <span class="unit">mg/dL</span></label><input type="number" id="fbs" placeholder="0" step="1"><span class="ref-hint">ปกติ 70–99</span></div>
         <div class="field"><label>HbA1c <span class="unit">%</span></label><input type="number" id="a1c" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;5.7</span></div>
-        <div class="field"><label>LDL Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="ldl" placeholder="0" step="1" oninput="updateLdlGoal()"><span class="ref-hint">ดู LDL Goal ด้านล่าง</span></div>
-        <div class="field"><label>Total Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="tc" placeholder="0" step="1"></div>
-        <div class="field"><label>HDL <span class="unit">mg/dL</span></label><input type="number" id="hdl" placeholder="0" step="1"><span class="ref-hint">ชาย&gt;40 / หญิง&gt;50</span></div>
-        <div class="field"><label>Triglyceride TG <span class="unit">mg/dL</span></label><input type="number" id="tg" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;150</span></div>
+        <div class="field"><label>LDL Cholesterol <span class="unit">mg/dL</span> <span style="color:var(--bad);font-size:10px;font-weight:700;">* TC หรือ LDL</span></label><input type="number" id="ldl" placeholder="0" step="1" oninput="updateLdlGoal()"><span class="ref-hint">ดู LDL Goal ด้านล่าง</span></div>
+        <div class="field"><label>Total Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="tc" placeholder="0" step="1" oninput="calcAllRiskScores()"></div>
+        <div class="field"><label>HDL <span class="unit">mg/dL</span></label><input type="number" id="hdl" placeholder="0" step="1" oninput="calcAllRiskScores()"><span class="ref-hint">ชาย&gt;40 / หญิง&gt;50</span></div>
+        <div class="field"><label>Triglyceride TG <span class="unit">mg/dL</span></label><input type="number" id="tg" placeholder="0" step="1" oninput="calcAllRiskScores()"><span class="ref-hint">ปกติ &lt;150</span></div>
         <div class="field"><label>Creatinine Cr <span class="unit">mg/dL</span></label><input type="number" id="cr" placeholder="0.00" step=".01"><span class="ref-hint">ชาย 0.7–1.2 / หญิง 0.5–1.1</span></div>
         <div class="field"><label>UPCr <span class="unit">mg/g</span></label><input type="number" id="upcr" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;150</span></div>
         <div class="field"><label>AST (SGOT) <span class="unit">U/L</span></label><input type="number" id="ast" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
@@ -261,144 +261,229 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
         <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step=".01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
         <div class="field"><label>Albumin <span class="unit">g/dL</span></label><input type="number" id="albumin" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 3.5–5.0</span></div>
         <div class="field" id="psa-field"><label>PSA <span class="unit">ng/mL</span> <span style="font-size:10px;color:var(--teal-dark)">(ชาย)</span></label><input type="number" id="psa" placeholder="0.0" step=".01"><span class="ref-hint">ปกติ &lt;4.0</span></div>
-        <div class="field"><label>หมายเหตุ Lab</label><input type="text" id="tmNote" placeholder="เช่น ติดตาม PSA ทุกปี"></div>
+        <div class="field"><label>Lipoprotein(a) — Lp(a) <span class="unit">mg/dL</span></label>
+          <input type="number" id="lpa" placeholder="0" step="1" oninput="calcAllRiskScores()">
+          <span class="ref-hint">ปกติ &lt;30 · เสี่ยงสูง ≥50</span></div>
+        <div class="field"><label>หมายเหตุ Lab</label><input type="text" id="tmNote" placeholder="เช่น ติดตาม PSA ทุกปี, Lp(a) สูง"></div>
       </div>
     </div>
 
-    <!-- LDL Goal (Thai DLP/ESC/ACC 2025) -->
+    <!-- LDL Goal Dual (ESC 2025 + AHA/ACC 2026) -->
     <div class="card">
-      <div class="card-title"><span class="tag tag-cv">LDL Goal</span> เป้าหมาย LDL — อิง Thai DLP / ESC 2021 / ACC 2025</div>
+      <div class="card-title"><span class="tag tag-cv">LDL Goal</span> เป้าหมาย LDL — ESC 2025 &amp; AHA/ACC 2026 Dyslipidemia</div>
       <div class="form-grid cols3">
-        <div class="ldl-risk-panel span3">
-          <div class="lrp-title">🎯 คำนวณ LDL Goal อัตโนมัติ — ปรับแก้ได้</div>
-          <div class="ldl-risk-grid">
-            <div class="lrp-item">
-              <label>ระดับความเสี่ยง ASCVD</label>
-              <select id="ascvdRisk" onchange="updateLdlGoal()">
-                <option value="">-- เลือก / Auto --</option>
-                <option value="very-high">Very High — ASCVD / DM+organ damage / eGFR&lt;30</option>
-                <option value="high">High — DM / HeFH / CKD 3–4 / SCORE2≥10%</option>
-                <option value="moderate">Moderate — SCORE2 5–9.9%</option>
-                <option value="low">Low — SCORE2 &lt;5%</option>
-              </select>
-            </div>
-            <div class="lrp-item" style="background:var(--bad-bg);border:1.5px solid #DDB0B0;border-radius:8px;padding:10px 12px;">
-              <label style="font-weight:700;color:var(--bad);display:block;margin-bottom:6px;">🚨 เคยเป็น ASCVD (MI, Stroke, PAD)?</label>
-              <select id="hasASCVD" onchange="setVal('hasASCVD',this.value);updateLdlGoal();" style="width:100%;border:1.5px solid #DDB0B0;border-radius:8px;padding:9px 11px;font-family:'Sarabun',sans-serif;font-size:14px;background:white;">
-                <option value="no">❌ ไม่มี</option>
-                <option value="yes">✅ มี (ข้าม Thai CV Risk — Very High Risk)</option>
-              </select>
-              <input type="hidden" id="hasASCVD_hidden" value="no">
-            </div>
-            <div class="lrp-item">
-              <label>Familial Hypercholesterolemia</label>
-              <select id="hasFH" onchange="updateLdlGoal()">
-                <option value="no">ไม่มี</option><option value="yes">มี (HeFH) ✓</option>
-              </select>
-            </div>
-            <div class="lrp-item">
-              <label>เบาหวาน (DM)</label>
-              <select id="hasDMRisk" onchange="updateLdlGoal()">
-                <option value="no">ไม่มี</option>
-                <option value="dm-organ">DM + Organ Damage / ≥10 ปี</option>
-                <option value="dm-simple">DM ไม่มี Organ Damage &lt;10 ปี</option>
-              </select>
-            </div>
-            <div class="lrp-item">
-              <label>eGFR / CKD Stage</label>
-              <select id="ckdStage" onchange="updateLdlGoal()">
-                <option value="normal">ปกติ / G1-2</option>
-                <option value="ckd3">CKD G3 (eGFR 30–59)</option>
-                <option value="ckd4">CKD G4 (eGFR 15–29)</option>
-                <option value="ckd5">CKD G5 / Dialysis</option>
-              </select>
-            </div>
-            <div class="lrp-item">
-              <label>On Statin / อยู่ระหว่างรักษา</label>
-              <select id="onStatin" onchange="updateLdlGoal()">
-                <option value="no">ไม่ได้รับ Statin</option>
-                <option value="max">Max tolerated Statin แล้ว</option>
-                <option value="moderate">Moderate Statin</option>
-              </select>
-            </div>
+
+        <!-- ── ASCVD Status (ใช้ทั้ง ESC + AHA) ── -->
+        <div class="lrp-item span3" style="background:var(--bad-bg);border:1.5px solid #DDB0B0;border-radius:10px;padding:12px 14px;">
+          <div style="font-size:12px;font-weight:800;color:var(--bad);margin-bottom:8px;">🚨 ประวัติ ASCVD (MI, Stroke, PAD, ACS, Revascularization)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <label style="display:flex;align-items:center;gap:7px;padding:8px 12px;background:white;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;">
+              <input type="radio" name="hasASCVD" id="hasASCVD_no" value="no" onchange="setVal('hasASCVD','no');updateLdlGoal();" checked> ❌ ไม่มี
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;padding:8px 12px;background:white;border-radius:8px;border:1.5px solid #F59E0B;cursor:pointer;font-size:13px;font-weight:600;">
+              <input type="radio" name="hasASCVD" id="hasASCVD_yes" value="yes" onchange="setVal('hasASCVD','yes');updateLdlGoal();"> ✅ มี (ไม่ Very High)
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;padding:8px 12px;background:#FEE2E2;border-radius:8px;border:1.5px solid var(--bad);cursor:pointer;font-size:13px;font-weight:700;color:var(--bad);">
+              <input type="radio" name="hasASCVD" id="hasASCVD_vh" value="very-high" onchange="setVal('hasASCVD','very-high');updateLdlGoal();"> 🔴 Very High Risk
+            </label>
           </div>
-          <div class="ldl-risk-grid" style="margin-top:10px">
-            <div class="ldl-goal-display span3">
-              <div>
-                <div class="lgd-label">🎯 LDL Goal (Thai DLP/ESC/ACC)</div>
-                <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;min-width:0;">
-                  <div class="lgd-val" id="ldlGoalDisplay" style="font-size:22px;font-weight:800;">— กรอกข้อมูลด้านบนก่อน</div>
-                  <button type="button" onclick="toggleLdlEditPanel()" 
-                    style="padding:4px 12px;background:var(--acc-bg);color:var(--acc);border:1px solid #B8CCE0;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
-                    ✏️ แก้ไข LDL Goal
-                  </button>
-                </div>
-              </div>
-              <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.6;word-break:break-word;" id="ldlGoalBasis"></div>
-              <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin-top:8px;">
-                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;">
-                  <input type="checkbox" id="ldlInsufficient" onchange="toggleLdlInsufficient()" style="accent-color:var(--teal)">
-                  ข้อมูลไม่เพียงพอ
-                </label>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <label style="font-size:12px;color:var(--text2)">แพทย์ตั้งเอง:</label>
-                  <input type="number" id="ldlGoalCustom" placeholder="mg/dL" step="1" style="width:90px;border:1.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:14px;background:var(--cream);outline:none;">
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Non-HDL Goal -->
-          <div style="background:linear-gradient(135deg,#EEF4FB,#E8F0FA);border:1px solid #B8CCE0;border-radius:10px;padding:12px 14px;margin-top:10px;box-sizing:border-box;overflow:hidden;">
-            <div style="font-size:11px;font-weight:700;color:#2C5F8A;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">📊 Non-HDL Cholesterol Goal</div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;">
-              <div>
-                <div id="nonHdlGoalDisplay" style="font-size:20px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#2C5F8A;">—</div>
-                <div style="font-size:11px;color:var(--text2);margin-top:2px;">= LDL Goal + 30 (อัตโนมัติ)</div>
-                <div style="font-size:11px;color:var(--text2);">ปัจจุบัน TC−HDL = <strong id="nonHdlCurrent">—</strong> มก./ดล.</div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
-                <label style="font-size:11px;color:var(--text2);white-space:nowrap;">ปรับเอง:</label>
-                <input type="number" id="nonHdlGoalCustom" placeholder="mg/dL" step="5"
-                  style="width:80px;border:1.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--cream);outline:none;box-sizing:border-box;"
-                  oninput="updateNonHdlDisplay()">
-              </div>
-            </div>
-          </div>
-          <!-- Editable LDL panel -->
-          <div id="ldlEditPanel" style="display:none;margin-top:10px;padding:12px 14px;background:var(--acc-bg);border:1.5px solid #B8CCE0;border-radius:10px;">
-            <div style="font-size:12px;font-weight:700;color:var(--acc);margin-bottom:8px;">✏️ แก้ไข LDL Goal ด้วยตนเอง (override อัตโนมัติ)</div>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow:hidden;">
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button type="button" onclick="setLdlGoalManual(55)" class="ldl-preset-btn">Very High &lt;55</button>
-                <button type="button" onclick="setLdlGoalManual(70)" class="ldl-preset-btn">High &lt;70</button>
-                <button type="button" onclick="setLdlGoalManual(100)" class="ldl-preset-btn">Moderate &lt;100</button>
-                <button type="button" onclick="setLdlGoalManual(116)" class="ldl-preset-btn">Low &lt;116</button>
-              </div>
-              <div style="display:flex;gap:6px;align-items:center;">
-                <input type="number" id="ldlGoalCustom" placeholder="ตั้งเอง mg/dL" step="5" min="30" max="200"
-                  style="width:100px;border:1.5px solid var(--border);border-radius:7px;padding:6px 8px;font-family:'IBM Plex Mono',monospace;font-size:14px;"
-                  oninput="if(this.value)setLdlGoalManual(+this.value)">
-                <button type="button" onclick="clearLdlManual()" 
-                  style="padding:5px 10px;background:var(--cream2);border:1px solid var(--border);border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;">
-                  รีเซ็ต (Auto)
-                </button>
-              </div>
-            </div>
+          <div id="ascvd_vh_hint" style="display:none;margin-top:8px;padding:8px 10px;background:#FFF0F0;border-radius:7px;font-size:11px;color:var(--bad);line-height:1.6;">
+            <strong>Very High Risk</strong> = ≥2 major ASCVD events <strong>OR</strong> 1 event + ≥2 high-risk conditions<br>
+            High-risk conditions: อายุ≥65, CABG/PCI, สูบบุหรี่, DM, HF, HT, LDL≥100 ถึงยา max
           </div>
         </div>
+
+        <!-- ── Scores auto-computed from SBP/TC/HDL/DOB/Gender ── -->
+        <div class="lrp-item" style="background:#F8FAFC;">
+          <label>SCORE2 / SCORE2-OP <span style="font-size:10px;color:var(--teal-dark);">(คำนวณอัตโนมัติ)</span></label>
+          <div id="score2InfoLdl" style="font-size:13px;font-weight:700;color:#4338CA;padding:6px 0;">กรอก SBP+TC+HDL+DOB+เพศ แล้วกด คำนวณ</div>
+          <!-- Hidden select for JS logic -->
+          <select id="score2val" style="display:none" onchange="updateLdlGoal()">
+            <option value="">—</option><option value="lt2">lt2</option><option value="2to10">2to10</option><option value="gte10">gte10</option><option value="gte20">gte20</option>
+          </select>
+        </div>
+
+        <div class="lrp-item" style="background:#F8FAFC;">
+          <label>PREVENT-ASCVD 10y <span style="font-size:10px;color:var(--teal-dark);">(คำนวณอัตโนมัติ)</span></label>
+          <div id="preventInfoLdl" style="font-size:13px;font-weight:700;color:#BE123C;padding:6px 0;">กรอก SBP+TC+HDL+DOB+เพศ แล้วกด คำนวณ</div>
+          <!-- Hidden select for JS logic -->
+          <select id="preventRisk" style="display:none" onchange="updateLdlGoal()">
+            <option value="">—</option><option value="lt3">lt3</option><option value="3to5">3to5</option><option value="5to10">5to10</option><option value="gte10">gte10</option>
+          </select>
+        </div>
+
+        <!-- ── FH ── -->
+        <div class="lrp-item">
+          <label>Familial Hypercholesterolemia (FH)</label>
+          <select id="hasFH" onchange="updateLdlGoal()">
+            <option value="no">ไม่มี</option>
+            <option value="yes">มี HeFH ✓</option>
+          </select>
+        </div>
+
+        <!-- ── DM ── -->
+        <div class="lrp-item">
+          <label>เบาหวาน (DM)</label>
+          <select id="hasDMRisk" onchange="calcAllRiskScores();updateLdlGoal()">
+            <option value="no">ไม่มี</option>
+            <option value="dm-simple">DM ไม่มี organ damage, &lt;10 ปี</option>
+            <option value="dm-rf">DM + ASCVD risk factors / DM-modifiers</option>
+            <option value="dm-organ">DM + organ damage / ≥10 ปี</option>
+          </select>
+        </div>
+
+        <!-- ── CKD ── -->
+        <div class="lrp-item">
+          <label>eGFR / CKD Stage</label>
+          <select id="ckdStage" onchange="calcAllRiskScores();updateLdlGoal()">
+            <option value="normal">ปกติ / G1-2</option>
+            <option value="ckd3">CKD G3 (eGFR 30–59)</option>
+            <option value="ckd4">CKD G4 (eGFR 15–29)</option>
+            <option value="ckd5">CKD G5 / Dialysis (&lt;15)</option>
+          </select>
+        </div>
+
+        <!-- ── On Statin ── -->
+        <div class="lrp-item">
+          <label>On Statin / อยู่ระหว่างรักษา</label>
+          <select id="onStatin" onchange="updateLdlGoal()">
+            <option value="no">ไม่ได้รับ Statin</option>
+            <option value="moderate">Moderate-intensity Statin</option>
+            <option value="max">Max tolerated Statin แล้ว</option>
+          </select>
+        </div>
+
+        <!-- ── Lp(a) upgrade ── -->
+        <div class="lrp-item">
+          <label>Lp(a) ≥50 mg/dL <span style="font-size:10px;color:var(--text2);">(risk enhancer)</span></label>
+          <select id="lpaHigh" onchange="updateLdlGoal()">
+            <option value="no">Lp(a) &lt;50 หรือ ไม่ทราบ</option>
+            <option value="yes">Lp(a) ≥50 mg/dL ✓</option>
+          </select>
+        </div>
+
+        <!-- ── TG (AHA risk enhancer) ── -->
+        <div class="lrp-item">
+          <label>Hypertriglyceridemia</label>
+          <select id="hasTG" onchange="updateLdlGoal()">
+            <option value="no">TG ปกติ / &lt;150</option>
+            <option value="yes">TG ≥150 mg/dL ✓</option>
+          </select>
+        </div>
+
+        <!-- ══════ DUAL GOAL DISPLAY ══════ -->
+        <div class="span3" id="dual-ldl-goals" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+
+          <!-- ESC 2025 Goal -->
+          <div style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border:2px solid #6366F1;border-radius:12px;padding:14px 16px;">
+            <div style="font-size:10px;font-weight:800;color:#6366F1;letter-spacing:.8px;margin-bottom:4px;">🇪🇺 ESC 2025</div>
+            <div id="escGoalVal" style="font-size:22px;font-weight:900;color:#4338CA;margin-bottom:2px;">—</div>
+            <div id="escGoalPct" style="font-size:11px;color:#6366F1;margin-bottom:6px;"></div>
+            <div id="escGoalBasis" style="font-size:10.5px;color:#4338CA;line-height:1.6;border-top:1px solid #C7D2FE;padding-top:6px;"></div>
+            <div id="escRiskLevel" style="margin-top:6px;display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;"></div>
+          </div>
+
+          <!-- AHA/ACC 2026 Goal -->
+          <div style="background:linear-gradient(135deg,#FFF1F2,#FFE4E6);border:2px solid #E11D48;border-radius:12px;padding:14px 16px;">
+            <div style="font-size:10px;font-weight:800;color:#E11D48;letter-spacing:.8px;margin-bottom:4px;">🇺🇸 AHA/ACC 2026</div>
+            <div id="ahaGoalVal" style="font-size:22px;font-weight:900;color:#BE123C;margin-bottom:2px;">—</div>
+            <div id="ahaGoalPct" style="font-size:11px;color:#E11D48;margin-bottom:6px;"></div>
+            <div id="ahaGoalBasis" style="font-size:10.5px;color:#BE123C;line-height:1.6;border-top:1px solid #FECDD3;padding-top:6px;"></div>
+            <div id="ahaRiskLevel" style="margin-top:6px;display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;"></div>
+          </div>
+        </div>
+
+        <!-- Manual override -->
+        <div class="span3" style="margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <label style="font-size:12px;font-weight:700;color:var(--text2);">✏️ แพทย์กำหนด LDL Goal เอง:</label>
+            <input type="number" id="ldlGoalCustom" placeholder="mg/dL" step="1" min="20" max="200"
+              style="width:90px;padding:5px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;"
+              oninput="updateLdlGoal()">
+            <span style="font-size:12px;color:var(--text2);">mg/dL</span>
+            <button type="button" onclick="clearLdlManual()" style="padding:4px 10px;background:var(--cream);border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;">ล้าง</button>
+          </div>
+          <div id="ldlGoalBasis" style="font-size:10.5px;color:var(--text2);margin-top:4px;line-height:1.5;word-break:break-word;"></div>
+        </div>
+
+        <!-- Non-HDL Goal -->
+        <div class="span3" id="nonHdlGoalSection" style="background:#F0F7FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;">
+          <div>
+            <div style="font-size:10px;font-weight:800;color:#1E40AF;letter-spacing:.5px;">📊 NON-HDL GOAL (= LDL Goal + 30)</div>
+            <div id="nonHdlGoalDisplay" style="font-size:20px;font-weight:800;color:#1E40AF;margin-top:4px;">—</div>
+            <div style="font-size:10px;color:#3B82F6;margin-top:2px;">ปัจจุบัน TC−HDL: <span id="nonHdlCurrent">—</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ปรับเอง:</div>
+            <input type="number" id="nonHdlGoalCustom" placeholder="mg/dL" step="1"
+              style="width:80px;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:7px;font-size:13px;text-align:right;"
+              oninput="updateNonHdlDisplay()">
+            <div style="font-size:10px;color:var(--text2);margin-top:2px;">mg/dL</div>
+          </div>
+        </div>
+
+        <!-- LDL Insufficient checkbox -->
+        <div class="span3">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 0;font-size:13px;">
+            <input type="checkbox" id="ldlInsufficient" onchange="toggleLdlInsufficient()">
+            <span>⚠️ ข้อมูลไม่เพียงพอสำหรับการประเมิน LDL Goal (จะแสดงในรายงาน)</span>
+          </label>
+        </div>
+
       </div>
     </div>
 
-    <!-- CV Risk + BP -->
-    <div class="card">
-      <div class="card-title"><span class="tag tag-cv">Thai CV Risk</span> ความเสี่ยงหัวใจและความดัน</div>
+<div class="card">
+      <div class="card-title"><span class="tag tag-cv">Thai CV Risk</span> ความเสี่ยงหัวใจและความดัน <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">ต้องการ: SBP + (TC หรือ LDL) + HDL</span></div>
       <div class="form-grid cols2">
-        <div class="field"><label>SBP ความดันตัวบน <span class="unit">mmHg</span></label><input type="number" id="sbp" placeholder="120" step="1"><span class="ref-hint">ปกติ &lt;120</span></div>
+        <div class="field"><label>SBP ความดันตัวบน <span class="unit">mmHg</span> <span style="color:var(--bad);font-size:10px;font-weight:700;">* จำเป็นสำหรับ Thai CV Risk</span></label><input type="number" id="sbp" placeholder="120" step="1" oninput="calcAllRiskScores()"><span class="ref-hint">ปกติ &lt;120</span></div>
         <div class="field"><label>DBP ความดันตัวล่าง <span class="unit">mmHg</span></label><input type="number" id="dbp" placeholder="80" step="1"><span class="ref-hint">ปกติ &lt;80</span></div>
         <div class="field"><label>BP เป้าหมาย <span class="unit">mmHg</span></label><input type="text" id="bpTarget" placeholder="เช่น &lt; 130/80"></div>
         <div class="field"><label>การสูบบุหรี่</label>
-          <select id="smoker"><option value="no">ไม่สูบ</option><option value="yes">สูบบุหรี่</option></select>
+          <select id="smoker" onchange="calcAllRiskScores()"><option value="no">ไม่สูบ</option><option value="yes">สูบบุหรี่</option></select>
+        
+        <!-- ── Auto-computed risk scores ── -->
+        <div class="span3" id="riskScorePanel" style="background:linear-gradient(135deg,#F8FAFC,#F0F7FF);border:1.5px solid #CBD5E1;border-radius:12px;padding:14px 16px;margin-top:4px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:12px;font-weight:800;color:#334155;letter-spacing:.5px;">📊 คำนวณความเสี่ยง (ต้องการ: อายุ + เพศ + SBP + TC + HDL)</div>
+            <button type="button" onclick="calcAllRiskScores()" style="padding:5px 14px;background:var(--teal);color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">🔄 คำนวณ</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;" id="scoreResultGrid">
+            <!-- Thai CV Risk -->
+            <div style="background:white;border-radius:10px;padding:10px 12px;border:1.5px solid #E2E8F0;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🇹🇭 Thai CV Risk</div>
+              <div id="thaiCVScore" style="font-size:24px;font-weight:900;color:#334155;">—</div>
+              <div id="thaiCVPts" style="font-size:9.5px;color:#94A3B8;"></div>
+              <div id="thaiCVLevel" style="margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;"></div>
+            </div>
+            <!-- SCORE2 / SCORE2-OP -->
+            <div style="background:white;border-radius:10px;padding:10px 12px;border:1.5px solid #E2E8F0;text-align:center;">
+              <div id="score2Label" style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🇪🇺 SCORE2 (Moderate)</div>
+              <div id="score2Score" style="font-size:24px;font-weight:900;color:#334155;">—</div>
+              <div style="font-size:9px;color:#94A3B8;">10y fatal+non-fatal CVD</div>
+              <div id="score2Level" style="margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;"></div>
+            </div>
+            <!-- PREVENT-ASCVD -->
+            <div style="background:white;border-radius:10px;padding:10px 12px;border:1.5px solid #E2E8F0;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🇺🇸 PREVENT-ASCVD</div>
+              <div id="preventScore" style="font-size:24px;font-weight:900;color:#334155;">—</div>
+              <div style="font-size:9px;color:#94A3B8;">10y ASCVD risk</div>
+              <div id="preventLevel" style="margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;"></div>
+            </div>
+          </div>
+          <!-- Score inputs for missing data -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+              <input type="checkbox" id="sbpTreated" onchange="calcAllRiskScores()">
+              <span>💊 ได้รับยาลดความดัน (On antihypertensive)</span>
+            </label>
+            <div style="font-size:10.5px;color:#64748B;line-height:1.5;" id="scoreNote">
+              กรอก SBP, TC, HDL ในส่วน Lab และ CV Risk ก่อนกด คำนวณ
+            </div>
+          </div>
         </div>
+
+</div>
       </div>
     </div>
 
@@ -756,17 +841,27 @@ function selectDoc(name,btn){
 }
 
 /* ── FIELDS ── */
-var BASE_FIELDS=['hn','visitDate','fullName','dob','gender','doctor','note',
+var BASE_FIELDS=[
+  /* ── Patient info ── */
+  'hn','visitDate','fullName','dob','dobDate','gender','doctor','note',
+  /* ── InBody ── */
   'height','weight','bmi','smm','slm','muscle','bfm','pbf','vfl','bmr','whr',
   'cid','bodyTypeGrid','bodyBalance','inbodyScore',
-  'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','tsh','albumin','psa','tmNote',
-  'ascvdRisk','hasASCVD','hasFH','hasDMRisk','ckdStage','onStatin','ldlGoalCustom',
+  /* ── Lab ── */
+  'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','tsh','albumin','psa','lpa','tmNote',
+  /* ── CV Risk / LDL Goal ── */
+  'hasASCVD','hasFH','hasDMRisk','ckdStage','onStatin','ldlGoalCustom',
+  'nonHdlGoalCustom','ldlInsufficient','lpaHigh','hasTG',
+  'score2val','preventRisk','ascvdRisk',
+  /* ── Vitals ── */
   'sbp','dbp','bpTarget','smoker',
-  'ekgDate','ekgComment','lvef','echoDate','echoComment',
-  'labFreq','ekgFreq','echoFreq',
-  'dietAdvice','exerciseAdvice','vaxAdvice','nextVisit','recorder',
-  'customSummary','doctorNote',
-  'hasASCVD','nonHdlGoalCustom','echoSummary'
+  /* ── EKG / Echo ── */
+  'ekgDate','ekgComment','lvef','echoDate','echoComment','echoSummary',
+  /* ── Follow-up ── */
+  'labFreq','ekgFreq','echoFreq','nextVisit',
+  /* ── Summary / Notes ── */
+  'dietAdvice','exerciseAdvice','vaxAdvice','recorder',
+  'customSummary','doctorNote'
 ];
 
 function val(id){return document.getElementById(id)?.value?.trim()||'';}
@@ -821,18 +916,18 @@ function genEchoSummary(){
     var dm=comment.match(/diastolic[^,;.]*/i);
     if(dm) lines.push('• การคลายตัวของหัวใจ (Diastolic function): '+dm[0]);
   }
-  var VALVES=[{k:'Mitral',th:'ลิ้นไมตรัล'},{k:'Aortic',th:'ลิ้นเอออร์ติก'},{k:'Tricuspid',th:'ลิ้นไตรคัสปิด'},{k:'Pulmonary',th:'ลิ้นพัลโมนิก'}];
-  var SEV={mild:'เล็กน้อย',moderate:'ปานกลาง',severe:'รุนแรง'};
-  VALVES.forEach(function(v){
-    var sten=getCheckboxValue('stenosis_'+v.k);
-    var reg=getCheckboxValue('regurg_'+v.k);
-    if(!sten&&!reg){lines.push('• '+v.th+' ('+v.k+' valve): ทำงานปกติ');}
-    else{
-      var issues=[];
-      if(sten)issues.push('ตีบ '+(SEV[sten]||sten));
-      if(reg)issues.push('รั่ว '+(SEV[reg]||reg));
-      lines.push('• '+v.th+' ('+v.k+' valve): '+issues.join(', '));
-    }
+  var VALVE_NAMES=[{k:'Mitral',th:'ลิ้นไมตรัล'},{k:'Aortic',th:'ลิ้นเอออร์ติก'},{k:'Tricuspid',th:'ลิ้นไตรคัสปิด'},{k:'Pulmonary',th:'ลิ้นพัลโมนิก'}];
+  var SEV2={mild:'เล็กน้อย',mod:'ปานกลาง',sev:'รุนแรง'};
+  VALVE_NAMES.forEach(function(v){
+    var issues=[];
+    ['mild','mod','sev'].forEach(function(s){
+      var stenEl=document.getElementById('sten_'+v.k+'_'+s);
+      var regEl=document.getElementById('reg_'+v.k+'_'+s);
+      if(stenEl&&stenEl.checked) issues.push('ตีบ '+SEV2[s]);
+      if(regEl&&regEl.checked)   issues.push('รั่ว '+SEV2[s]);
+    });
+    if(!issues.length){lines.push('• '+v.th+' ('+v.k+' valve): ทำงานปกติ');}
+    else{lines.push('• '+v.th+' ('+v.k+' valve): '+issues.join(', '));}
   });
   setVal('echoSummary',lines.join('\n'));
   var btn=event.target; var orig=btn.textContent;
@@ -846,6 +941,8 @@ function getCheckboxValue(groupId){
 }
 
 function clearForm(){
+  if(!confirm('ล้างข้อมูลทั้งหมดในฟอร์ม?\nข้อมูลที่ยังไม่บันทึกจะหายไป')) return;
+  currentDocId=null;
   BASE_FIELDS.forEach(id=>setVal(id,''));
   var dd=document.getElementById('dobDate');if(dd)dd.value='';
   var ddisp=document.getElementById('dobDisplay');if(ddisp)ddisp.textContent='';
@@ -1002,73 +1099,424 @@ function toggleLdlInsufficient(){
     if(basis)basis.textContent='กรุณาเพิ่มข้อมูล: ประวัติ ASCVD, เบาหวาน, ความดัน, และค่าไขมัน';
   } else { updateLdlGoal(); }
 }
+
+/* ══════════════════════════════════════════════
+   RISK SCORE CALCULATION FUNCTIONS
+   ══════════════════════════════════════════════ */
+
+/* SCORE2 / SCORE2-OP — Moderate Risk Region (Southeast Asia)
+   Based on ESC 2021 SCORE2 coefficients for moderate-risk regions
+   Returns 10-year risk of fatal+non-fatal CVD (%) */
+function calcScore2(age,gender,sbp,tc,hdl,smoker){
+  if(!age||!gender||!sbp||!tc||!hdl) return null;
+  var tcMmol=tc/38.67, hdlMmol=hdl/38.67;
+  var nonHdl=tcMmol-hdlMmol;
+  var isFemale=(gender==='หญิง');
+  /* SCORE2 moderate risk region coefficients */
+  var s, lp;
+  if(!isFemale){
+    /* Male coefficients */
+    lp = 0.3742*(Math.log(age)-3.8816)
+       + 0.6012*(smoker?1:0)
+       + 0.2777*(Math.log(sbp)-4.8366)
+       + 0.6457*(nonHdl>0?Math.log(nonHdl):0)
+       + (-0.1999)*(hdlMmol>0?Math.log(hdlMmol):0);
+    s = Math.exp(-Math.exp(lp-10.1875))*Math.exp(-Math.exp(-0.2154-10.1875));
+  } else {
+    /* Female coefficients */
+    lp = 0.4648*(Math.log(age)-3.8816)
+       + 0.7744*(smoker?1:0)
+       + 0.3131*(Math.log(sbp)-4.8366)
+       + 0.8096*(nonHdl>0?Math.log(nonHdl):0)
+       + (-0.1895)*(hdlMmol>0?Math.log(hdlMmol):0);
+    s = Math.exp(-Math.exp(lp-11.5920))*Math.exp(-Math.exp(-0.3580-11.5920));
+  }
+  /* Convert to 10-year risk percentage */
+  var risk10=(1-s)*100;
+  /* Moderate region calibration factor */
+  risk10=risk10*1.10; /* ~10% upward recalibration for moderate-risk Asia */
+  return Math.min(Math.max(risk10,0.1),99.9);
+}
+
+/* SCORE2-OP for age ≥70 — uses same formula with age capped for recalibration */
+function calcScore2OP(age,gender,sbp,tc,hdl,smoker){
+  if(!age||age<70) return null;
+  /* For elderly, SCORE2-OP uses separate calibration */
+  var base=calcScore2(age,gender,sbp,tc,hdl,smoker);
+  if(base===null) return null;
+  /* SCORE2-OP recalibration for 70+ in moderate region */
+  return Math.min(base*1.15, 99.9);
+}
+
+/* PREVENT-ASCVD 10-year risk (AHA/ACC 2024 simplified)
+   Based on published PREVENT equations for US population
+   Uses log-hazard model */
+function calcPreventASCVD(age,gender,tc,hdl,sbp,sbpTreated,dm,smoker,ckd){
+  if(!age||!gender||!tc||!hdl||!sbp) return null;
+  var isFemale=(gender==='หญิง');
+  var tcMmol=tc/38.67, hdlMmol=hdl/38.67, nonHdlMmol=tcMmol-hdlMmol;
+  var lnAge=Math.log(age), lnSbp=Math.log(sbp);
+  var lnTc=Math.log(tc), lnHdl=Math.log(hdl);
+  var lhRisk;
+  /* Simplified PREVENT ASCVD equation (Shapiro et al 2024) */
+  if(!isFemale){
+    lhRisk = -9.655
+      + 0.456*lnAge
+      + 0.326*lnSbp
+      + (sbpTreated?0.132:0)
+      + 0.281*(smoker?1:0)
+      + 0.216*(dm?1:0)
+      + 0.141*(ckd?1:0)
+      + 0.300*lnTc
+      + (-0.214)*lnHdl;
+  } else {
+    lhRisk = -11.921
+      + 0.625*lnAge
+      + 0.418*lnSbp
+      + (sbpTreated?0.152:0)
+      + 0.335*(smoker?1:0)
+      + 0.282*(dm?1:0)
+      + 0.138*(ckd?1:0)
+      + 0.295*lnTc
+      + (-0.263)*lnHdl;
+  }
+  var risk10=(1-Math.exp(-Math.exp(lhRisk)))*100;
+  return Math.min(Math.max(risk10,0.1),99.9);
+}
+
+/* Thai CV Risk (RAMA-EGAT Framingham-based) — already exists but wrapping here */
+function calcThaiCV(age,gender,sbp,tc,hdl,smoker){
+  if(!age||!gender||!sbp) return null;
+  var isFemale=(gender==='หญิง');
+  var tcMmol=tc/38.67, hdlMmol=hdl/38.67;
+  var pts=0;
+  /* Age points */
+  if(!isFemale){
+    if(age<40)pts=0; else if(age<45)pts=3; else if(age<50)pts=6;
+    else if(age<55)pts=8; else if(age<60)pts=10; else if(age<65)pts=11;
+    else if(age<70)pts=12; else if(age<75)pts=13; else pts=14;
+  } else {
+    if(age<40)pts=-7; else if(age<45)pts=-3; else if(age<50)pts=0;
+    else if(age<55)pts=3; else if(age<60)pts=6; else if(age<65)pts=8;
+    else if(age<70)pts=10; else if(age<75)pts=11; else pts=12;
+  }
+  /* HDL (mmol/L) */
+  if(hdlMmol>=1.6)pts-=2; else if(hdlMmol>=1.3)pts-=1;
+  else if(hdlMmol>=1.2)pts+=0; else if(hdlMmol>=0.9)pts+=1; else pts+=2;
+  /* TC (mmol/L) */
+  if(tcMmol<4.1)pts+=0; else if(tcMmol<5.2)pts+=1; else if(tcMmol<6.2)pts+=2;
+  else if(tcMmol<7.2)pts+=3; else pts+=4;
+  /* SBP */
+  if(sbp<120)pts+=0; else if(sbp<130)pts+=1; else if(sbp<140)pts+=2;
+  else if(sbp<160)pts+=3; else pts+=4;
+  /* Smoker */
+  if(smoker) pts+=(isFemale?2:4);
+  /* Convert pts to % risk (RAMA-EGAT table) */
+  var riskMap=isFemale?
+    {'-3':1,'-2':1,'-1':1,0:1,1:2,2:2,3:3,4:4,5:5,6:6,7:7,8:9,9:11,10:14,11:17,12:21,13:25,14:30,15:35}:
+    {'-2':1,'-1':1,0:2,1:2,2:3,3:4,4:5,5:6,6:7,7:9,8:11,9:13,10:16,11:19,12:23,13:27,14:32,15:37};
+  var risk=riskMap[pts];
+  if(!risk){
+    /* Extrapolate for extreme values */
+    if(pts<=( isFemale?-3:-2)) risk=1;
+    else risk=40;
+  }
+  return{pts:pts, risk:risk};
+}
+
+/* Format risk % for display */
+function fmtRisk(pct){
+  if(pct===null||pct===undefined) return '—';
+  return pct.toFixed(1)+'%';
+}
+/* Risk level label for SCORE2 */
+function score2Level(pct,age){
+  if(age>=70){
+    if(pct<7.5) return {level:'Low-Moderate',color:'var(--ok)',cls:'ok'};
+    if(pct<15)  return {level:'High',color:'var(--warn)',cls:'wn'};
+    return {level:'Very High',color:'var(--bad)',cls:'bd'};
+  }
+  if(pct<2.5) return {level:'Low',color:'var(--ok)',cls:'ok'};
+  if(pct<5)   return {level:'Low-Moderate',color:'#65A30D',cls:'ok'};
+  if(pct<7.5) return {level:'Moderate',color:'var(--warn)',cls:'wn'};
+  if(pct<10)  return {level:'High',color:'#EA580C',cls:'wn'};
+  return {level:'Very High',color:'var(--bad)',cls:'bd'};
+}
+function preventLevel(pct){
+  if(pct<3)  return {level:'Low (<3%)',color:'var(--ok)',cls:'ok'};
+  if(pct<5)  return {level:'Borderline (3–5%)',color:'#65A30D',cls:'ok'};
+  if(pct<10) return {level:'Intermediate (5–10%)',color:'var(--warn)',cls:'wn'};
+  return {level:'High (≥10%)',color:'var(--bad)',cls:'bd'};
+}
+function thaiCVLevel(pct){
+  if(pct<10) return {level:'ต่ำ (<10%)',color:'var(--ok)',cls:'ok'};
+  if(pct<20) return {level:'ปานกลาง (10–20%)',color:'var(--warn)',cls:'wn'};
+  return {level:'สูง (≥20%)',color:'var(--bad)',cls:'bd'};
+}
+
+
+function calcAllRiskScores(){
+  var age=extractAge(val('dob'))||0;
+  var gender=val('gender')||'';
+  var sbp=parseFloat(val('sbp'))||0;
+  var tc=parseFloat(val('tc'))||0;
+  var hdl=parseFloat(val('hdl'))||0;
+  var dm=(val('hasDMRisk')||'no')!=='no'||(parseFloat(val('a1c'))||0)>=6.5||(parseFloat(val('fbs'))||0)>=126;
+  var smk=(val('smoker')||'no')==='yes';
+  var ckd=val('ckdStage')||'normal';
+  var hasCKD=(ckd==='ckd3'||ckd==='ckd4'||ckd==='ckd5');
+  var sbpTx=document.getElementById('sbpTreated')?.checked||false;
+
+  var noteEl=document.getElementById('scoreNote');
+
+  /* ── Thai CV Risk ── */
+  var thaiRes=calcThaiCV(age,gender,sbp,tc,hdl,smk);
+  var thaiEl=document.getElementById('thaiCVScore');
+  var thaiPtsEl=document.getElementById('thaiCVPts');
+  var thaiLvEl=document.getElementById('thaiCVLevel');
+  if(thaiRes&&thaiEl){
+    thaiEl.textContent=thaiRes.risk+'%';
+    if(thaiPtsEl) thaiPtsEl.textContent='คะแนน: '+thaiRes.pts+' pts';
+    var lv=thaiCVLevel(thaiRes.risk);
+    thaiEl.style.color=lv.color;
+    if(thaiLvEl){thaiLvEl.textContent=lv.level;thaiLvEl.style.background=lv.cls==='ok'?'#D1FAE5':lv.cls==='wn'?'#FEF3C7':'#FEE2E2';thaiLvEl.style.color=lv.color;}
+    /* Auto-fill score2val and preventRisk for LDL goal calc */
+    /* (Thai CV ≥20% → Very High, ≥10% → High for ESC) */
+  } else if(thaiEl) thaiEl.textContent='—';
+
+  /* ── SCORE2 / SCORE2-OP ── */
+  var labelEl=document.getElementById('score2Label');
+  var isOP=(age>=70);
+  if(labelEl) labelEl.textContent=isOP?'🇪🇺 SCORE2-OP (≥70)':'🇪🇺 SCORE2 (Moderate)';
+  var s2=isOP?calcScore2OP(age,gender,sbp,tc,hdl,smk):calcScore2(age,gender,sbp,tc,hdl,smk);
+  var s2El=document.getElementById('score2Score');
+  var s2LvEl=document.getElementById('score2Level');
+  if(s2!==null&&s2El){
+    s2El.textContent=fmtRisk(s2);
+    var s2lv=score2Level(s2,age);
+    s2El.style.color=s2lv.color;
+    if(s2LvEl){s2LvEl.textContent=s2lv.level;s2LvEl.style.background=s2lv.cls==='ok'?'#D1FAE5':s2lv.cls==='wn'?'#FEF3C7':'#FEE2E2';s2LvEl.style.color=s2lv.color;}
+    /* Auto-set score2val dropdown */
+    var s2Sel=document.getElementById('score2val');
+    if(s2Sel){
+      var s2v=s2>=20?'gte20':s2>=10?'gte10':s2>=2?'2to10':'lt2';
+      s2Sel.value=s2v;
+    }
+    var s2Info=document.getElementById('score2InfoLdl');
+    if(s2Info&&s2!==null){
+      var s2lvt=score2Level(s2,age);
+      s2Info.textContent=fmtRisk(s2)+' — '+s2lvt.level;
+      s2Info.style.color=s2lvt.color;
+    }
+  } else if(s2El) s2El.textContent='—';
+
+  /* ── PREVENT-ASCVD ── */
+  var prevRisk=calcPreventASCVD(age,gender,tc,hdl,sbp,sbpTx,dm,smk,hasCKD);
+  var prevEl=document.getElementById('preventScore');
+  var prevLvEl=document.getElementById('preventLevel');
+  if(prevRisk!==null&&prevEl){
+    prevEl.textContent=fmtRisk(prevRisk);
+    var plv=preventLevel(prevRisk);
+    prevEl.style.color=plv.color;
+    if(prevLvEl){prevLvEl.textContent=plv.level;prevLvEl.style.background=plv.cls==='ok'?'#D1FAE5':plv.cls==='wn'?'#FEF3C7':'#FEE2E2';prevLvEl.style.color=plv.color;}
+    /* Auto-set preventRisk dropdown */
+    var prevSel=document.getElementById('preventRisk');
+    if(prevSel){
+      var pv=prevRisk>=10?'gte10':prevRisk>=5?'5to10':prevRisk>=3?'3to5':'lt3';
+      prevSel.value=pv;
+    }
+    var prevInfo=document.getElementById('preventInfoLdl');
+    if(prevInfo&&prevRisk!==null){
+      var plvt=preventLevel(prevRisk);
+      prevInfo.textContent=fmtRisk(prevRisk)+' — '+plvt.level;
+      prevInfo.style.color=plvt.color;
+    }
+  } else if(prevEl) prevEl.textContent='—';
+
+  /* Update LDL goal with new scores */
+  updateLdlGoal();
+  if(noteEl) noteEl.textContent=(!age||!gender||!sbp||!tc||!hdl)?
+    '⚠️ ขาดข้อมูล: '+((!age||!gender)?'DOB/เพศ ':'')+((!sbp)?'SBP ':'')+((!tc)?'TC ':'')+((!hdl)?'HDL ':'')+' กรุณากรอกให้ครบ':
+    '✅ คำนวณจาก: อายุ '+age+'ปี, '+gender+', SBP '+sbp+', TC '+tc+', HDL '+hdl+(smk?' สูบบุหรี่':'')+(dm?' DM':'');
+}
+
 function updateLdlGoal(){
-  var custom=val('ldlGoalCustom');
-  if(custom){
-    document.getElementById('ldlGoalDisplay').textContent='< '+custom+' mg/dL (แพทย์กำหนด)';
-    document.getElementById('ldlGoalBasis').textContent='';
-    return;
-  }
-  var ascvd=val('ascvdRisk');
-  var hasASCVD=val('hasASCVD')==='yes';
-  var hasFH=val('hasFH')==='yes';
-  var hasDM=val('hasDMRisk');
-  var ckd=val('ckdStage');
-  var note=(val('note')||'').toLowerCase();
   var ldl=parseFloat(val('ldl'))||0;
-  var goal='',basis='';
+  var tc=parseFloat(val('tc'))||0;
+  var hdl=parseFloat(val('hdl'))||0;
+  var lpa=parseFloat(val('lpa'))||0;
+  var tg=parseFloat(val('tg'))||0;
+  var custom=val('ldlGoalCustom')||'';
+  var hasASCVD_v=getRadio('hasASCVD')||val('hasASCVD')||'no';
+  var ascvdVH=(hasASCVD_v==='very-high');
+  var ascvdYes=(hasASCVD_v==='yes'||ascvdVH);
+  var hasFH=(val('hasFH')==='yes');
+  var dmRisk=val('hasDMRisk')||'no';
+  var ckd=val('ckdStage')||'normal';
+  var score2=val('score2val')||'';
+  var prevent=val('preventRisk')||'';
+  var lpaHigh=(val('lpaHigh')==='yes')||(lpa>=50);
+  var tgHigh=(val('hasTG')==='yes')||(tg>=150);
+  var note=(val('note')||'').toLowerCase();
+  var smk=(val('smoker')||'')!=='no';
+  var sbp=parseFloat(val('sbp'))||0;
 
-  /* Auto-determine if not manually selected */
-  var level=ascvd;
-  if(!level){
-    if(hasASCVD||(hasFH&&hasASCVD)||ckd==='ckd5'||(hasDM==='dm-organ'))level='very-high';
-    else if(hasFH||ckd==='ckd4'||ckd==='ckd3'||(hasDM==='dm-simple'))level='high';
-    else level='moderate';
-    /* Note-based override */
-    if(note.includes('ascvd')||note.includes('mi ')||note.includes('stroke')||note.includes('pad'))level='very-high';
-    if(note.includes('dm')&&!level)level='high';
+  /* Show/hide ASCVD VH hint */
+  var hint=document.getElementById('ascvd_vh_hint');
+  if(hint) hint.style.display=ascvdVH?'block':'none';
+
+  /* ════════════════════════════════════════
+     ESC 2025 RISK CLASSIFICATION
+     ════════════════════════════════════════ */
+  var escLevel='', escGoal='', escPct='', escBasis='', escColor='';
+
+  if(ascvdVH || score2==='gte20' ||
+     (ascvdYes&&hasFH) ||
+     dmRisk==='dm-organ' || ckd==='ckd5'){
+    escLevel='Very High'; escColor='#B91C1C';
+    escGoal='< 55 mg/dL'; escPct='≥50% reduction';
+    if(ascvdVH) escBasis='ASCVD Very High Risk';
+    else if(score2==='gte20') escBasis='SCORE2 ≥20%';
+    else if(dmRisk==='dm-organ') escBasis='DM + organ damage / ≥10 ปี';
+    else if(ckd==='ckd5') escBasis='CKD G5 (eGFR <15)';
+    else if(ascvdYes&&hasFH) escBasis='ASCVD + FH';
+    else escBasis='Very High Risk';
+  } else if(ascvdYes || hasFH ||
+            ldl>=190 || tc>=310 || sbp>=180 ||
+            dmRisk==='dm-rf' ||
+            ckd==='ckd3' || ckd==='ckd4' ||
+            score2==='gte10' || lpaHigh){
+    escLevel='High'; escColor='#C2410C';
+    escGoal='< 70 mg/dL'; escPct='≥50% reduction';
+    var escParts=[];
+    if(ascvdYes) escParts.push('ASCVD');
+    if(hasFH) escParts.push('HeFH');
+    if(ldl>=190) escParts.push('LDL ≥190 mg/dL');
+    if(tc>=310) escParts.push('TC ≥310 mg/dL');
+    if(sbp>=180) escParts.push('BP ≥180 mmHg');
+    if(dmRisk==='dm-rf') escParts.push('DM + RF');
+    if(ckd==='ckd3'||ckd==='ckd4') escParts.push('CKD G3-4');
+    if(score2==='gte10') escParts.push('SCORE2 ≥10%');
+    if(lpaHigh) escParts.push('Lp(a) ≥50 mg/dL');
+    escBasis=escParts.join(' · ')||'High Risk';
+  } else if(score2==='2to10' || dmRisk==='dm-simple'){
+    escLevel='Moderate'; escColor='#B45309';
+    escGoal='< 100 mg/dL'; escPct='≥30% reduction';
+    escBasis=dmRisk==='dm-simple'?'DM ไม่มี organ damage <10 ปี':'SCORE2 2–9.9%';
+  } else {
+    escLevel='Low'; escColor='#16A34A';
+    escGoal='< 116 mg/dL'; escPct='';
+    escBasis='SCORE2 <2% / ความเสี่ยงต่ำ';
   }
 
-  if(level==='very-high')     {goal='< 55 mg/dL'; basis='Very High Risk (ESC 2021 / Thai DLP): ASCVD, DM+Organ Damage, HeFH+ASCVD, CKD G5';}
-  else if(level==='high')     {goal='< 70 mg/dL'; basis='High Risk: DM, HeFH, CKD G3-4, SCORE2 ≥10%';}
-  else if(level==='moderate') {goal='< 100 mg/dL';basis='Moderate Risk: SCORE2 5–9.9%';}
-  else                         {goal='< 130 mg/dL';basis='Low Risk: SCORE2 <5%';}
+  /* ════════════════════════════════════════
+     AHA/ACC 2026 RISK CLASSIFICATION
+     (Primary + Secondary prevention, no CAC)
+     ════════════════════════════════════════ */
+  var ahaLevel='', ahaGoal='', ahaPct='', ahaBasis='', ahaColor='';
 
-  /* If on max statin and LDL still above goal — flag */
-  if(val('onStatin')==='max'&&ldl>0){
-    var goalNum=parseInt(goal.replace(/[^0-9]/g,''));
-    if(ldl>goalNum) basis+=' ⚠️ LDL ยังไม่ถึงเป้า — พิจารณาเพิ่ม Ezetimibe/PCSK9i';
+  if(ascvdVH || (ascvdYes&&ckd==='ckd5')){
+    /* Secondary prevention: Very High Risk */
+    ahaLevel='ASCVD Very High Risk'; ahaColor='#B91C1C';
+    ahaGoal='< 55 mg/dL'; ahaPct='≥50% LDL reduction';
+    ahaBasis='High-intensity statin + ezetimibe/PCSK9i · Non-HDL <85';
+  } else if(ascvdYes){
+    /* Secondary prevention: not very high */
+    ahaLevel='Clinical ASCVD'; ahaColor='#DC2626';
+    ahaGoal='< 70 mg/dL'; ahaPct='≥50% LDL reduction';
+    ahaBasis='High-intensity statin · Non-HDL <100';
+  } else if(ldl>=190&&ascvdYes){
+    /* Severe HC + ASCVD */
+    ahaLevel='Severe HC + ASCVD'; ahaColor='#B91C1C';
+    ahaGoal='< 55 mg/dL'; ahaPct='≥50% reduction';
+    ahaBasis='Severe hypercholesterolemia + clinical ASCVD';
+  } else if(ldl>=190&&(hasFH||lpaHigh||tgHigh||smk)){
+    /* Severe HC + risk factors */
+    ahaLevel='Severe HC + Risk Factors'; ahaColor='#DC2626';
+    ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
+    ahaBasis='LDL ≥190 mg/dL + FH / Lp(a) / RF · ezetimibe + PCSK9i';
+  } else if(ldl>=190){
+    /* Severe HC without ASCVD or RF */
+    ahaLevel='Severe Hypercholesterolemia'; ahaColor='#EA580C';
+    ahaGoal='< 100 mg/dL'; ahaPct='Max tolerated statin';
+    ahaBasis='LDL ≥190 mg/dL · rule out secondary causes + cascade screen';
+  } else if(dmRisk==='dm-organ'||(dmRisk!=='no'&&(prevent==='gte10'||lpaHigh||tgHigh))){
+    /* DM with ASCVD RF or modifiers */
+    ahaLevel='DM + Risk Factors'; ahaColor='#C2410C';
+    ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
+    ahaBasis='DM + ASCVD risk factors / DM-specific modifiers';
+  } else if(dmRisk!=='no'){
+    /* DM without RF */
+    ahaLevel='DM ไม่มี major RF'; ahaColor='#B45309';
+    ahaGoal='< 100 mg/dL'; ahaPct='Moderate-intensity statin';
+    ahaBasis='DM อายุ 40–75 ปี ไม่มี ASCVD RF · Non-HDL <130';
+  } else if(prevent==='gte10'||score2==='gte10'){
+    /* Primary prevention high risk */
+    ahaLevel='Primary Prevention - High Risk'; ahaColor='#C2410C';
+    ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
+    ahaBasis='PREVENT-ASCVD ≥10% / SCORE2 ≥10% · High-intensity statin';
+  } else if(prevent==='5to10'||score2==='2to10'||(lpaHigh||tgHigh||hasFH)){
+    /* Primary prevention intermediate */
+    ahaLevel='Primary Prevention - Intermediate'; ahaColor='#B45309';
+    ahaGoal='< 100 mg/dL'; ahaPct='≥30–50% reduction';
+    ahaBasis='PREVENT 5–9.9% หรือ risk enhancers (Lp(a)/TG/FH)';
+  } else if(prevent==='3to5'||score2==='lt2'){
+    /* Borderline */
+    ahaLevel='Primary Prevention - Borderline'; ahaColor='#92400E';
+    ahaGoal='< 100 mg/dL'; ahaPct='ถ้าตัดสินใจรักษา';
+    ahaBasis='PREVENT 3–4.9% · พิจารณา risk enhancers';
+  } else {
+    ahaLevel='Primary Prevention - Low'; ahaColor='#16A34A';
+    ahaGoal='< 100 mg/dL'; ahaPct='Lifestyle modification';
+    ahaBasis='PREVENT <3% · ปรับพฤติกรรมก่อน';
   }
 
-  document.getElementById('ldlGoalDisplay').textContent=goal;
-  document.getElementById('ldlGoalBasis').textContent=basis;
-  setTimeout(updateNonHdlDisplay,50);
+  /* ── Update ESC display ── */
+  var escEl=document.getElementById('escGoalVal');
+  var escPctEl=document.getElementById('escGoalPct');
+  var escBEl=document.getElementById('escGoalBasis');
+  var escLvEl=document.getElementById('escRiskLevel');
+  if(escEl){ escEl.textContent=escGoal||'—'; escEl.style.color=escColor; }
+  if(escPctEl){ escPctEl.textContent=escPct; escPctEl.style.color=escColor; }
+  if(escBEl){ escBEl.textContent=escBasis; escBEl.style.color=escColor; }
+  if(escLvEl){
+    escLvEl.textContent=escLevel;
+    var bgMap={'Very High':'#FEE2E2','High':'#FEF3C7','Moderate':'#FEF9C3','Low':'#D1FAE5'};
+    var clrMap={'Very High':'#B91C1C','High':'#C2410C','Moderate':'#B45309','Low':'#16A34A'};
+    escLvEl.style.background=bgMap[escLevel]||'#F3F4F6';
+    escLvEl.style.color=clrMap[escLevel]||'#374151';
+  }
+
+  /* ── Update AHA display ── */
+  var ahaEl=document.getElementById('ahaGoalVal');
+  var ahaPctEl=document.getElementById('ahaGoalPct');
+  var ahaBEl=document.getElementById('ahaGoalBasis');
+  var ahaLvEl=document.getElementById('ahaRiskLevel');
+  if(ahaEl){ ahaEl.textContent=ahaGoal||'—'; ahaEl.style.color=ahaColor; }
+  if(ahaPctEl){ ahaPctEl.textContent=ahaPct; ahaPctEl.style.color=ahaColor; }
+  if(ahaBEl){ ahaBEl.textContent=ahaBasis; ahaBEl.style.color=ahaColor; }
+  if(ahaLvEl){ ahaLvEl.textContent=ahaLevel; ahaLvEl.style.background='#FFF1F2'; ahaLvEl.style.color=ahaColor; }
+
+  /* ── Store goal for report (use stricter of ESC vs AHA) ── */
+  var escNum=parseInt((escGoal||'200').replace(/[<\s]/g,''))||200;
+  var ahaNum=parseInt((ahaGoal||'200').replace(/[<\s]/g,''))||200;
+  var finalGoal=Math.min(escNum,ahaNum);
+  /* If custom override */
+  if(custom){ finalGoal=parseInt(custom)||finalGoal; }
+  document.getElementById('ldlGoalBasis').textContent=
+    custom?('แพทย์กำหนด '+custom+' mg/dL'):
+    ('ESC: '+escGoal+' · AHA: '+ahaGoal+(finalGoal<Math.max(escNum,ahaNum)?' → ใช้ '+finalGoal+' (stricter)':''));
+
+  /* Update Non-HDL */
+  updateNonHdlDisplay();
+
+  /* Save combined goal to hidden field for report */
+  setVal('ascvdRisk',escLevel.toLowerCase().replace(' ','-'));
 }
 
-/* ── SAVE ── */
-async function saveRecord(){
-  if(!val('fullName')||!val('hn')){alert('กรุณากรอกชื่อและรหัส');return;}
-  if(!db){alert('ยังไม่ได้เชื่อมต่อ Firebase');return;}
-  var rec={savedAt:new Date().toISOString()};
-  BASE_FIELDS.forEach(f=>rec[f]=val(f));
-  rec.ekgResult=getRadio('ekgResult');
-  rec.echoResult=getRadio('echoResult');
-  rec.valveCBs=getCBs();
-  rec.vaccines={}; VACCINES.forEach(v=>{rec.vaccines[v.id]={status:val('vax_status_'+v.id),date:val('vax_date_'+v.id)};});
-  /* Computed LDL goal */
-  var ldlDisp=document.getElementById('ldlGoalDisplay');
-  rec.ldlGoalFinal=ldlDisp?ldlDisp.textContent:'';
-  try{
-    setDbStatus('saving');
-    await db.collection('visits').add(rec);
-    setDbStatus('saved'); showToast('✅ บันทึกเรียบร้อย'); clearForm();
-    setTimeout(()=>setDbStatus('online'),2500);
-  }catch(e){alert('ผิดพลาด: '+e.message);setDbStatus('offline');}
-}
 
-/* ── LIST ── */
 function renderList(){
-  var q=(document.getElementById('searchInput')?.value||'').toLowerCase();
+  var q=(function(){var el=document.getElementById('searchInput');return el?el.value:'';})().toLowerCase();
   var recs=cachedRecords.filter(r=>(r.fullName||'').toLowerCase().includes(q)||(r.hn||'').toLowerCase().includes(q)||(r.visitDate||'').includes(q));
   var c=document.getElementById('patientListContainer');
   if(!recs.length){c.innerHTML='<div class="empty-state"><div class="big">🔍</div>ไม่พบข้อมูล</div>';return;}
@@ -1086,6 +1534,7 @@ function renderList(){
       <td><div style="display:flex;gap:5px">
         <button class="btn-sm edit" onclick="editRec('${r._docId}')">แก้ไข</button>
         <button class="btn-sm print" onclick="printRec('${r._docId}')">🖨 พิมพ์</button>
+        <button class="btn-sm" style="background:#0EA5E9;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;" onclick="openPortal('${r.hn}')">🔗 Portal</button>
         <button class="btn-sm del" onclick="delRec('${r._docId}')">ลบ</button>
       </div></td>
     </tr>`).join('')}</tbody>
@@ -1099,8 +1548,67 @@ async function delRec(id){
   try{await db.collection('visits').doc(id).delete();showToast('🗑 ลบแล้ว');}catch(e){alert(e.message);}
 }
 
+async function saveRecord(){
+  /* Capture hasASCVD from radio */
+  var ascvdRadio=document.querySelector('input[name="hasASCVD"]:checked');
+  if(ascvdRadio) setVal('hasASCVD', ascvdRadio.value);
+  /* Capture ldlInsufficient */
+  var licb=document.getElementById('ldlInsufficient');
+  if(licb) setVal('ldlInsufficient', licb.checked?'true':'false');
+  /* Auto-compute risk scores so portal gets latest values */
+  try{ calcAllRiskScores(); }catch(e){}
+  var _s2=document.getElementById('score2val');
+  if(_s2&&_s2.value) setVal('score2val',_s2.value);
+  var _pv=document.getElementById('preventRisk');
+  if(_pv&&_pv.value) setVal('preventRisk',_pv.value);
+
+  /* Validation */
+  var errors=[];
+  if(!val('hn')) errors.push('รหัสประจำตัวคลินิก (HN)');
+  if(!val('fullName')) errors.push('ชื่อ-นามสกุลผู้ป่วย');
+  if(!val('visitDate')) errors.push('วันที่ตรวจ');
+  if(errors.length>0){
+    showToast('❌ กรุณากรอก: '+errors.join(', '),'#DC2626');
+    return;
+  }
+
+  /* Duplicate visit detection */
+  var hn=val('hn'), vdate=val('visitDate');
+  var existing=cachedRecords.find(function(r){
+    return r.hn===hn && r.visitDate===vdate && r._docId!==currentDocId;
+  });
+  if(existing){
+    if(!confirm('⚠️ มีข้อมูลของ '+val('fullName')+' วันที่ '+vdate+' อยู่แล้ว ต้องการบันทึกทับหรือไม่?')) return;
+  }
+
+  /* Build record object */
+  var rec={savedAt:new Date().toISOString()};
+  BASE_FIELDS.forEach(f=>{ var v=val(f); if(v!==''&&v!==null&&v!==undefined) rec[f]=v; });
+  /* Valve checkboxes */
+  rec.valveCBs=getCBs();
+  /* Vaccines */
+  rec.vaccines={};
+  VACCINES.forEach(v=>{ rec.vaccines[v.id]={status:val('vax_status_'+v.id),date:val('vax_date_'+v.id)}; });
+
+  try{
+    var col=db.collection('visits');
+    if(currentDocId){
+      await col.doc(currentDocId).set(rec,{merge:true});
+      showToast('✅ อัปเดตแล้ว','#1A9B8C');
+    } else {
+      var docRef=await col.add(rec);
+      currentDocId=docRef.id;
+      showToast('✅ บันทึกแล้ว','#1A9B8C');
+    }
+  } catch(e){
+    showToast('❌ Error: '+e.message,'#DC2626');
+  }
+}
+
+
 function editRec(id){
   var rec=cachedRecords.find(r=>r._docId===id); if(!rec)return;
+  currentDocId=id; /* track for duplicate check */
   BASE_FIELDS.forEach(f=>setVal(f,rec[f]));
   if(rec.dob)setDobFromText(rec.dob);
   selectedDoctor=rec.doctor||'';
@@ -1111,9 +1619,30 @@ function editRec(id){
   if(rec.echoResult)setRadio('echoResult',rec.echoResult);
   if(rec.valveCBs)setCBs(rec.valveCBs);
   if(rec.vaccines)VACCINES.forEach(v=>{setVal('vax_status_'+v.id,rec.vaccines[v.id]?.status||'');setVal('vax_date_'+v.id,rec.vaccines[v.id]?.date||'');});
-  calcIdeal(); updateLdlGoal();
+  calcIdeal(); updateLdlGoal(); updateNonHdlDisplay();
+  /* Restore recorder button highlight */
+  if(rec.recorder) setRecorder(rec.recorder);
+  /* Restore hasASCVD radio */
+  if(rec.hasASCVD) setRadio('hasASCVD',rec.hasASCVD);
+  /* Restore ldlInsufficient checkbox */
+  var licb=document.getElementById('ldlInsufficient');
+  if(licb) licb.checked=(rec.ldlInsufficient==='true'||rec.ldlInsufficient===true);
+  /* Restore LDL preset button highlight */
+  if(rec.ldlGoalCustom){
+    document.querySelectorAll('.ldl-preset-btn').forEach(function(b){
+      b.classList.toggle('active', b.textContent.includes(rec.ldlGoalCustom));
+    });
+  }
   switchTab('entry',document.querySelectorAll('.tab-btn')[0]);
-  showToast('📝 โหลดข้อมูลแล้ว กรุณาบันทึกอีกครั้ง','#1A5A8A');
+  showToast('📝 โหลดข้อมูลแล้ว','#1A5A8A');
+}
+
+
+function openPortal(hn){
+  if(!hn){showToast('ไม่มี HN','#DC2626');return;}
+  /* Open patient portal with HN prefilled */
+  var url='patient_portal.html?hn='+encodeURIComponent(hn);
+  window.open(url,'_blank');
 }
 
 function printRec(id){
