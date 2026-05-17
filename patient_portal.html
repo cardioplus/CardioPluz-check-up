@@ -506,24 +506,18 @@ function showReport(idx){
     '<span class="chip '+_ckdP.cls+'">'+_ckdP.stage+' '+_ckdP.txt+'</span></div>';
   if(labHTML) html+='<div class="report-section"><div class="rs-header blue">🔬 ผลเลือด</div><div class="rs-body">'+labHTML+'</div></div>';
 
-  /* CV Risk */
-  var cvRiskTxt='', cvRiskBg='', cvRiskColor='';
-  if(r.sbp&&r.ldl){
-    /* Simple display only — full calculation in staff portal */
-    var sbp=+r.sbp, ldl=+r.ldl, a1c=+r.a1c||0, fbs=+r.fbs||0;
-    var dm=(r.note||'').toLowerCase().indexOf('dm')>=0||a1c>=6.5||fbs>=126;
-    var hasMult=(dm&&sbp>=140)||(dm&&ldl>=160)||(sbp>=140&&ldl>=160);
-    if(hasMult){cvRiskTxt='ความเสี่ยงสูง — ควรติดตามอย่างใกล้ชิด';cvRiskBg='var(--warn-bg)';cvRiskColor='var(--warn)';}
-    else if(!dm&&sbp<130&&ldl<130){cvRiskTxt='ความเสี่ยงต่ำ — ดูแลสุขภาพต่อไป';cvRiskBg='var(--ok-bg)';cvRiskColor='var(--ok)';}
-    else{cvRiskTxt='ความเสี่ยงปานกลาง — ควรปรับพฤติกรรม';cvRiskBg='var(--warn-bg)';cvRiskColor='var(--warn)';}
-    html+='<div class="report-section"><div class="rs-header orange">❤️ ความเสี่ยงโรคหัวใจ</div>'+
+  /* ── CV Risk section ── */
+  var hasASCVD_p=(r.hasASCVD==='yes'||r.hasASCVD==='very-high');
+  if(hasASCVD_p){
+    /* Secondary Prevention — show badge */
+    html+='<div class="report-section"><div class="rs-header" style="background:#B91C1C;">🚨 Secondary Prevention — มีโรคหลอดเลือดหัวใจ</div>'+
       '<div class="rs-body">'+
-      '<div class="cv-risk-banner" style="background:'+cvRiskBg+';border-left:4px solid '+cvRiskColor+';border-radius:8px;padding:12px;">'+
-      '<div style="font-size:14px;font-weight:700;color:'+cvRiskColor+'">'+cvRiskTxt+'</div>'+
-      '<div style="font-size:11px;color:var(--text2);margin-top:4px">สำหรับรายละเอียด ASCVD score กรุณาติดต่อแพทย์</div>'+
-      '</div>'+
-      '</div></div>';
-  } /* end if(r.sbp&&r.ldl) */
+      '<div style="background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:10px;padding:14px 16px;">'+
+      '<div style="font-size:13px;font-weight:700;color:#B91C1C;margin-bottom:6px;">ท่านมีประวัติโรคหลอดเลือดหัวใจ</div>'+
+      '<div style="font-size:12px;color:#7F1D1D;line-height:1.7;">การรักษาจะมุ่งเน้น Secondary Prevention<br>เป้าหมาย LDL: '+(r.hasASCVD==='very-high'?'< 55 mg/dL (Very High Risk)':'< 70 mg/dL')+
+      '<br>กรุณาปฏิบัติตามแผนการรักษาของแพทย์อย่างเคร่งครัด</div>'+
+      '</div></div></div>';
+  }
   /* Risk score display in portal */
   if(r.score2val||r.preventRisk){
     var s2LabelMap={'lt2':'<2% (ต่ำ)','2to10':'2–9.9% (ปานกลาง)','gte10':'≥10% (สูง)','gte20':'≥20% (สูงมาก)'};
