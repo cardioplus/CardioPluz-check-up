@@ -455,15 +455,18 @@ body{
 
   /* ══ PAGE BREAKS ══ */
   .px-page{
-    padding:10mm 12mm 8mm 12mm!important;
+    padding:6mm 11mm 5mm 11mm!important;
     margin:0!important;
     border:none!important;
     border-radius:0!important;
     box-shadow:none!important;
     page-break-after:always!important;
     break-after:page!important;
-    overflow:visible!important;
+    page-break-inside:avoid!important;
+    break-inside:avoid!important;
+    overflow:hidden!important;
     background:white!important;
+    box-sizing:border-box!important;
   }
   .px-page:last-child{
     page-break-after:auto!important;
@@ -642,6 +645,37 @@ body{
   canvas{display:none!important;}
   .px-empty-trends{display:none!important;}
   .delta{font-size:8.5px!important;padding:1px 4px!important;}
+
+  /* ══ FIT-TO-PAGE: shrink heavy elements ══ */
+  /* Body type scatter chart — cap height so it fits with goals */
+  .px-bodychart-card{max-height:115mm!important;overflow:hidden!important;}
+  .px-body-chart svg{max-height:105mm!important;width:auto!important;display:block;margin:0 auto;}
+  .px-body-chart-name{font-size:15px!important;margin-bottom:4px!important;}
+  .px-body-chart-title{font-size:9px!important;margin-bottom:2px!important;}
+  /* InBody bars — tighter spacing */
+  .ib-chart{gap:9mm!important;}
+  .ib-row{margin:0!important;}
+  .ib-track-wrap{padding-top:16px!important;}
+  /* Trend mini charts — compact 3 columns to fit 12 on one page */
+  .px-trend-mini{padding:3px 5px!important;}
+  .px-trend-label{font-size:7.5px!important;margin-bottom:1px!important;}
+  .px-trend-svg,.px-trend-mini svg{max-height:24mm!important;}
+  /* Lab groups tighter */
+  .lab-group{margin-bottom:6px!important;}
+  .lab-row{padding:2.5px 8px!important;}
+  /* Section headers compact */
+  .px-sh{margin:6px 0 5px!important;padding:4px 8px!important;}
+  .px-sh-th{font-size:11px!important;}
+  .px-sh-en{font-size:8px!important;}
+  /* Cards tighter */
+  .px-card{padding:8px 12px!important;margin-bottom:8px!important;}
+  .px-lab-section{margin-bottom:8px!important;}
+  /* Goal cards compact */
+  .px-ib-goal{padding:6px 8px!important;}
+  .px-ib-goals{gap:6px!important;}
+
+  /* Trend grid: 3 columns in print to fit all 12 on one page */
+  .px-trend-grid{grid-template-columns:1fr 1fr 1fr!important;gap:4px!important;}
 }
 
 
@@ -2551,7 +2585,7 @@ function render(){
   O+=secHead('📈','LAB TRENDS OVER TIME','แนวโน้มผลตรวจตามเวลา');
   if(hist&&hist.length>=2){
     O+='<div class="px-lab-section"><div class="px-lab-head">TRENDS OVER TIME</div>';
-    O+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">';
+    O+='<div class="px-trend-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">';
     var trendItems=[
       {k:'ldl',l:'ไขมันเลว LDL-C (mg/dL)',cls:ldl.cls},
       {k:'a1c',l:'น้ำตาลสะสม HbA1c (%)'},
