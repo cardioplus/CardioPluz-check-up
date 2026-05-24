@@ -2484,27 +2484,6 @@ function render(){
   if(psa&&r.psa)otherRows.push(labRow('ต่อมลูกหมาก (PSA)',r.psa,'ng/mL','< 4.0 ng/mL',psa.cls,psa.txt));
   O+=labGroup('🧪','ฮอร์โมนและวิตามิน (Hormone & Vitamin)',otherRows);
 
-  /* LDL Status box */
-  if(r.ldl){
-    var ldlGoalNum=ldlGoalData.finalNum||100;
-    var ldlAch=+r.ldl<ldlGoalNum;
-    O+='<div class="px-ldl-status '+(ldlAch?'px-ldl-ok':'px-ldl-fail')+'">'+
-      '<div class="px-ldl-top">'+
-        '<div>'+
-          '<div class="px-ldl-title">LDL STATUS</div>'+
-          '<div class="px-ldl-big">'+r.ldl+' <span>mg/dL</span></div>'+
-          '<div class="px-ldl-cat">'+ldlGoalData.lvlTh+' Risk</div>'+
-        '</div>'+
-        '<div>'+
-          '<div class="px-ldl-goal-lbl">TARGET</div>'+
-          '<div class="px-ldl-goal">&lt;'+ldlGoalNum+' mg/dL</div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="px-ldl-ach">'+
-        (ldlAch?'✅ บรรลุเป้าหมาย':'❌ ยังสูงกว่าเป้าหมาย — พิจารณาปรับยา')+
-      '</div>'+
-    '</div>';
-  }
   O+='</div>'; /* end labs container */
   O+='</div>'; /* end page 2 */
 
@@ -2586,6 +2565,29 @@ function render(){
   O+='<div class="px-page px-p3">';
   O+=secHead('❤️','CARDIOVASCULAR RISK & CARDIOLOGY','ความเสี่ยงโรคหัวใจและผลตรวจหัวใจ');
 
+  /* LDL Status box */
+  if(r.ldl){
+    var ldlGoalNum=ldlGoalData.finalNum||100;
+    var ldlAch=+r.ldl<ldlGoalNum;
+    O+='<div class="px-ldl-status '+(ldlAch?'px-ldl-ok':'px-ldl-fail')+'">'+
+      '<div class="px-ldl-top">'+
+        '<div>'+
+          '<div class="px-ldl-title">LDL STATUS</div>'+
+          '<div class="px-ldl-big">'+r.ldl+' <span>mg/dL</span></div>'+
+          '<div class="px-ldl-cat">'+ldlGoalData.lvlTh+' Risk</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="px-ldl-goal-lbl">TARGET</div>'+
+          '<div class="px-ldl-goal">&lt;'+ldlGoalNum+' mg/dL</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="px-ldl-ach">'+
+        (ldlAch?'✅ บรรลุเป้าหมาย':'❌ ยังสูงกว่าเป้าหมาย — พิจารณาปรับยา')+
+      '</div>'+
+    '</div>';
+  }
+
+
   /* CV Risk + LDL Goal */
   O+='<div class="px-row gap-12" style="margin-top:10px">';
 
@@ -2640,6 +2642,13 @@ function render(){
   }
   O+='</div>';
   O+='</div>'; /* end row */
+  O+='</div>'; /* end page 3 */
+
+  /* ════════════════════════════════════
+     PAGE 3B — EKG & ECHO
+     ════════════════════════════════════ */
+  O+='<div class="px-page px-p3b">';
+  O+=secHead('🫀','EKG & ECHOCARDIOGRAM','ผลคลื่นไฟฟ้าหัวใจและเอคโค่');
 
   /* EKG */
   var ekgRes=r.ekgResult||'NA';
@@ -2711,7 +2720,7 @@ function render(){
     O+='</div>'; /* end echo card */
   }
 
-  O+='</div>'; /* end page 3 */
+  O+='</div>'; /* end page 3b */
 
   /* ════════════════════════════════════
      PAGE 4 — FOLLOW-UP + ADVICE + FOOTER
