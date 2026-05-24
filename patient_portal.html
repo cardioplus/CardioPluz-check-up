@@ -484,8 +484,16 @@ function showReport(idx){
     {k:'hdl',n:'HDL Cholesterol',u:'mg/dL'},{k:'tg',n:'Triglyceride',u:'mg/dL'},
     {k:'cr',n:'Creatinine',u:'mg/dL'},{k:'ast',n:'AST',u:'U/L'},{k:'alt',n:'ALT',u:'U/L'}
   ];
+  if(r.tsh) labRows.push({k:'tsh',n:'TSH',u:'mIU/L'});
+  if(r.albumin) labRows.push({k:'albumin',n:'Albumin',u:'g/dL'});
+  if(r.upcr) labRows.push({k:'upcr',n:'UPCR (โปรตีนในปัสสาวะ)',u:'mg/g'});
   if(g!=='หญิง') labRows.push({k:'psa',n:'PSA',u:'ng/mL'});
   if(r.lpa) labRows.push({k:'lpa',n:'Lp(a) — ความเสี่ยง ASCVD',u:'mg/dL'});
+  if(r.apob) labRows.push({k:'apob',n:'Apolipoprotein B (ApoB)',u:'mg/dL'});
+  if(r.hb) labRows.push({k:'hb',n:'ฮีโมโกลบิน (Hb)',u:'g/dL'});
+  if(r.hct) labRows.push({k:'hct',n:'ฮีมาโตคริต (Hct)',u:'%'});
+  if(r.vitd) labRows.push({k:'vitd',n:'วิตามินดี (Vitamin D)',u:'ng/mL'});
+  if(r.ferritin) labRows.push({k:'ferritin',n:'เฟอร์ริติน (Ferritin)',u:'ng/mL'});
   /* eGFR */
   var _ageP=0;var _dobM=(r.dob||'').match(/(\d+)\s*ปี/);if(_dobM)_ageP=+_dobM[1];
   var _gfrP=calcGFR(r.cr,_ageP,g);
@@ -504,6 +512,15 @@ function showReport(idx){
     '<div class="lab-row-name"><div class="lab-row-nm">eGFR (CKD-EPI)</div><div class="lab-row-ref">อัตราการกรองไต | ปกติ ≥ 60</div></div>'+
     '<span class="lab-row-val" style="color:'+(_gfrP>=60?'var(--ok)':_gfrP>=30?'var(--warn)':'var(--bad)')+'">'+_gfrP+'</span>'+
     '<span class="chip '+_ckdP.cls+'">'+_ckdP.stage+' '+_ckdP.txt+'</span></div>';
+  if(r.tc&&r.hdl){
+    var _ratio=(+r.tc/+r.hdl);
+    var _rcls=_ratio<=4.0?'ok':_ratio<=5.0?'wn':'bd';
+    labHTML+='<div class="lab-row">'+
+      '<div class="lab-row-name"><div class="lab-row-nm">TC/HDL Ratio</div>'+
+      '<div class="lab-row-ref">ดัชนีความเสี่ยง | &lt;4.0 ดี</div></div>'+
+      '<span class="lab-row-val" style="color:'+(_rcls==='ok'?'var(--ok)':_rcls==='wn'?'var(--warn)':'var(--bad)')+'">'+_ratio.toFixed(1)+'</span>'+
+      '<span class="chip '+_rcls+'">'+(_rcls==='ok'?'ดี':_rcls==='wn'?'ปานกลาง':'สูง')+'</span></div>';
+  }
   if(labHTML) html+='<div class="report-section"><div class="rs-header blue">🔬 ผลเลือด</div><div class="rs-body">'+labHTML+'</div></div>';
 
   /* ── CV Risk section ── */
