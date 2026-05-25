@@ -368,7 +368,7 @@ function calcScore2(age,gender,sbp,tc,hdl,smoker){
   }
   return Math.min(Math.max(risk,0.1),99.9);
 }
-/* ── HEART AGE (อายุหัวใจ) — JBS3 concept ── */
+/* ── HEART AGE (อายุหัวใจ) ── */
 function calcHeartAge(age,gender,sbp,tc,hdl,smoker){
   if(!age||!gender||!sbp||!tc||!hdl) return null;
   if(age<35||age>85) return null;

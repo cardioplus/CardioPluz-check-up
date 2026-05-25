@@ -728,7 +728,7 @@ var DEMO={
   lpa:'42',apob:'95',
   tmNote:'ติดตาม PSA ทุกปี',
   ascvdRisk:'high',hasASCVD:'no',
-  hasFH:'no',hasDMRisk:'no',ckdStage:'ปกติ / G1-2',onStatin:'ไม่ได้รับ Statin',
+  hasFH:'no',hasDMRisk:'no',ckdStage:'ปกติ / G1-2',onStatin:'no',
   ldlGoalCustom:'70',ldlInsufficient:'false',nonHdlGoalCustom:'',
   sbp:'142',dbp:'88',bpTarget:'<130/80',smoker:'no',
   ekgResult:'Normal',ekgDate:'2568-05-10',ekgComment:'Normal sinus rhythm',
@@ -739,7 +739,7 @@ var DEMO={
   customSummary:'ผลตรวจสุขภาพปีนี้พบ: น้ำตาลสะสมสูงเล็กน้อย ไขมัน LDL ยังต้องลดเพิ่ม ความดันโลหิตยังสูงอยู่ Lp(a) อยู่ในช่วงเฝ้าระวัง แนะนำปรับยาและพฤติกรรม',
   doctorNote:'ติดตาม HbA1c และ LDL ทุก 3 เดือน ปรับ Statin เป็น High intensity',
   recorder:'พญ.ณัฏฐา',hasFH:'no',hasDMRisk:'dm-organ',
-  ckdStage:'ckd3',onStatin:'yes-moderate',
+  ckdStage:'ckd3',onStatin:'moderate',
   ldlGoalCustom:'<70',
   sbp:'138',dbp:'88',bpTarget:'< 130/80',smoker:'yes',
   ekgDate:'2568-05-10',ekgComment:'Normal sinus rhythm, ไม่พบ ST changes',
@@ -839,7 +839,7 @@ function labSt(t,v,g){
   return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};
 }
 
-/* ── LDL GOAL: Thai DLP / ESC 2021 / ACC 2025 ── */
+/* ── LDL GOAL: Thai DLP / ESC 2025 DLP / ACC 2026 DLP ── */
 function calcLdlGoal(r){
   var ldlVal=+r.ldl||0, tc=+r.tc||0, lpa=+r.lpa||0, tg=+r.tg||0, sbp=+r.sbp||0;
   var custom=r.ldlGoalCustom||'';
@@ -855,7 +855,7 @@ function calcLdlGoal(r){
   var tgHigh=(r.hasTG==='yes')||(tg>=150);
   var ldlOver190=ldlVal>=190;
 
-  /* ESC 2021 */
+  /* ESC 2025 DLP */
   var escGoal='',escLevel='',escPct='',escBasis='';
   if(ascvdVH||score2==='gte20'||(ascvdYes&&hasFH)||dmRisk==='dm-organ'||ckd==='ckd5'){
     escLevel='Very High';escGoal='55';escPct='≥50%';
@@ -872,7 +872,7 @@ function calcLdlGoal(r){
     escLevel='Low';escGoal='116';escPct='';escBasis='Low Risk';
   }
 
-  /* ACC/AHA 2026 Dyslipidemia Guideline — LDL-C goals restored */
+  /* ACC 2026 DLP Guideline — LDL-C goals restored */
   var ahaGoal='',ahaLevel='',ahaPct='',ahaBasis='';
   if(ascvdVH){
     ahaLevel='ASCVD ความเสี่ยงสูงมาก';ahaGoal='55';ahaPct='non-HDL <85';
@@ -903,13 +903,75 @@ function calcLdlGoal(r){
   var basis=custom?('แพทย์กำหนด: '+custom+' mg/dL'):('ESC: <'+escGoal+' · AHA: <'+ahaGoal);
   var curr=ldlVal, achieved=curr>0?curr<finalNum:null;
 
+  /* ── BP GOAL (ACC/AHA 2017 + ESC/ESH 2024) ──
+     ACC/AHA 2017: เป้าหมายทั่วไป <130/80
+     ESC/ESH 2024: เป้าหมาย <130/80 (ถ้าทนได้) — สำหรับผู้สูงอายุ ≥80 ปี
+     แนะนำ SBP 140-150 หรือ <140 ถ้าทนได้
+     ผู้ป่วยความเสี่ยงสูง/มี ASCVD/DM/CKD → <130/80 */
+  var bpSys=130, bpDia=80, bpBasis='ACC/AHA 2017 · ESC/ESH 2024: <130/80 mmHg';
+  var ageForBp=extractAge(r.dob)||0;
+  if(ageForBp>=80){
+    bpSys=140; bpDia=80;
+    bpBasis='อายุ ≥80 ปี — ESC/ESH 2024: SBP <140 mmHg (ถ้าทนได้)';
+  } else if(escLevel==='Very High'||escLevel==='High'||ascvdYes||dmRisk!=='no'||ckd!=='normal'){
+    bpSys=130; bpDia=80;
+    bpBasis='ความเสี่ยงสูง/ASCVD/DM/CKD — เป้าหมายเข้มงวด <130/80 mmHg';
+  }
+  /* ค่าที่แพทย์แก้ไขเอง */
+  var bpCustom=(r.bpGoalCustom||'').trim();
+  if(bpCustom){
+    var bpm=bpCustom.match(/(\d+)\s*\/\s*(\d+)/);
+    if(bpm){ bpSys=+bpm[1]; bpDia=+bpm[2]; bpBasis='แพทย์กำหนด: '+bpCustom+' mmHg'; }
+  }
+  var bpGoalStr='< '+bpSys+'/'+bpDia+' mmHg';
+  var curSbp=+r.sbp||0, curDbp=+r.dbp||0;
+  var bpAchieved=(curSbp>0)?(curSbp<bpSys&&(curDbp===0||curDbp<bpDia)):null;
+
+  /* ── ApoB GOAL (ESC 2025 DLP) ──
+     ESC 2025 DLP: ApoB <65 (Very High), <80 (High), <100 (Moderate) mg/dL
+     ใช้เป็นเป้าหมายรองจาก LDL-C โดยเฉพาะเมื่อ TG สูง / DM / metabolic syndrome */
+  var apobGoalN= escLevel==='Very High'?65 : escLevel==='High'?80 : escLevel==='Moderate'?100 : 100;
+  var apobBasis= escLevel==='Very High'?'ESC 2025 DLP: Very High Risk — ApoB <65 mg/dL'
+               : escLevel==='High'?'ESC 2025 DLP: High Risk — ApoB <80 mg/dL'
+               : escLevel==='Moderate'?'ESC 2025 DLP: Moderate Risk — ApoB <100 mg/dL'
+               : 'ESC 2025 DLP: Low Risk — ApoB <100 mg/dL';
+  var apobCustom=(r.apobGoalCustom||'').trim();
+  if(apobCustom){
+    var apn=parseInt(apobCustom,10);
+    if(apn>0){ apobGoalN=apn; apobBasis='แพทย์กำหนด: '+apn+' mg/dL'; }
+  }
+  var apobGoalStr='< '+apobGoalN+' mg/dL';
+  var apobCur=+r.apob||0;
+  var apobAchieved=apobCur>0?apobCur<apobGoalN:null;
+
+  /* ── Non-HDL GOAL (ESC 2025 DLP = LDL goal + 30 mg/dL) ── */
+  var nonHdlGoalN= finalNum+30;
+  var nonHdlBasis='ESC 2025 DLP: = LDL-C goal + 30 mg/dL';
+  var nonHdlCustom=(r.nonHdlGoalCustom||'').trim();
+  if(nonHdlCustom){
+    var nhn=parseInt(nonHdlCustom,10);
+    if(nhn>0){ nonHdlGoalN=nhn; nonHdlBasis='แพทย์กำหนด: '+nhn+' mg/dL'; }
+  }
+  var nonHdlGoalStr='< '+nonHdlGoalN+' mg/dL';
+  var nonHdlCur=(tc>0&&(+r.hdl)>0)?(tc-(+r.hdl)):null;
+  var nonHdlAchieved=nonHdlCur!==null?nonHdlCur<nonHdlGoalN:null;
+
   return{
     goal:goal, pctReduce:escPct, basis:basis, lvlTh:escLevel,
     achieved:achieved, curr:curr, finalNum:finalNum,
     escGoal:'< '+escGoal, escLevel:escLevel, escBasis:escBasis, escPct:escPct,
     ahaGoal:'< '+ahaGoal, ahaLevel:ahaLevel, ahaBasis:ahaBasis, ahaPct:ahaPct,
     upgradedByLdl190:ldlOver190&&escLevel!=='Very High',
-    upgradedByLpa:lpaHigh&&escLevel!=='Very High'
+    upgradedByLpa:lpaHigh&&escLevel!=='Very High',
+    /* BP goal */
+    bpGoal:bpGoalStr, bpSys:bpSys, bpDia:bpDia, bpBasis:bpBasis,
+    bpAchieved:bpAchieved, bpCurSbp:curSbp, bpCurDbp:curDbp, bpIsCustom:!!bpCustom,
+    /* ApoB goal */
+    apobGoal:apobGoalStr, apobGoalNum:apobGoalN, apobBasis:apobBasis,
+    apobAchieved:apobAchieved, apobCur:apobCur, apobIsCustom:!!apobCustom,
+    /* Non-HDL goal */
+    nonHdlGoal:nonHdlGoalStr, nonHdlGoalNum:nonHdlGoalN, nonHdlBasis:nonHdlBasis,
+    nonHdlAchieved:nonHdlAchieved, nonHdlCur:nonHdlCur, nonHdlIsCustom:!!nonHdlCustom
   };
 }
 
@@ -985,7 +1047,7 @@ function calcPreventReport(age, gender, tc, hdl, sbp, sbpTx, dm, smoker, ckd, eg
   return Math.min(Math.max(risk,0.1),99.9);
 }
 
-/* ── HEART AGE (อายุหัวใจ) — JBS3 concept ──
+/* ── HEART AGE (อายุหัวใจ) ──
    แนวคิด: หา "อายุ" ของคนที่มีปัจจัยเสี่ยงในอุดมคติ (ไม่สูบบุหรี่,
    ความดัน 120, TC 4 mmol/L (~155 mg/dL), HDL 1.6 mmol/L (~62 mg/dL))
    ที่จะมีความเสี่ยง 10 ปี เท่ากับความเสี่ยงปัจจุบันของผู้ป่วย
@@ -1499,7 +1561,7 @@ function buildDietAdvice(r){
   if(hasASCVD){
     L.push('');
     L.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    L.push('❤️ คำแนะนำเฉพาะ: ผู้ป่วยโรคหลอดเลือดหัวใจ (ตามแนวทาง AHA 2026)');
+    L.push('❤️ คำแนะนำเฉพาะ: ผู้ป่วยโรคหลอดเลือดหัวใจ (ตามแนวทาง ACC 2026 DLP)');
     L.push('   ▸ เน้นรูปแบบการกินที่ดีต่อหัวใจ (heart-healthy pattern):');
     L.push('     DASH, เมดิเตอร์เรเนียน หรืออาหารเน้นพืช (plant-based)');
     L.push('   ▸ กินผักผลไม้หลากสีให้มาก — เลี่ยงน้ำผลไม้ (น้ำตาลสูง)');
@@ -1899,7 +1961,9 @@ function render(){
   var isOP=(age4s>=70);
   var s2Raw=calcScore2Report(age4s,g,+r.sbp||0,+r.tc||0,+r.hdl||0,smk4s);
   var s2Score=s2Raw!==null?s2Raw*(isOP?1.15:1):null;
-  var prevScore=calcPreventReport(age4s,g,+r.tc||0,+r.hdl||0,+r.sbp||0,(r.onStatin==='yes'),dm4s,smk4s,ckd4s,calcGFR(r.cr,age4s,g),(r.onStatin==='yes'));
+  var onStatinR=(r.onStatin||'no');
+  var isOnStatinR=(onStatinR!=='no'&&onStatinR!==''&&onStatinR!=='ไม่ได้รับ Statin'&&onStatinR.indexOf('ไม่ได้รับ')<0);
+  var prevScore=calcPreventReport(age4s,g,+r.tc||0,+r.hdl||0,+r.sbp||0,(r.sbpTreatedVal==='yes'||r.sbpTreated===true||r.sbpTreated==='yes'),dm4s,smk4s,ckd4s,calcGFR(r.cr,age4s,g),isOnStatinR);
   var heartAge=calcHeartAge(age4s,g,+r.sbp||0,+r.tc||0,+r.hdl||0,smk4s);
   var heartAgeHist=buildHeartAgeHistory(r,hist,age4s,g,smk4s);
   var ldlGoalData=calcLdlGoal(r);
@@ -2035,7 +2099,7 @@ function render(){
       '</div>'+
       '</div>';
 
-    /* ── HEART AGE (อายุหัวใจ) — JBS3 ── */
+    /* ── HEART AGE (อายุหัวใจ) ── */
     if(heartAge!==null && age4s>0){
       var haDiff=heartAge-age4s;
       var haCapped=(haDiff>=20);
@@ -2067,7 +2131,7 @@ function render(){
             haMsg+
           '</div>'+
           '<div style="font-size:9.5px;color:#94A3B8;margin-top:6px;line-height:1.5;">'+
-            '📌 อายุหัวใจ = อายุของคนสุขภาพดี (ไม่สูบบุหรี่ · ความดัน 120 · ไขมันปกติ) ที่มีความเสี่ยงโรคหัวใจเท่ากับคุณ — ตามแนวคิด JBS3 Heart Age'+
+            '📌 อายุหัวใจ = อายุของคนสุขภาพดี (ไม่สูบบุหรี่ · ความดัน 120 · ไขมันปกติ) ที่มีความเสี่ยงโรคหัวใจเท่ากับคุณ'+
           '</div>'+
         '</div>';
 
@@ -2814,16 +2878,16 @@ function render(){
   /* LDL Goal dual */
   O+='<div style="flex:1">';
   O+='<div class="px-card">';
-  O+='<div class="px-lab-head">LDL GOAL — ESC 2021 &amp; ACC/AHA 2026</div>';
+  O+='<div class="px-lab-head">LDL GOAL — ESC 2025 DLP &amp; ACC 2026 DLP</div>';
   O+='<div class="px-dual-ldl">';
   O+='<div class="px-dual-esc">'+
-    '<div class="px-dual-flag">🇪🇺 ESC 2021</div>'+
+    '<div class="px-dual-flag">🇪🇺 ESC 2025 DLP</div>'+
     '<div class="px-dual-goal">'+ldlGoalData.escGoal+'</div>'+
     '<div class="px-dual-level">'+ldlGoalData.escLevel+'</div>'+
     '<div class="px-dual-basis">'+ldlGoalData.escBasis+'</div>'+
   '</div>';
   O+='<div class="px-dual-aha">'+
-    '<div class="px-dual-flag">🇺🇸 ACC/AHA 2026</div>'+
+    '<div class="px-dual-flag">🇺🇸 ACC 2026 DLP</div>'+
     '<div class="px-dual-goal">'+ldlGoalData.ahaGoal+'</div>'+
     '<div class="px-dual-level">'+ldlGoalData.ahaLevel+'</div>'+
     '<div class="px-dual-basis">'+ldlGoalData.ahaBasis+'</div>'+
@@ -2834,13 +2898,28 @@ function render(){
     '<div class="px-dual-pct">'+(ldlGoalData.pctReduce||'')+'</div>'+
   '</div>';
   O+='</div>';
-  /* Non-HDL */
-  var nhGoalN=ldlGoalData.finalNum?ldlGoalData.finalNum+30:130;
-  var nhCur=(+r.tc>0&&+r.hdl>0)?(+r.tc-+r.hdl):null;
-  var nhOk=nhCur!==null&&nhCur<nhGoalN;
+  /* Non-HDL Goal */
+  var nhCur=ldlGoalData.nonHdlCur;
+  var nhOk=ldlGoalData.nonHdlAchieved;
   O+='<div class="px-nonhdl">'+
-    '<span>📊 Non-HDL Goal: <strong>&lt;'+nhGoalN+' mg/dL</strong></span>'+
+    '<span>📊 Non-HDL Goal: <strong>'+ldlGoalData.nonHdlGoal+'</strong>'+
+      (ldlGoalData.nonHdlIsCustom?' <span style="font-size:8.5px;color:var(--teal);">(แพทย์กำหนด)</span>':'')+'</span>'+
     (nhCur!==null?'<span style="color:'+(nhOk?'var(--ok)':'var(--bad)')+';">ปัจจุบัน: '+nhCur+(nhOk?' ✓':' ↑')+'</span>':'')+
+  '</div>';
+  /* ApoB Goal */
+  O+='<div class="px-nonhdl" style="background:#FEF3F2;">'+
+    '<span>🧬 ApoB Goal: <strong>'+ldlGoalData.apobGoal+'</strong>'+
+      (ldlGoalData.apobIsCustom?' <span style="font-size:8.5px;color:var(--teal);">(แพทย์กำหนด)</span>':'')+'</span>'+
+    (ldlGoalData.apobCur>0?'<span style="color:'+(ldlGoalData.apobAchieved?'var(--ok)':'var(--bad)')+';">ปัจจุบัน: '+ldlGoalData.apobCur+(ldlGoalData.apobAchieved?' ✓':' ↑')+'</span>':'')+
+  '</div>';
+  /* BP Goal */
+  O+='<div class="px-nonhdl" style="background:#EFF6FF;">'+
+    '<span>🩺 BP Goal: <strong>'+ldlGoalData.bpGoal+'</strong>'+
+      (ldlGoalData.bpIsCustom?' <span style="font-size:8.5px;color:var(--teal);">(แพทย์กำหนด)</span>':'')+'</span>'+
+    (ldlGoalData.bpCurSbp>0?'<span style="color:'+(ldlGoalData.bpAchieved?'var(--ok)':'var(--bad)')+';">ปัจจุบัน: '+ldlGoalData.bpCurSbp+(ldlGoalData.bpCurDbp>0?'/'+ldlGoalData.bpCurDbp:'')+(ldlGoalData.bpAchieved?' ✓':' ↑')+'</span>':'')+
+  '</div>';
+  O+='<div style="font-size:8.5px;color:var(--text3);margin-top:5px;line-height:1.5;">'+
+    'BP: '+ldlGoalData.bpBasis+' · ApoB: '+ldlGoalData.apobBasis+' · Non-HDL: '+ldlGoalData.nonHdlBasis+
   '</div>';
   O+='</div>';
 
@@ -3061,20 +3140,6 @@ function render(){
       )+'</div>'+
     '</div>';
     O+='</div>';
-  }
-
-  /* QR code linking to patient portal */
-  var portalUrl='https://cardioplus.github.io/CardioPluz-check-up/patient_portal.html?hn='+encodeURIComponent(r.hn||'');
-  if(r.hn){
-    var qrSvgStr=qrSVG(portalUrl);
-    O+='<div class="px-qr-card">'+
-      '<div class="px-qr-img">'+qrSvgStr+'</div>'+
-      '<div class="px-qr-text">'+
-        '<div class="px-qr-title">📱 ดูผลตรวจบนมือถือ</div>'+
-        '<div class="px-qr-desc">สแกน QR Code นี้เพื่อดูผลตรวจสุขภาพของท่านผ่านโทรศัพท์ ทุกที่ทุกเวลา</div>'+
-        '<div class="px-qr-hn">HN: '+(r.hn||'—')+' · ใช้วันเกิดเพื่อเข้าสู่ระบบ</div>'+
-      '</div>'+
-    '</div>';
   }
 
   /* Footer */
