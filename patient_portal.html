@@ -332,6 +332,63 @@ function ckdLabel(gfr){
   if(gfr>=15)return{stage:'G4',txt:'ลดลงมาก',cls:'chip-bad'};
   return{stage:'G5',txt:'ไตวายเรื้อรัง',cls:'chip-bad'};
 }
+/* ── SCORE2 / SCORE2-OP (ESC 2021, moderate-risk region) ── */
+function calcScore2(age,gender,sbp,tc,hdl,smoker){
+  if(!age||!gender||!sbp||!tc||!hdl) return null;
+  var tcMmol=tc/38.67, hdlMmol=hdl/38.67, nonHdl=tcMmol-hdlMmol;
+  var female=(gender==='หญิง'), smk=smoker?1:0, isOP=(age>=70), risk;
+  if(!isOP){
+    var cage=(age-60)/5, csbp=(sbp-120)/20, cnhdl=(nonHdl-6), chdl=(hdlMmol-1.3)/0.5;
+    var lp,S0,s1,s2;
+    if(!female){
+      lp=0.3742*cage+0.6012*smk+0.2777*csbp+0.6457*cnhdl-0.1999*chdl
+        -0.0255*cage*smk-0.0281*cage*csbp-0.0426*cage*cnhdl+0.0149*cage*chdl;
+      S0=0.8617;s1=-0.1565;s2=0.8009;
+    } else {
+      lp=0.4648*cage+0.7744*smk+0.3131*csbp+0.8096*cnhdl-0.1898*chdl
+        -0.0277*cage*smk-0.0226*cage*csbp-0.0524*cage*cnhdl+0.0213*cage*chdl;
+      S0=0.8789;s1=-0.3143;s2=0.7701;
+    }
+    var uncal=1-Math.pow(S0,Math.exp(lp));
+    risk=(1-Math.exp(-Math.exp(s1+s2*Math.log(-Math.log(1-uncal)))))*100;
+  } else {
+    var cageO=(age-73), csbpO=(sbp-150), cnhdlO=(nonHdl-6), chdlO=(hdlMmol-1.4);
+    var lpO,S0O,c1,c2;
+    if(!female){
+      lpO=0.0634*cageO+0.4245*smk+0.0094*csbpO+0.0850*cnhdlO-0.3564*chdlO
+        -0.0247*cageO*smk-0.0005*cageO*csbpO+0.0073*cageO*cnhdlO+0.0091*cageO*chdlO;
+      S0O=0.8807;c1=-0.0836;c2=0.7110;
+    } else {
+      lpO=0.0789*cageO+0.4921*smk+0.0102*csbpO+0.0605*cnhdlO-0.3040*chdlO
+        -0.0255*cageO*smk-0.0004*cageO*csbpO-0.0009*cageO*cnhdlO+0.0154*cageO*chdlO;
+      S0O=0.8838;c1=-0.1112;c2=0.7380;
+    }
+    var uncalO=1-Math.pow(S0O,Math.exp(lpO));
+    risk=(1-Math.exp(-Math.exp(c1+c2*Math.log(-Math.log(1-uncalO)))))*100;
+  }
+  return Math.min(Math.max(risk,0.1),99.9);
+}
+/* ── HEART AGE (อายุหัวใจ) — JBS3 concept ── */
+function calcHeartAge(age,gender,sbp,tc,hdl,smoker){
+  if(!age||!gender||!sbp||!tc||!hdl) return null;
+  if(age<35||age>85) return null;
+  var actualRisk=calcScore2(age,gender,sbp,tc,hdl,smoker);
+  if(actualRisk===null) return null;
+  var idealSbp=120,idealTc=155,idealHdl=62;
+  var idealAtActualAge=calcScore2(age,gender,idealSbp,idealTc,idealHdl,false);
+  if(idealAtActualAge!==null && actualRisk<=idealAtActualAge) return age;
+  var heartAge=age;
+  for(var a=age;a<=95;a+=0.1){
+    var rIdeal=calcScore2(a,gender,idealSbp,idealTc,idealHdl,false);
+    if(rIdeal===null){ heartAge=a; continue; }
+    heartAge=a;
+    if(rIdeal>=actualRisk) break;
+  }
+  heartAge=Math.round(heartAge);
+  if(heartAge-age>20) heartAge=age+20;
+  if(heartAge>89) heartAge=89;
+  return heartAge;
+}
 /* ── LOGIN ── */
 function doLogin() {
   var hn=(document.getElementById('hnInput').value||'').trim();
@@ -550,9 +607,22 @@ function showReport(idx){
     }
     if(r.preventRisk&&prevLabelMap[r.preventRisk]){
       scHTML+='<div style="text-align:center;padding:10px 8px;background:white;border-radius:10px;border:1.5px solid #E2E8F0;">'+
-        '<div style="font-size:9px;font-weight:700;color:#64748B;margin-bottom:4px;">🇺🇸 PREVENT-ASCVD</div>'+
+        '<div style="font-size:9px;font-weight:700;color:#64748B;margin-bottom:4px;">🇺🇸 PREVENT (Total CVD)</div>'+
         '<div style="font-size:18px;font-weight:800;color:'+(prevColor[r.preventRisk]||'var(--text)')+';">'+prevLabelMap[r.preventRisk]+'</div>'+
-        '<div style="font-size:9px;color:#94A3B8;">AHA/ACC 10y ASCVD</div></div>';
+        '<div style="font-size:9px;color:#94A3B8;">AHA 2024 · 10y total CVD</div></div>';
+    }
+    /* Heart Age — computed from this visit's data */
+    var _haPortal=calcHeartAge(_ageP,g,+r.sbp||0,+r.tc||0,+r.hdl||0,r.smoker==='yes');
+    if(_haPortal!==null&&_ageP>0){
+      var _haD=_haPortal-_ageP;
+      var _haC=_haD<=0?'var(--ok)':_haD<=5?'#D97706':'var(--bad)';
+      var _haTxt=_haD<0?('อ่อนกว่าอายุจริง '+Math.abs(_haD)+' ปี'):
+                 _haD===0?'เท่ากับอายุจริง':
+                 ('แก่กว่าอายุจริง '+(_haD>=20?'>20':_haD)+' ปี');
+      scHTML+='<div style="text-align:center;padding:10px 8px;background:white;border-radius:10px;border:1.5px solid #E2E8F0;">'+
+        '<div style="font-size:9px;font-weight:700;color:#64748B;margin-bottom:4px;">🫀 อายุหัวใจ · Heart Age</div>'+
+        '<div style="font-size:18px;font-weight:800;color:'+_haC+';">'+_haPortal+' ปี</div>'+
+        '<div style="font-size:9px;color:'+_haC+';">'+_haTxt+'</div></div>';
     }
     if(scHTML){
       html+='<div class="report-section">'+

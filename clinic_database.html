@@ -371,7 +371,7 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
         </div>
 
         <div class="lrp-item" style="background:#F8FAFC;">
-          <label>PREVENT-ASCVD 10y <span style="font-size:10px;color:var(--teal-dark);">(คำนวณอัตโนมัติ)</span></label>
+          <label>PREVENT Total CVD 10y <span style="font-size:10px;color:var(--teal-dark);">(คำนวณอัตโนมัติ)</span></label>
           <div id="preventInfoLdl" style="font-size:13px;font-weight:700;color:#BE123C;padding:6px 0;">กรอก SBP+TC+HDL+DOB+เพศ แล้วกด คำนวณ</div>
           <!-- Hidden select for JS logic -->
           <select id="preventRisk" style="display:none" onchange="updateLdlGoal()">
@@ -517,7 +517,7 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
             <div style="font-size:12px;font-weight:800;color:#334155;letter-spacing:.5px;">📊 คำนวณความเสี่ยง (ต้องการ: อายุ + เพศ + SBP + TC + HDL)</div>
             <button type="button" onclick="calcAllRiskScores()" style="padding:5px 14px;background:var(--teal);color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sarabun',sans-serif;">🔄 คำนวณ</button>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="scoreResultGrid">
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;" id="scoreResultGrid">
             <!-- Thai CV Risk -->
             <div style="background:white;border-radius:10px;padding:10px 12px;border:1.5px solid #E2E8F0;text-align:center;">
               <div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🇹🇭 Thai CV Risk</div>
@@ -532,12 +532,19 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
               <div style="font-size:9px;color:#94A3B8;">10y fatal+non-fatal CVD</div>
               <div id="score2Level" style="margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;"></div>
             </div>
-            <!-- PREVENT-ASCVD -->
+            <!-- PREVENT (Total CVD) -->
             <div style="background:white;border-radius:10px;padding:10px 12px;border:1.5px solid #E2E8F0;text-align:center;">
-              <div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🇺🇸 PREVENT-ASCVD</div>
+              <div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🇺🇸 PREVENT (Total CVD)</div>
               <div id="preventScore" style="font-size:24px;font-weight:900;color:#334155;">—</div>
-              <div style="font-size:9px;color:#94A3B8;">10y ASCVD risk</div>
+              <div style="font-size:9px;color:#94A3B8;">10y total CVD risk</div>
               <div id="preventLevel" style="margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;"></div>
+            </div>
+            <!-- HEART AGE (อายุหัวใจ) -->
+            <div style="background:white;border-radius:10px;padding:10px 12px;border:1.5px solid #E2E8F0;text-align:center;">
+              <div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">🫀 อายุหัวใจ · Heart Age</div>
+              <div id="heartAgeScore" style="font-size:24px;font-weight:900;color:#334155;">—</div>
+              <div style="font-size:9px;color:#94A3B8;">JBS3 Heart Age</div>
+              <div id="heartAgeLevel" style="margin-top:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;"></div>
             </div>
           </div>
           <!-- Score inputs for missing data -->
@@ -1142,7 +1149,7 @@ function genAutoSummary(){
   var age=extractAge(val('dob'))||50;
   var g=val('gender')||'';
 
-  if(sc){var n=+sc; lines.push('⚖️ InBody Score: '+n+'/100 — '+(n>=70?'ดี ร่างกายแข็งแรง':n>=50?'พอใช้ ควรปรับพฤติกรรม':'ต่ำ ควรปรับปรุงเร่งด่วน'));}
+  if(sc){var n=+sc; lines.push('⚖️ InBody Score: '+n+'/100 — '+(n>=70?'องค์ประกอบร่างกายอยู่ในเกณฑ์ดี':n>=50?'องค์ประกอบร่างกายพอใช้ ควรปรับพฤติกรรม':'องค์ประกอบร่างกายต่ำ ควรปรับปรุงเร่งด่วน'));}
   if(bmi){lines.push('📏 BMI: '+bmi+' กก./ม.² — '+(bmi<18.5?'น้ำหนักน้อยเกิน':bmi<23?'ปกติ':bmi<27.5?'น้ำหนักเกิน':'อ้วน'));}
   if(fbs||a1c){var ok=(+fbs<=125||!fbs)&&(+a1c<7.0||!a1c);lines.push('🩸 น้ำตาล: '+(fbs?'FBS '+fbs+' มก./ดล. ':'')+(a1c?'HbA1c '+a1c+'% ':'')+' — '+(ok?'อยู่ในเกณฑ์ดี':'ยังสูงกว่าเป้าหมาย ควรปรับยาและอาหาร'));}
   if(ldl&&ldlGoalTxt){
@@ -1296,6 +1303,30 @@ function calcThaiCV(age,gender,sbp,tc,hdl,smoker){
   return{pts:pts, risk:risk};
 }
 
+/* ── HEART AGE (อายุหัวใจ) — JBS3 concept ──
+   หาอายุของคนที่มีปัจจัยเสี่ยงในอุดมคติ ที่มีความเสี่ยง 10 ปี
+   เท่ากับผู้ป่วย — ใช้โมเดล SCORE2/SCORE2-OP เป็นเครื่องคำนวณ */
+function calcHeartAge(age,gender,sbp,tc,hdl,smoker){
+  if(!age||!gender||!sbp||!tc||!hdl) return null;
+  if(age<35||age>85) return null;
+  var actualRisk=calcScore2(age,gender,sbp,tc,hdl,smoker);
+  if(actualRisk===null) return null;
+  var idealSbp=120,idealTc=155,idealHdl=62;
+  var idealAtActualAge=calcScore2(age,gender,idealSbp,idealTc,idealHdl,false);
+  if(idealAtActualAge!==null && actualRisk<=idealAtActualAge) return age;
+  var heartAge=age;
+  for(var a=age;a<=95;a+=0.1){
+    var rIdeal=calcScore2(a,gender,idealSbp,idealTc,idealHdl,false);
+    if(rIdeal===null){ heartAge=a; continue; }
+    heartAge=a;
+    if(rIdeal>=actualRisk) break;
+  }
+  heartAge=Math.round(heartAge);
+  if(heartAge-age>20) heartAge=age+20;
+  if(heartAge>89) heartAge=89;
+  return heartAge;
+}
+
 /* Format risk % for display */
 function fmtRisk(pct){
   if(pct===null||pct===undefined) return '—';
@@ -1420,6 +1451,28 @@ function calcAllRiskScores(){
     }
   } else if(prevEl) prevEl.textContent='—';
 
+  /* ── HEART AGE (อายุหัวใจ) ── */
+  var heartAge=calcHeartAge(age,gender,sbp,tc,hdl,smk);
+  var haEl=document.getElementById('heartAgeScore');
+  var haLvEl=document.getElementById('heartAgeLevel');
+  if(haEl){
+    if(heartAge!==null&&age>0){
+      var haDiff=heartAge-age;
+      var haColor=haDiff<=0?'#16A34A':haDiff<=5?'#D97706':'#DC2626';
+      haEl.textContent=heartAge+' ปี';
+      haEl.style.color=haColor;
+      if(haLvEl){
+        var haTxt=(haDiff<=0?'เท่า/น้อยกว่าอายุจริง':'+'+haDiff+' ปี จากอายุจริง '+age);
+        haLvEl.textContent=haTxt;
+        haLvEl.style.background=haDiff<=0?'#D1FAE5':haDiff<=5?'#FEF3C7':'#FEE2E2';
+        haLvEl.style.color=haColor;
+      }
+    } else {
+      haEl.textContent='—';
+      if(haLvEl){haLvEl.textContent='ต้องมี อายุ·เพศ·SBP·TC·HDL';haLvEl.style.background='#F1F5F9';haLvEl.style.color='#64748B';}
+    }
+  }
+
   /* Update LDL goal with new scores */
   updateLdlGoal();
   if(noteEl) noteEl.textContent=(!age||!gender||!sbp||!tc||!hdl)?
@@ -1541,7 +1594,7 @@ function updateLdlGoal(){
     /* Primary prevention high risk */
     ahaLevel='Primary Prevention - High Risk'; ahaColor='#C2410C';
     ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
-    ahaBasis='PREVENT-ASCVD ≥10% / SCORE2 ≥10% · High-intensity statin';
+    ahaBasis='PREVENT ≥10% / SCORE2 ≥10% · High-intensity statin';
   } else if(prevent==='5to10'||score2==='2to10'||(lpaHigh||tgHigh||hasFH)){
     /* Primary prevention intermediate */
     ahaLevel='Primary Prevention - Intermediate'; ahaColor='#B45309';

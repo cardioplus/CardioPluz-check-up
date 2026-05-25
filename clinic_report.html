@@ -440,13 +440,21 @@ body{
   body{background:white!important;font-size:9.5px!important;line-height:1.35!important;}
   #rpt{max-width:none!important;padding:0!important;}
 
-  /* PAGE BREAKS — each px-page = one sheet */
+  /* PAGE BREAKS — content flows continuously to eliminate white gaps.
+     No page wrapper forces a break; only the cards inside avoid being
+     split mid-element. This packs pages tightly with no blank space. */
   .px-page{
     padding:0!important;margin:0!important;border:none!important;
     border-radius:0!important;box-shadow:none!important;background:white!important;
-    page-break-after:always!important;break-after:page!important;
+    page-break-after:auto!important;break-after:auto!important;
+    page-break-before:auto!important;break-before:auto!important;
   }
-  .px-page:last-child{page-break-after:auto!important;break-after:auto!important;}
+  /* Section headers start fresh sheets only for the major report sections
+     (overview, labs, trends) so the report keeps logical structure while
+     the cardiology / follow-up content flows without blank gaps */
+  .px-p1b,.px-p2,.px-p2b{
+    page-break-before:always!important;break-before:page!important;
+  }
 
   /* Never split these mid-page */
   .px-card,.px-lab-section,.px-ldl-status,.px-lpa,.px-ib-goal,.px-cid,
@@ -482,6 +490,10 @@ body{
   .px-sh-ico{font-size:13px!important;}
   .px-sh-th{font-size:10px!important;}
   .px-sh-en{font-size:7.5px!important;}
+  /* Section headers in continuously-flowing content keep tight spacing */
+  .px-p3 .px-sh,.px-p3b .px-sh,.px-p4 .px-sh,.px-p4b .px-sh{
+    margin-top:3px!important;
+  }
 
   /* CARDS */
   .px-card{padding:7px 9px!important;border-radius:6px!important;margin-bottom:6px!important;}
@@ -571,6 +583,10 @@ body{
   .px-es-row{font-size:8.5px!important;padding:1px 0!important;}
   .px-heart-wrap{margin:4px 0!important;}
   .px-heart-wrap svg{max-height:48mm!important;}
+  .px-heart-wrap img{max-height:54mm!important;width:auto!important;max-width:78mm!important;}
+  .px-heart-card{box-shadow:none!important;}
+  .px-ha-trend{break-inside:avoid!important;page-break-inside:avoid!important;}
+  .px-ha-trend svg{max-height:46mm!important;}
 
   /* PAGE 4 — vaccines / follow-up / advice */
   .px-vax-grid{grid-template-columns:repeat(3,1fr)!important;gap:4px!important;}
@@ -967,6 +983,76 @@ function calcPreventReport(age, gender, tc, hdl, sbp, sbpTx, dm, smoker, ckd, eg
   }
   var risk=Math.exp(lp)/(1+Math.exp(lp))*100;
   return Math.min(Math.max(risk,0.1),99.9);
+}
+
+/* ── HEART AGE (อายุหัวใจ) — JBS3 concept ──
+   แนวคิด: หา "อายุ" ของคนที่มีปัจจัยเสี่ยงในอุดมคติ (ไม่สูบบุหรี่,
+   ความดัน 120, TC 4 mmol/L (~155 mg/dL), HDL 1.6 mmol/L (~62 mg/dL))
+   ที่จะมีความเสี่ยง 10 ปี เท่ากับความเสี่ยงปัจจุบันของผู้ป่วย
+   ใช้โมเดล SCORE2/SCORE2-OP เป็นเครื่องคำนวณ */
+function calcHeartAge(age, gender, sbp, tc, hdl, smoker){
+  if(!age || !gender || !sbp || !tc || !hdl) return null;
+  if(age<35 || age>85) return null;
+  /* ความเสี่ยงปัจจุบันของผู้ป่วย */
+  var actualRisk=calcScore2Report(age, gender, sbp, tc, hdl, smoker);
+  if(actualRisk===null) return null;
+  /* ปัจจัยเสี่ยงในอุดมคติ */
+  var idealSbp=120, idealTc=155, idealHdl=62, idealSmoker=false;
+  /* ถ้าผู้ป่วยมีปัจจัยเสี่ยงดีกว่าอุดมคติอยู่แล้ว → heart age = อายุจริง */
+  var idealAtActualAge=calcScore2Report(age, gender, idealSbp, idealTc, idealHdl, idealSmoker);
+  if(idealAtActualAge!==null && actualRisk<=idealAtActualAge) return age;
+  /* ไล่หาอายุที่คนสุขภาพดีจะมีความเสี่ยงเท่ากับผู้ป่วย (ความละเอียด 0.1 ปี) */
+  var heartAge=age;
+  for(var a=age; a<=95; a+=0.1){
+    var rIdeal=calcScore2Report(a, gender, idealSbp, idealTc, idealHdl, idealSmoker);
+    if(rIdeal===null){ heartAge=a; continue; }
+    heartAge=a;
+    if(rIdeal>=actualRisk) break;
+  }
+  heartAge=Math.round(heartAge);
+  /* จำกัดส่วนต่างไม่เกิน +20 ปี เพื่อให้ตัวเลขสื่อความหมายและไม่ตกใจเกินจริง */
+  if(heartAge-age>20) heartAge=age+20;
+  if(heartAge>89) heartAge=89;
+  return heartAge;
+}
+
+/* ── HEART AGE HISTORY ──
+   คำนวณ Heart Age เฉพาะครั้งที่ "ข้อมูลครบ" เท่านั้น
+   (ต้องมี visitDate + sbp + tc + hdl ของครั้งนั้นจริง ๆ — ไม่ใช้ค่าครั้งอื่นแทน)
+   - อายุของแต่ละครั้ง คำนวณจากอายุปัจจุบันถอยหลังตามปีที่ตรวจ
+   คืนค่า array ของ {date, age, heartAge, diff} เรียงตามวันที่ */
+function buildHeartAgeHistory(r, hist, currentAge, gender, smoker){
+  if(!currentAge || !gender) return [];
+  /* รวมประวัติ + ครั้งปัจจุบัน */
+  var recs=(hist||[]).slice();
+  var hasCur=recs.some(function(h){return h.visitDate===r.visitDate;});
+  if(!hasCur) recs.push(r);
+  /* เรียงตามวันที่ */
+  recs=recs.filter(function(h){return h.visitDate;})
+           .sort(function(a,b){return a.visitDate.localeCompare(b.visitDate);});
+  if(!recs.length) return [];
+  /* ปีของครั้งล่าสุด ใช้เป็นฐานเทียบอายุ */
+  function yearOf(d){
+    var p=(d||'').split('-'); if(!p[0]) return null;
+    var y=parseInt(p[0],10); return y<2400?y:y-543; /* แปลง พ.ศ. -> ค.ศ. */
+  }
+  var latestYear=yearOf(r.visitDate)||yearOf(recs[recs.length-1].visitDate);
+  var out=[];
+  var totalCandidates=0;
+  recs.forEach(function(h){
+    var yr=yearOf(h.visitDate);
+    if(yr===null||latestYear===null) return;
+    totalCandidates++;
+    var ageAtVisit=currentAge-(latestYear-yr);
+    /* ข้อมูลต้องครบของครั้งนั้นเท่านั้น — ไม่ใช้ค่าครั้งอื่นแทน */
+    var sbp=+h.sbp, tc=+h.tc, hdl=+h.hdl;
+    if(!(sbp>0) || !(tc>0) || !(hdl>0)) return; /* ข้อมูลไม่ครบ → ข้าม */
+    var ha=calcHeartAge(ageAtVisit, gender, sbp, tc, hdl, smoker);
+    if(ha===null) return;
+    out.push({date:h.visitDate, age:ageAtVisit, heartAge:ha, diff:ha-ageAtVisit});
+  });
+  out.totalCandidates=totalCandidates;
+  return out;
 }
 
 /* ── GFR / CKD ── */
@@ -1540,11 +1626,15 @@ var LOGO=(function(){
 /* ── Heart anatomy SVG ── */
 function heartAnatomySVG(){
   var S=[]; function p(s){S.push(s);}
-  p('<div style="border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">');  
-  p('<div style="padding:0;line-height:0;">');
-  p('<img id="heartImgNew" style="width:100%;height:auto;display:block;" loading="lazy" alt="กายวิภาคหัวใจ"/>');
+  p('<div class="px-heart-card" style="border-radius:12px;overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,0.12);border:1px solid #DDD8D0;background:#fff;">');
+  p('<div style="background:linear-gradient(135deg,#147A6E,#1A9B8C);color:white;padding:8px 14px;display:flex;align-items:center;gap:8px;">');
+  p('<span style="font-size:15px;">🫀</span>');
+  p('<div><div style="font-size:11px;font-weight:800;letter-spacing:.3px;">กายวิภาคหัวใจ — Heart Anatomy</div>');
+  p('<div style="font-size:8.5px;opacity:.85;">โครงสร้างห้องหัวใจและลิ้นหัวใจ</div></div></div>');
+  p('<div style="padding:10px 12px;line-height:0;background:#FAFCFB;text-align:center;">');
+  p('<img id="heartImgNew" style="width:100%;max-width:340px;height:auto;display:inline-block;border-radius:6px;" loading="lazy" alt="กายวิภาคหัวใจ"/>');
   p('</div>');
-  p('<div style="background:#1B5E20;color:white;text-align:center;padding:8px 12px;font-size:9.5px;font-weight:700;line-height:1.6;">');
+  p('<div style="background:#1B5E20;color:white;text-align:center;padding:7px 12px;font-size:9px;font-weight:600;line-height:1.6;">');
   p('LVEF = สมรรถภาพสูบฉีดหัวใจห้อง LV &nbsp;|&nbsp; ค่าปกติ &#x2265; 53% &nbsp;|&nbsp; LVEF ลดลง = LV Dysfunction &#x2192; Echo ซ้ำ');
   p('</div>');
   p('</div>');
@@ -1564,7 +1654,7 @@ function buildAutoSummary(r,cv,ldlGoalData,hasLVDys){
   // InBody
   if(r.inbodyScore){
     var sc=+r.inbodyScore;
-    lines.push('⚖️ InBody Score: '+sc+'/100 — '+(sc>=70?'ดี ร่างกายแข็งแรง':sc>=50?'พอใช้ ควรปรับพฤติกรรม':'ต่ำ ควรปรับปรุงเร่งด่วน'));
+    lines.push('⚖️ InBody Score: '+sc+'/100 — '+(sc>=70?'องค์ประกอบร่างกายอยู่ในเกณฑ์ดี':sc>=50?'องค์ประกอบร่างกายพอใช้ ควรปรับพฤติกรรม':'องค์ประกอบร่างกายต่ำ ควรปรับปรุงเร่งด่วน'));
   }
   if(r.bmi){
     var bmi=+r.bmi;
@@ -1810,6 +1900,8 @@ function render(){
   var s2Raw=calcScore2Report(age4s,g,+r.sbp||0,+r.tc||0,+r.hdl||0,smk4s);
   var s2Score=s2Raw!==null?s2Raw*(isOP?1.15:1):null;
   var prevScore=calcPreventReport(age4s,g,+r.tc||0,+r.hdl||0,+r.sbp||0,(r.onStatin==='yes'),dm4s,smk4s,ckd4s,calcGFR(r.cr,age4s,g),(r.onStatin==='yes'));
+  var heartAge=calcHeartAge(age4s,g,+r.sbp||0,+r.tc||0,+r.hdl||0,smk4s);
+  var heartAgeHist=buildHeartAgeHistory(r,hist,age4s,g,smk4s);
   var ldlGoalData=calcLdlGoal(r);
 
   /* Lab statuses */
@@ -1907,7 +1999,7 @@ function render(){
       '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
       missingScoreFields.map(function(f){return'<span style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;color:#92400E;">❌ '+f+'</span>';}).join('')+
       '</div>'+
-      '<div style="font-size:11px;color:#6B7280;margin-top:8px;">กรุณาเพิ่มข้อมูลเพื่อประเมิน Thai CV Risk, SCORE2, PREVENT-ASCVD</div>'+
+      '<div style="font-size:11px;color:#6B7280;margin-top:8px;">กรุณาเพิ่มข้อมูลเพื่อประเมิน Thai CV Risk, SCORE2, PREVENT</div>'+
       '</div></div></div>';
   } else {
     /* Primary prevention + data complete — show all 3 scores */
@@ -1936,12 +2028,133 @@ function render(){
       '</div>'+
       /* PREVENT-ASCVD */
       '<div style="background:white;border:1.5px solid '+(prevR===null?'#E2E8F0':prevR<5?'#86EFAC':prevR<10?'#FCD34D':'#FCA5A5')+'  ;border-radius:10px;padding:10px;text-align:center;">'+
-        '<div style="font-size:9px;font-weight:800;color:#64748B;margin-bottom:2px;">🇺🇸 PREVENT-ASCVD</div>'+
+        '<div style="font-size:9px;font-weight:800;color:#64748B;margin-bottom:2px;">🇺🇸 PREVENT (Total CVD)</div>'+
         '<div style="font-size:22px;font-weight:900;color:'+prevCls+';">'+(prevR!==null?prevR.toFixed(1)+'%':'—')+'</div>'+
         '<div style="font-size:9px;color:'+prevCls+';margin-top:2px;">'+(prevR!==null?(prevR<3?'ต่ำ':prevR<5?'ต่ำ-ปานกลาง':prevR<10?'ปานกลาง':'สูง'):'')+'</div>'+
-        '<div style="font-size:11px;color:#94A3B8;">AHA/ACC 10y ASCVD</div>'+
+        '<div style="font-size:11px;color:#94A3B8;">AHA 2024 · 10y Total CVD</div>'+
       '</div>'+
       '</div>';
+
+    /* ── HEART AGE (อายุหัวใจ) — JBS3 ── */
+    if(heartAge!==null && age4s>0){
+      var haDiff=heartAge-age4s;
+      var haCapped=(haDiff>=20);
+      var haColor=haDiff<=0?'#16A34A':haDiff<=5?'#D97706':'#DC2626';
+      var haBg=haDiff<=0?'#F0FDF4':haDiff<=5?'#FFFBEB':'#FEF2F2';
+      var haBorder=haDiff<=0?'#86EFAC':haDiff<=5?'#FCD34D':'#FCA5A5';
+      var haIcon=haDiff<=0?'💚':haDiff<=5?'🟡':'❤️‍🩹';
+      var haDiffTxt=(haCapped?'มากกว่า 20':String(haDiff));
+      var haMsg=haDiff<0?('หัวใจของคุณอ่อนกว่าอายุจริง '+Math.abs(haDiff)+' ปี — ดูแลสุขภาพได้ดีมาก'):
+                haDiff===0?'อายุหัวใจเท่ากับอายุจริง — สุขภาพหัวใจอยู่ในเกณฑ์ดี':
+                haDiff<=5?('หัวใจของคุณแก่กว่าอายุจริง '+haDiff+' ปี — ควรปรับพฤติกรรมเพื่อชะลอ'):
+                ('หัวใจของคุณแก่กว่าอายุจริง '+haDiffTxt+' ปี — แนะนำปรับพฤติกรรมและปรึกษาแพทย์');
+      scoreBoxHTML+=
+        '<div style="background:'+haBg+';border:1.5px solid '+haBorder+';border-radius:12px;padding:13px 16px;margin-top:8px;">'+
+          '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">'+
+            '<div style="display:flex;align-items:center;gap:14px;flex:1;min-width:200px;">'+
+              '<div style="font-size:30px;flex-shrink:0;">'+haIcon+'</div>'+
+              '<div>'+
+                '<div style="font-size:10px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.5px;">อายุหัวใจ · Heart Age</div>'+
+                '<div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">'+
+                  '<span style="font-size:30px;font-weight:900;color:'+haColor+';font-family:\'IBM Plex Mono\',monospace;">'+heartAge+'</span>'+
+                  '<span style="font-size:13px;color:#64748B;">ปี</span>'+
+                  '<span style="font-size:11px;color:#94A3B8;">(อายุจริง '+age4s+' ปี · '+(haDiff>0?'+':'')+haDiffTxt+' ปี)</span>'+
+                '</div>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+          '<div style="margin-top:9px;padding:7px 11px;background:white;border-radius:8px;border:1px solid '+haBorder+';font-size:11.5px;color:'+haColor+';font-weight:600;line-height:1.5;">'+
+            haMsg+
+          '</div>'+
+          '<div style="font-size:9.5px;color:#94A3B8;margin-top:6px;line-height:1.5;">'+
+            '📌 อายุหัวใจ = อายุของคนสุขภาพดี (ไม่สูบบุหรี่ · ความดัน 120 · ไขมันปกติ) ที่มีความเสี่ยงโรคหัวใจเท่ากับคุณ — ตามแนวคิด JBS3 Heart Age'+
+          '</div>'+
+        '</div>';
+
+      /* ── HEART AGE TREND CHART (กราฟแนวโน้มอายุหัวใจ) ── */
+      if(heartAgeHist && heartAgeHist.length>=2){
+        var hh=heartAgeHist;
+        var haVisitsSkipped=Math.max(0,(heartAgeHist.totalCandidates||hh.length)-hh.length);
+        /* ขอบเขตแกน Y: ครอบทั้งอายุจริงและอายุหัวใจ */
+        var allVals=[];
+        hh.forEach(function(p){allVals.push(p.age,p.heartAge);});
+        var yMin=Math.min.apply(null,allVals), yMax=Math.max.apply(null,allVals);
+        var yPad=Math.max(2,Math.round((yMax-yMin)*0.15));
+        yMin=Math.floor(yMin-yPad); yMax=Math.ceil(yMax+yPad);
+        var yRange=(yMax-yMin)||1;
+        /* ขนาด SVG */
+        var CW=460, CH=170, mL=34, mR=12, mT=14, mB=34;
+        var plotW=CW-mL-mR, plotH=CH-mT-mB;
+        var n=hh.length;
+        function xAt(i){ return mL + (n===1?plotW/2:i*plotW/(n-1)); }
+        function yAt(v){ return mT + plotH - (v-yMin)/yRange*plotH; }
+        /* เส้นกริด Y (4 เส้น) */
+        var gridSvg='';
+        for(var gi=0; gi<=4; gi++){
+          var gv=yMin+gi*yRange/4;
+          var gy=yAt(gv);
+          gridSvg+='<line x1="'+mL+'" y1="'+gy.toFixed(1)+'" x2="'+(CW-mR)+'" y2="'+gy.toFixed(1)+'" stroke="#E5E7EB" stroke-width="1"/>'+
+            '<text x="'+(mL-6)+'" y="'+(gy+3).toFixed(1)+'" text-anchor="end" font-size="9" fill="#9CA3AF" font-family="IBM Plex Mono,monospace">'+Math.round(gv)+'</text>';
+        }
+        /* เส้นอายุจริง (Real Age) */
+        var realPts=hh.map(function(p,i){return xAt(i).toFixed(1)+','+yAt(p.age).toFixed(1);}).join(' ');
+        /* เส้นอายุหัวใจ (Heart Age) */
+        var haPts=hh.map(function(p,i){return xAt(i).toFixed(1)+','+yAt(p.heartAge).toFixed(1);}).join(' ');
+        /* พื้นที่ระบายช่องว่างระหว่างสองเส้น */
+        var bandPath='M'+hh.map(function(p,i){return xAt(i).toFixed(1)+' '+yAt(p.heartAge).toFixed(1);}).join(' L')+
+          ' L'+hh.slice().reverse().map(function(p,i){var idx=n-1-i;return xAt(idx).toFixed(1)+' '+yAt(p.age).toFixed(1);}).join(' L')+' Z';
+        /* จุด + ป้ายค่าของแต่ละครั้ง */
+        var dotsSvg='';
+        hh.forEach(function(p,i){
+          var x=xAt(i), yReal=yAt(p.age), yHa=yAt(p.heartAge);
+          var dotColor=p.diff<=0?'#16A34A':p.diff<=5?'#D97706':'#DC2626';
+          /* จุดอายุจริง */
+          dotsSvg+='<circle cx="'+x.toFixed(1)+'" cy="'+yReal.toFixed(1)+'" r="3" fill="white" stroke="#94A3B8" stroke-width="1.6"/>';
+          /* จุดอายุหัวใจ */
+          dotsSvg+='<circle cx="'+x.toFixed(1)+'" cy="'+yHa.toFixed(1)+'" r="3.4" fill="white" stroke="'+dotColor+'" stroke-width="2"/>';
+          /* ป้ายค่าอายุหัวใจ */
+          var lblY=yHa<yReal?(yHa-7):(yHa+13);
+          dotsSvg+='<text x="'+x.toFixed(1)+'" y="'+lblY.toFixed(1)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="'+dotColor+'" font-family="IBM Plex Mono,monospace">'+p.heartAge+'</text>';
+          /* ป้ายวันที่แกน X */
+          dotsSvg+='<text x="'+x.toFixed(1)+'" y="'+(CH-mB+14)+'" text-anchor="middle" font-size="8.5" fill="#6B7280">'+thDateSh(p.date)+'</text>';
+        });
+        var latest=hh[hh.length-1], first=hh[0];
+        var trendDelta=latest.heartAge-first.heartAge;
+        var trendTxt=trendDelta<0?('อายุหัวใจลดลง '+Math.abs(trendDelta)+' ปี — ดีขึ้น 👍'):
+                     trendDelta===0?'อายุหัวใจคงที่':
+                     ('อายุหัวใจเพิ่มขึ้น '+trendDelta+' ปี — ควรดูแลเพิ่มเติม');
+        var trendColor=trendDelta<=0?'#16A34A':'#DC2626';
+        scoreBoxHTML+=
+          '<div class="px-card px-ha-trend" style="margin-top:8px;padding:12px 14px;">'+
+            '<div class="px-lab-head" style="display:flex;align-items:center;gap:6px;">'+
+              '📈 แนวโน้มอายุหัวใจ — Heart Age Trend'+
+            '</div>'+
+            '<div style="display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 8px;font-size:9.5px;color:#64748B;">'+
+              '<span style="display:flex;align-items:center;gap:5px;"><span style="width:18px;height:3px;background:#1A9B8C;border-radius:2px;display:inline-block;"></span>อายุหัวใจ (Heart Age)</span>'+
+              '<span style="display:flex;align-items:center;gap:5px;"><span style="width:18px;height:0;border-top:2.5px dashed #94A3B8;display:inline-block;"></span>อายุจริง (Real Age)</span>'+
+            '</div>'+
+            '<div style="overflow:hidden;">'+
+              '<svg viewBox="0 0 '+CW+' '+CH+'" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;">'+
+                gridSvg+
+                '<path d="'+bandPath+'" fill="#1A9B8C" fill-opacity="0.10"/>'+
+                '<polyline points="'+realPts+'" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="5 3" stroke-linejoin="round" stroke-linecap="round"/>'+
+                '<polyline points="'+haPts+'" fill="none" stroke="#1A9B8C" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+                dotsSvg+
+                '<text x="'+(mL-26)+'" y="'+(mT+plotH/2)+'" text-anchor="middle" font-size="9" fill="#9CA3AF" transform="rotate(-90 '+(mL-26)+' '+(mT+plotH/2)+')">อายุ (ปี)</text>'+
+              '</svg>'+
+            '</div>'+
+            '<div style="margin-top:6px;padding:6px 10px;background:#F8FAFC;border-radius:7px;border:1px solid #E2E8F0;font-size:10.5px;color:'+trendColor+';font-weight:700;">'+
+              'ตั้งแต่ '+thDateSh(first.date)+' ถึง '+thDateSh(latest.date)+': '+trendTxt+
+            '</div>'+
+            (haVisitsSkipped>0?
+              '<div style="font-size:9px;color:#94A3B8;margin-top:5px;line-height:1.5;">'+
+                '📌 แสดงเฉพาะ '+hh.length+' ครั้งที่มีข้อมูลครบ (ความดัน · ไขมันรวม · HDL) — '+
+                'อีก '+haVisitsSkipped+' ครั้งข้อมูลไม่ครบจึงไม่นำมาคำนวณ'+
+              '</div>'
+            :'')+
+          '</div>';
+      }
+    }
 
     /* ── Patient-facing Thai summary ── */
     /* Pick worst score to explain */
@@ -1968,7 +2181,7 @@ function render(){
                  prevR<5?'ต่ำ-ปานกลาง — ควรดูแลปัจจัยเสี่ยง':
                  prevR<10?'ปานกลาง — แนะนำปรับพฤติกรรม พิจารณา Statin':
                           'สูง — แนะนำเริ่ม Statin และติดตามอย่างใกล้ชิด';
-      explainParts.push('<strong>PREVENT-ASCVD (AHA/ACC 2024)</strong>: '+prevR.toFixed(1)+'% → '+prevth);
+      explainParts.push('<strong>PREVENT Total CVD (AHA 2024)</strong>: '+prevR.toFixed(1)+'% → '+prevth);
     }
     if(thaiR!==null){
       var thaith=thaiR<10?'ต่ำ — ความเสี่ยงในคนไทยน้อย':
@@ -1997,7 +2210,7 @@ function render(){
 
   if(cv&&cv.incomplete){
     /* Primary prevention + missing DOB/gender — scoreBoxHTML handles SBP/TC/HDL warning */
-    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score · SCORE2 · PREVENT-ASCVD</p></div></div>'+
+    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score · SCORE2 · PREVENT (Total CVD)</p></div></div>'+
     '<div class="cv-card">'+scoreBoxHTML+'</div></div>';
   } else if(cv){
     cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — Framingham-based RAMA-EGAT</p></div></div>'+
@@ -2165,7 +2378,7 @@ function render(){
   if(sc>0){
     var scLabel=sc>=80?'Excellent':sc>=70?'Good':sc>=60?'Fair':'Needs Improvement';
     O+='<div class="px-card" style="flex:0 0 200px;">'+
-      secHead('🏋️','คะแนนสุขภาพหัวใจและเมแทบอลิก','Cardiometabolic Score')+
+      secHead('🏋️','คะแนนองค์ประกอบร่างกาย','InBody Score (Body Composition)')+
       '<div class="px-score-wrap">'+
         '<div class="px-score-ring" style="--sc:'+sc+';--sc-color:'+(sc>=80?'#16A34A':sc>=70?'#2563EB':sc>=50?'#D97706':'#DC2626')+'">'+
           '<svg viewBox="0 0 100 100" width="120" height="120">'+
@@ -2404,7 +2617,7 @@ function render(){
   if(r.a1c)        O+='<div class="px-sumchip '+(+r.a1c<5.7?'g':+r.a1c<6.5?'y':'r')+'"><div class="px-sc-val">'+r.a1c+'%</div><div class="px-sc-lbl">HbA1c | น้ำตาลสะสม</div><div class="px-sc-status">'+a1c.txt+'</div></div>';
   if(r.ldl)        O+='<div class="px-sumchip '+(ldl.cls==='ok'?'g':ldl.cls==='wn'?'y':'r')+'"><div class="px-sc-val">'+r.ldl+'</div><div class="px-sc-lbl">mg/dL | LDL-C</div><div class="px-sc-status">'+ldl.txt+'</div></div>';
   if(r.cr){var gfv=calcGFR(r.cr,age4s,g);O+='<div class="px-sumchip '+(gfv>=60?'g':gfv>=30?'y':'r')+'"><div class="px-sc-val">'+(gfv?gfv.toFixed(0):'—')+'</div><div class="px-sc-lbl">eGFR | ไต</div><div class="px-sc-status">'+(gfv>=60?'Normal':gfv>=30?'CKD G3':'CKD G4–5')+'</div></div>';}
-  if(r.inbodyScore)O+='<div class="px-sumchip '+(sc>=70?'g':sc>=50?'y':'r')+'"><div class="px-sc-val">'+sc+'</div><div class="px-sc-lbl">/100 | Body Score</div><div class="px-sc-status">'+(sc>=80?'Excellent':sc>=70?'Good':sc>=60?'Fair':'Needs Improvement')+'</div></div>';
+  if(r.inbodyScore)O+='<div class="px-sumchip '+(sc>=70?'g':sc>=50?'y':'r')+'"><div class="px-sc-val">'+sc+'</div><div class="px-sc-lbl">/100 | InBody Score</div><div class="px-sc-status">'+(sc>=80?'Excellent':sc>=70?'Good':sc>=60?'Fair':'Needs Improvement')+'</div></div>';
   O+='</div></div>';
 
   O+='</div>'; /* end page 1b */
