@@ -1392,7 +1392,7 @@ function extractAge(s){
 /* ── THAI CV RISK ── */
 function cvRisk(r){
   /* If established ASCVD → skip calculation, return Very High Risk directly */
-  if(r.hasASCVD==='yes' || r.hasASCVD==='very-high'){
+  if(r.hasASCVD==='yes'){
     var age2=extractAge(r.dob)||50;
     return{pts:null,risk:null,lv:'VHIGH',lth:'Very High Risk — มีโรคหลอดเลือดหัวใจอยู่แล้ว',
       icon:'🔴',cls:'cv-VHIGH',bgcls:'cvbg-VHIGH',age:age2,dm:false,ht:false,smoker:false,
@@ -1404,11 +1404,15 @@ function cvRisk(r){
   var sbp=+r.sbp||0,tc=+r.tc||0,hdl=+r.hdl||0,ldl=+r.ldl||0,tg=+r.tg||0;
   var a1c=+r.a1c||0,fbs=+r.fbs||0,note=(r.note||'').toLowerCase();
   
+  /* DM/HT/Dyslip — ต้องคำนวณให้ตรงกับ clinic_database.html (calcThaiCV)
+     ใช้ field ที่ถูกบันทึก (hasDMRisk, ckdStage, sbp, ค่าแล็บ) ไม่ใช่ note text
+     เพราะ field 'note' ไม่ถูก save ลง localStorage */
   var dm=((r.hasDMRisk||'no')!=='no'&&(r.hasDMRisk||'no')!=='')||a1c>=6.5||fbs>=126||note.indexOf('dm')>=0;
   var ht=sbp>=140||note.indexOf('ht')>=0;
   var smoker=r.smoker==='yes';
   var dyslip=ldl>=160||tc>=240||note.indexOf('dyslip')>=0;
   
+  /* เพิ่มตัวแปรเช็คการกินยาลดความดัน */
   var sbpTx = (r.sbpTreatedVal==='yes'||r.sbpTreated===true||r.sbpTreated==='yes');
 
   if(!age||!g)return null;
@@ -1428,6 +1432,7 @@ function cvRisk(r){
   var hdlMmol = hdlE/38.67;
   var pts=0;
 
+  /* 1. Age points */
   if(!isFemale){
     if(age<40)pts=0; else if(age<45)pts=3; else if(age<50)pts=6;
     else if(age<55)pts=8; else if(age<60)pts=10; else if(age<65)pts=11;
@@ -1438,12 +1443,15 @@ function cvRisk(r){
     else if(age<70)pts=10; else if(age<75)pts=11; else pts=12;
   }
 
+  /* 2. HDL points */
   if(hdlMmol>=1.6)pts-=2; else if(hdlMmol>=1.3)pts-=1;
   else if(hdlMmol>=1.2)pts+=0; else if(hdlMmol>=0.9)pts+=1; else pts+=2;
 
+  /* 3. TC points */
   if(tcMmol<4.1)pts+=0; else if(tcMmol<5.2)pts+=1; else if(tcMmol<6.2)pts+=2;
   else if(tcMmol<7.2)pts+=3; else pts+=4;
 
+  /* 4. SBP & Treatment Status points */
   if(!isFemale) {
     if(sbp<120) pts+=(sbpTx?0:0);
     else if(sbp<130) pts+=(sbpTx?2:1);
@@ -1458,9 +1466,13 @@ function cvRisk(r){
     else pts+=(sbpTx?6:4);
   }
 
+  /* 5. Smoker points */
   if(smoker) pts+=(isFemale?3:4);
+
+  /* 6. Diabetes (DM) points */
   if(dm) pts+=(isFemale?4:2);
 
+  /* 7. Convert pts to % risk (RAMA-EGAT table) */
   var riskMap=isFemale?
     {'-3':1,'-2':1,'-1':1,0:1,1:2,2:2,3:3,4:4,5:5,6:6,7:7,8:9,9:11,10:14,11:17,12:21,13:25,14:30,15:35,16:40,17:45}:
     {'-2':1,'-1':1,0:2,1:2,2:3,3:4,4:5,5:6,6:7,7:9,8:11,9:13,10:16,11:19,12:23,13:27,14:32,15:37,16:40,17:45};
@@ -1468,9 +1480,10 @@ function cvRisk(r){
   var risk=riskMap[pts];
   if(!risk){
     if(pts<=(isFemale?-3:-2)) risk=1;
-    else risk=50;
+    else risk=50; // Max out
   }
 
+  /* 8. Level & Color formatting */
   var lv,lth,icon,cls,bgcls;
   var fu=dm&&ht&&dyslip;
   if(risk<10&&!fu){lv='LOW';lth='ความเสี่ยงต่ำ';icon='🟢';cls='cv-LOW';bgcls='cvbg-LOW';}
@@ -2066,10 +2079,9 @@ function render(){
     'Slim':{w:30,s:35,f:30,desc:'น้ำหนักน้อย กล้ามเนื้อและไขมันต่ำ'}};
   var ci=r.cid?CID_INFO[r.cid]:null;
 
-/* Diet + Exercise advice */
-  // ถ้ามีค่าให้โชว์ ถ้าไม่มีให้เป็นค่าว่าง (ไม่ต้องเอา buildDietAdvice มาช่วยแล้ว)
-  var dietAdv = r.dietAdvice ? r.dietAdvice.trim() : '';
-  var exAdv = r.exerciseAdvice ? r.exerciseAdvice.trim() : '';
+  /* Diet + Exercise advice */
+  var dietAdv=r.dietAdvice||buildDietAdvice(r);
+  var exAdv=r.exerciseAdvice||buildExAdvice(r,+r.bmr||0);
 
   /* Follow-up freq labels */
   var freqLabel={1:'ทุกเดือน',3:'ทุก 3 เดือน','3-6':'ทุก 3–6 เดือน',6:'ทุก 6 เดือน',12:'ทุกปี',24:'ทุก 2 ปี',36:'ทุก 3 ปี',60:'ทุก 5 ปี',0:'ตามอาการ',doctor:'ตามดุลยพินิจแพทย์'};
@@ -2376,15 +2388,6 @@ function render(){
         '<div class="cv-gc">ปัจจุบัน: <span style="color:'+nhColor+';font-weight:700;">'+nhStatus+'</span> มก./ดล.<br><span style="font-size:9px;color:var(--text3)">= TC − HDL | Goal = LDL+30</span></div>'+
         '</div>';
     })()+
-(function(){
-      if(tcHDL === null) return '';
-      var tcHdlColor = (tcHDL < 4.5) ? 'var(--ok)' : 'var(--warn)';
-      return '<div class="cv-goal" style="background:linear-gradient(135deg,#F8FAFC,#F1F5F9);border-color:#CBD5E1;">'+
-      '<div class="cv-gl" style="color:#475569;">⚖️ อัตราส่วน TC / HDL</div>'+
-      '<div class="cv-gv" style="color:'+tcHdlColor+';">' + tcHDL + '</div>'+
-      '<div class="cv-gc">เป้าหมาย < 4.5<br><span style="font-size:9px;color:var(--text3)">ค่ายิ่งน้อยยิ่งดี</span></div>'+
-      '</div>';
-    })() +
     '</div>'+
     '<div class="cv-factors">'+
     '<div class="cv-fac"><div class="cv-fl">อายุ/เพศ</div><div class="cv-fv">'+cv.age+' ปี<br>'+g+'</div></div>'+
