@@ -449,10 +449,9 @@ body{
     page-break-after:auto!important;break-after:auto!important;
     page-break-before:auto!important;break-before:auto!important;
   }
-  /* Section headers start fresh sheets only for the major report sections
-     (overview, labs, trends) so the report keeps logical structure while
-     the cardiology / follow-up content flows without blank gaps */
-  .px-p1b,.px-p2,.px-p2b{
+  /* Section headers start fresh sheets for the major report sections
+     so each section is a clean, balanced page */
+  .px-p1b,.px-p2,.px-p2b,.px-p3b{
     page-break-before:always!important;break-before:page!important;
   }
 
@@ -2868,15 +2867,14 @@ function render(){
   /* CV Risk + LDL Goal */
   O+='<div class="px-row gap-12" style="margin-top:10px">';
 
-  /* CV Risk section */
-  O+='<div style="flex:1">';
+  /* CV Risk section (gauge + scores only) */
+  O+='<div style="flex:1;min-width:0;">';
   O+=scoreBoxHTML;
   O+=cvHTML;
-  O+=scoreSummaryHTML;
   O+='</div>';
 
   /* LDL Goal dual */
-  O+='<div style="flex:1">';
+  O+='<div style="flex:1;min-width:0;">';
   O+='<div class="px-card">';
   O+='<div class="px-lab-head">LDL GOAL — ESC 2025 DLP &amp; ACC 2026 DLP</div>';
   O+='<div class="px-dual-ldl">';
@@ -2934,6 +2932,11 @@ function render(){
   }
   O+='</div>';
   O+='</div>'; /* end row */
+
+  /* CV Risk summary — full width below the two columns for balance */
+  if(scoreSummaryHTML){
+    O+='<div style="margin-top:10px;">'+scoreSummaryHTML+'</div>';
+  }
   O+='</div>'; /* end page 3 */
 
   /* ════════════════════════════════════
