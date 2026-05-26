@@ -728,7 +728,7 @@ var DEMO={
   tmNote:'ติดตาม PSA ทุกปี',
   ascvdRisk:'high',hasASCVD:'no',
   hasFH:'no',hasDMRisk:'no',ckdStage:'ปกติ / G1-2',onStatin:'no',
-  ldlGoalCustom:'70',ldlInsufficient:'false',nonHdlGoalCustom:'',
+  ldlGoalCustom:'70',ldlInsufficient:'false',nonHdlGoalCustom:'',tcHdlGoalCustom:'',
   sbp:'142',dbp:'88',bpTarget:'<130/80',smoker:'no',
   ekgResult:'Normal',ekgDate:'2568-05-10',ekgComment:'Normal sinus rhythm',
   lvef:'62',echoResult:'Normal',echoDate:'2568-05-10',
@@ -955,6 +955,21 @@ function calcLdlGoal(r){
   var nonHdlCur=(tc>0&&(+r.hdl)>0)?(tc-(+r.hdl)):null;
   var nonHdlAchieved=nonHdlCur!==null?nonHdlCur<nonHdlGoalN:null;
 
+  /* ── TC/HDL RATIO GOAL ──
+     เป้าหมาย: ความเสี่ยงสูง/ASCVD/DM < 4.0 · ทั่วไป < 5.0
+     (NCEP ATP III / Thai Lipid Association) */
+  var tcHdlHighRisk=/Very High|High/i.test(escLevel);
+  var tcHdlGoalN=tcHdlHighRisk?4.0:5.0;
+  var tcHdlBasis=tcHdlHighRisk?'ความเสี่ยงสูง/ASCVD/DM — เป้าหมาย < 4.0':'ความเสี่ยงทั่วไป — เป้าหมาย < 5.0';
+  var tcHdlCustom=(r.tcHdlGoalCustom||'').trim();
+  if(tcHdlCustom){
+    var thn=parseFloat(tcHdlCustom);
+    if(thn>0){ tcHdlGoalN=thn; tcHdlBasis='แพทย์กำหนด: < '+thn.toFixed(1); }
+  }
+  var tcHdlGoalStr='< '+tcHdlGoalN.toFixed(1);
+  var tcHdlCur=(tc>0&&(+r.hdl)>0)?(tc/(+r.hdl)):null;
+  var tcHdlAchieved=tcHdlCur!==null?tcHdlCur<tcHdlGoalN:null;
+
   return{
     goal:goal, pctReduce:escPct, basis:basis, lvlTh:escLevel,
     achieved:achieved, curr:curr, finalNum:finalNum,
@@ -970,7 +985,10 @@ function calcLdlGoal(r){
     apobAchieved:apobAchieved, apobCur:apobCur, apobIsCustom:!!apobCustom,
     /* Non-HDL goal */
     nonHdlGoal:nonHdlGoalStr, nonHdlGoalNum:nonHdlGoalN, nonHdlBasis:nonHdlBasis,
-    nonHdlAchieved:nonHdlAchieved, nonHdlCur:nonHdlCur, nonHdlIsCustom:!!nonHdlCustom
+    nonHdlAchieved:nonHdlAchieved, nonHdlCur:nonHdlCur, nonHdlIsCustom:!!nonHdlCustom,
+    /* TC/HDL ratio goal */
+    tcHdlGoal:tcHdlGoalStr, tcHdlGoalNum:tcHdlGoalN, tcHdlBasis:tcHdlBasis,
+    tcHdlAchieved:tcHdlAchieved, tcHdlCur:tcHdlCur, tcHdlIsCustom:!!tcHdlCustom
   };
 }
 
@@ -1046,11 +1064,16 @@ function calcPreventReport(age, gender, tc, hdl, sbp, sbpTx, dm, smoker, ckd, eg
   return Math.min(Math.max(risk,0.1),99.9);
 }
 
-/* ── HEART AGE (อายุหัวใจ) ──
-   แนวคิด: หา "อายุ" ของคนที่มีปัจจัยเสี่ยงในอุดมคติ (ไม่สูบบุหรี่,
-   ความดัน 120, TC 4 mmol/L (~155 mg/dL), HDL 1.6 mmol/L (~62 mg/dL))
-   ที่จะมีความเสี่ยง 10 ปี เท่ากับความเสี่ยงปัจจุบันของผู้ป่วย
-   ใช้โมเดล SCORE2/SCORE2-OP เป็นเครื่องคำนวณ */
+/* ── HEART AGE / VASCULAR AGE (อายุหัวใจ) ──
+   วิธีการ: ตามนิยามมาตรฐานของ vascular age (Cuende et al.;
+   ESC 2021 CVD Prevention Guidelines) — "อายุของบุคคลเพศเดียวกัน
+   ที่มีปัจจัยเสี่ยงในอุดมคติ (ไม่สูบบุหรี่ · ความดัน/ไขมันปกติ)
+   ซึ่งมีความเสี่ยง CVD 10 ปี เท่ากับผู้ป่วย"
+   ใช้โมเดล SCORE2/SCORE2-OP (ESC 2021, moderate-risk region) เป็นตัวคำนวณ
+   หมายเหตุ: ESC ไม่ได้เผยแพร่ "สมการ" สำเร็จรูปของ vascular age —
+   ค่าได้จากการ invert ตาราง/สมการความเสี่ยง ตามที่ทำในฟังก์ชันนี้
+   ปัจจัยอุดมคติที่ใช้: SBP 120 · TC 155 mg/dL (~4.0 mmol/L) ·
+   HDL 62 mg/dL (~1.6 mmol/L) · ไม่สูบบุหรี่ */
 function calcHeartAge(age, gender, sbp, tc, hdl, smoker){
   if(!age || !gender || !sbp || !tc || !hdl) return null;
   if(age<35 || age>85) return null;
@@ -1059,21 +1082,31 @@ function calcHeartAge(age, gender, sbp, tc, hdl, smoker){
   if(actualRisk===null) return null;
   /* ปัจจัยเสี่ยงในอุดมคติ */
   var idealSbp=120, idealTc=155, idealHdl=62, idealSmoker=false;
-  /* ถ้าผู้ป่วยมีปัจจัยเสี่ยงดีกว่าอุดมคติอยู่แล้ว → heart age = อายุจริง */
+  /* ถ้าผู้ป่วยมีปัจจัยเสี่ยงดีกว่า/เท่าอุดมคติอยู่แล้ว → heart age = อายุจริง */
   var idealAtActualAge=calcScore2Report(age, gender, idealSbp, idealTc, idealHdl, idealSmoker);
   if(idealAtActualAge!==null && actualRisk<=idealAtActualAge) return age;
-  /* ไล่หาอายุที่คนสุขภาพดีจะมีความเสี่ยงเท่ากับผู้ป่วย (ความละเอียด 0.1 ปี) */
-  var heartAge=age;
+  /* ไล่หาอายุที่คนสุขภาพดีจะมีความเสี่ยงเท่ากับผู้ป่วย (ความละเอียด 0.1 ปี)
+     ใช้การ interpolate เชิงเส้นเพื่อความแม่นยำ และหยุดเมื่อ rIdeal ≥ actualRisk */
+  var heartAge=age, prevA=age, prevR=idealAtActualAge;
   for(var a=age; a<=95; a+=0.1){
     var rIdeal=calcScore2Report(a, gender, idealSbp, idealTc, idealHdl, idealSmoker);
-    if(rIdeal===null){ heartAge=a; continue; }
-    heartAge=a;
-    if(rIdeal>=actualRisk) break;
+    if(rIdeal===null){ heartAge=a; prevA=a; continue; }
+    if(rIdeal>=actualRisk){
+      /* interpolate ระหว่าง prevA (prevR) กับ a (rIdeal) */
+      if(rIdeal>prevR && prevR<actualRisk){
+        heartAge=prevA+(a-prevA)*((actualRisk-prevR)/(rIdeal-prevR));
+      } else {
+        heartAge=a;
+      }
+      break;
+    }
+    heartAge=a; prevA=a; prevR=rIdeal;
   }
   heartAge=Math.round(heartAge);
-  /* จำกัดส่วนต่างไม่เกิน +20 ปี เพื่อให้ตัวเลขสื่อความหมายและไม่ตกใจเกินจริง */
+  /* จำกัดส่วนต่างไม่เกิน +20 ปี เพื่อการสื่อสารกับผู้ป่วย (ไม่ใช่ส่วนของนิยามทางวิชาการ) */
   if(heartAge-age>20) heartAge=age+20;
   if(heartAge>89) heartAge=89;
+  if(heartAge<age) heartAge=age;
   return heartAge;
 }
 
@@ -1428,60 +1461,22 @@ function cvRisk(r){
   var tcE=tc>0?tc:(ldl>0?ldl+(hdl||40)+(tg>0?tg/5:30):0);
   var hdlE=hdl>0?hdl:(g==='หญิง'?55:45);
   var isFemale = (g==='หญิง');
-  var tcMmol = tcE/38.67;
-  var hdlMmol = hdlE/38.67;
-  var pts=0;
 
-  /* 1. Age points */
-  if(!isFemale){
-    if(age<40)pts=0; else if(age<45)pts=3; else if(age<50)pts=6;
-    else if(age<55)pts=8; else if(age<60)pts=10; else if(age<65)pts=11;
-    else if(age<70)pts=12; else if(age<75)pts=13; else pts=14;
-  } else {
-    if(age<40)pts=-7; else if(age<45)pts=-3; else if(age<50)pts=0;
-    else if(age<55)pts=3; else if(age<60)pts=6; else if(age<65)pts=8;
-    else if(age<70)pts=10; else if(age<75)pts=11; else pts=12;
-  }
-
-  /* 2. HDL points */
-  if(hdlMmol>=1.6)pts-=2; else if(hdlMmol>=1.3)pts-=1;
-  else if(hdlMmol>=1.2)pts+=0; else if(hdlMmol>=0.9)pts+=1; else pts+=2;
-
-  /* 3. TC points */
-  if(tcMmol<4.1)pts+=0; else if(tcMmol<5.2)pts+=1; else if(tcMmol<6.2)pts+=2;
-  else if(tcMmol<7.2)pts+=3; else pts+=4;
-
-  /* 4. SBP & Treatment Status points */
-  if(!isFemale) {
-    if(sbp<120) pts+=(sbpTx?0:0);
-    else if(sbp<130) pts+=(sbpTx?2:1);
-    else if(sbp<140) pts+=(sbpTx?3:2);
-    else if(sbp<160) pts+=(sbpTx?4:3);
-    else pts+=(sbpTx?5:4);
-  } else {
-    if(sbp<120) pts+=(sbpTx?0:0);
-    else if(sbp<130) pts+=(sbpTx?3:1);
-    else if(sbp<140) pts+=(sbpTx?4:2);
-    else if(sbp<160) pts+=(sbpTx?5:3);
-    else pts+=(sbpTx?6:4);
-  }
-
-  /* 5. Smoker points */
-  if(smoker) pts+=(isFemale?3:4);
-
-  /* 6. Diabetes (DM) points */
-  if(dm) pts+=(isFemale?4:2);
-
-  /* 7. Convert pts to % risk (RAMA-EGAT table) */
-  var riskMap=isFemale?
-    {'-3':1,'-2':1,'-1':1,0:1,1:2,2:2,3:3,4:4,5:5,6:6,7:7,8:9,9:11,10:14,11:17,12:21,13:25,14:30,15:35,16:40,17:45}:
-    {'-2':1,'-1':1,0:2,1:2,2:3,3:4,4:5,5:6,6:7,7:9,8:11,9:13,10:16,11:19,12:23,13:27,14:32,15:37,16:40,17:45};
-  
-  var risk=riskMap[pts];
-  if(!risk){
-    if(pts<=(isFemale?-3:-2)) risk=1;
-    else risk=50; // Max out
-  }
+  /* ════════════════════════════════════════════════════════════
+     Thai CV Risk Score — OFFICIAL Rama / Thai MoPH Cox equation
+     ต้องตรงกับ calcThaiCV() ใน clinic_database.html ทุกประการ
+     FullScore = 0.08183·AGE + 0.39499·SEX + 0.02084·SBP
+               + 0.69974·DM + 0.00212·CHOL + 0.41916·SMOKING
+     Risk% = (1 − 0.978296^exp(FullScore − 7.04423)) × 100
+     SEX: ชาย=1 หญิง=0  |  DM, SMOKING: ใช่=1 ไม่=0
+     ════════════════════════════════════════════════════════════ */
+  var sexV=isFemale?0:1, dmV=dm?1:0, smkV=smoker?1:0;
+  var fullScore = (0.08183*age) + (0.39499*sexV) + (0.02084*sbp)
+                + (0.69974*dmV) + (0.00212*tcE) + (0.41916*smkV);
+  var risk = (1 - Math.pow(0.978296, Math.exp(fullScore - 7.04423))) * 100;
+  risk = Math.min(Math.max(risk,0.1),99.9);
+  risk = Math.round(risk*10)/10;
+  var pts=null;
 
   /* 8. Level & Color formatting */
   var lv,lth,icon,cls,bgcls;
@@ -2079,10 +2074,6 @@ function render(){
     'Slim':{w:30,s:35,f:30,desc:'น้ำหนักน้อย กล้ามเนื้อและไขมันต่ำ'}};
   var ci=r.cid?CID_INFO[r.cid]:null;
 
-  /* Diet + Exercise advice */
-  var dietAdv=r.dietAdvice||buildDietAdvice(r);
-  var exAdv=r.exerciseAdvice||buildExAdvice(r,+r.bmr||0);
-
   /* Follow-up freq labels */
   var freqLabel={1:'ทุกเดือน',3:'ทุก 3 เดือน','3-6':'ทุก 3–6 เดือน',6:'ทุก 6 เดือน',12:'ทุกปี',24:'ทุก 2 ปี',36:'ทุก 3 ปี',60:'ทุก 5 ปี',0:'ตามอาการ',doctor:'ตามดุลยพินิจแพทย์'};
 
@@ -2337,7 +2328,7 @@ function render(){
     cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score · SCORE2 · PREVENT (Total CVD)</p></div></div>'+
     '<div class="cv-card">'+scoreBoxHTML+'</div></div>';
   } else if(cv){
-    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — Framingham-based RAMA-EGAT</p></div></div>'+
+    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — RAMA (EGAT) official equation</p></div></div>'+
     '<div class="cv-card">'+
     '<div class="cv-main">'+
     (cv.isASCVD?
@@ -2347,7 +2338,7 @@ function render(){
       '<div style="font-size:11px;color:var(--text2);text-align:center">มีโรคหลอดเลือดหัวใจอยู่แล้ว<br>ไม่ต้องประเมิน Thai CV Risk</div>'+
       '</div>'
     :
-      '<div class="cv-gauge-side">'+cvArcSVG(cv.risk,cv.lv)+cvLegendHTML()+'<div class="cv-pts-badge">คะแนนสะสม '+cv.pts+' คะแนน</div></div>'
+      '<div class="cv-gauge-side">'+cvArcSVG(cv.risk,cv.lv)+cvLegendHTML()+'<div class="cv-pts-badge">Thai CV Risk Score (RAMA)</div></div>'
     )+
     '<div class="cv-risk-side '+cv.bgcls+'">'+
     '<div class="cv-lvl-row"><span class="cv-lv-icon">'+cv.icon+'</span><span class="cv-lv-name '+cv.cls+'">'+cv.lth+'</span></div>'+
@@ -2376,16 +2367,27 @@ function render(){
     '<div class="cv-goal"><div class="cv-gl">💉 ความดันโลหิตเป้าหมาย</div><div class="cv-gv">'+(cv.bpGoal||'< 140/90')+'</div><div class="cv-gc">ปัจจุบัน: '+(r.sbp||'—')+'/'+(r.dbp||'—')+' มมปรอท</div></div>'+
     '<div class="cv-goal"><div class="cv-gl">🩸 HbA1c เป้าหมาย</div><div class="cv-gv">'+(cv.dm?'< 7.0 %':'< 5.7 %')+'</div><div class="cv-gc">ปัจจุบัน: '+(r.a1c||'—')+' %</div></div>'+
     (function(){
-      var ldlNum=parseInt((ldlGoalData.goal||'130').replace(/[^0-9]/g,''))||130;
-      var nhGoal=r.nonHdlGoalCustom?('< '+r.nonHdlGoalCustom):'< '+(ldlNum+30);
-      var nhCurVal=(+r.tc>0&&+r.hdl>0)?(+r.tc-+r.hdl):null;
-      var nhGoalNum=r.nonHdlGoalCustom?+r.nonHdlGoalCustom:(ldlNum+30);
-      var nhColor=nhCurVal===null?'var(--text3)':nhCurVal<nhGoalNum?'var(--ok)':'var(--bad)';
-      var nhStatus=nhCurVal===null?'—':(nhCurVal<nhGoalNum?nhCurVal+' ✓':nhCurVal+' ↑');
+      var nhGoal=ldlGoalData.nonHdlGoal;
+      var nhCurVal=ldlGoalData.nonHdlCur;
+      var nhOk=ldlGoalData.nonHdlAchieved;
+      var nhColor=nhCurVal===null?'var(--text3)':(nhOk?'var(--ok)':'var(--bad)');
+      var nhStatus=nhCurVal===null?'—':(nhCurVal+(nhOk?' ✓':' ↑'));
       return '<div class="cv-goal" style="background:linear-gradient(135deg,var(--acc-bg),#EBF4FF);border-color:#B8CCE0;">'+
         '<div class="cv-gl" style="color:#2C5F8A;">📊 เป้าหมาย Non-HDL</div>'+
-        '<div class="cv-gv" style="color:#2C5F8A;">'+nhGoal+' มก./ดล.</div>'+
+        '<div class="cv-gv" style="color:#2C5F8A;">'+nhGoal+'</div>'+
         '<div class="cv-gc">ปัจจุบัน: <span style="color:'+nhColor+';font-weight:700;">'+nhStatus+'</span> มก./ดล.<br><span style="font-size:9px;color:var(--text3)">= TC − HDL | Goal = LDL+30</span></div>'+
+        '</div>';
+    })()+
+    (function(){
+      var thGoal=ldlGoalData.tcHdlGoal;
+      var thCurVal=ldlGoalData.tcHdlCur;
+      var thOk=ldlGoalData.tcHdlAchieved;
+      var thColor=thCurVal===null?'var(--text3)':(thOk?'var(--ok)':'var(--bad)');
+      var thStatus=thCurVal===null?'—':(thCurVal.toFixed(1)+(thOk?' ✓':' ↑'));
+      return '<div class="cv-goal" style="background:linear-gradient(135deg,#F0FDFA,#CCFBF1);border-color:#5EEAD4;">'+
+        '<div class="cv-gl" style="color:#0F766E;">⚖️ เป้าหมาย TC/HDL</div>'+
+        '<div class="cv-gv" style="color:#0F766E;">'+thGoal+'</div>'+
+        '<div class="cv-gc">ปัจจุบัน: <span style="color:'+thColor+';font-weight:700;">'+thStatus+'</span><br><span style="font-size:9px;color:var(--text3)">= TC ÷ HDL | '+ldlGoalData.tcHdlBasis+'</span></div>'+
         '</div>';
     })()+
     '</div>'+
@@ -2780,8 +2782,10 @@ function render(){
     r.tc?labRow('ไขมันรวม (TC)',r.tc,'mg/dL','< 200 mg/dL',tc.cls,tc.txt):''
   ];
   if(r.tc&&r.hdl){
-    var tchdlR=(+r.tc/+r.hdl),tcCls=tchdlR<=4?'ok':tchdlR<=5?'wn':'bd';
-    lipidRows.push(labRow('สัดส่วน TC/HDL',tchdlR.toFixed(1),'','< 4.0',tcCls,tchdlR<=4?'ดี':tchdlR<=5?'ปานกลาง':'สูง'));
+    var tchdlR=(+r.tc/+r.hdl);
+    var thGoalN=ldlGoalData.tcHdlGoalNum||5.0;
+    var tcCls=tchdlR<thGoalN?'ok':(tchdlR<thGoalN+1?'wn':'bd');
+    lipidRows.push(labRow('สัดส่วน TC/HDL',tchdlR.toFixed(1),'',ldlGoalData.tcHdlGoal,tcCls,tchdlR<thGoalN?'ดี':(tchdlR<thGoalN+1?'ปานกลาง':'สูง')));
   }
   if(lpaV>0)lipidRows.push(labRow('ไลโปโปรตีน เอ (Lp(a))',lpaV,'mg/dL','< 30 mg/dL',lpaCls,lpaTxt));
   if(r.apob){var apob=labSt('apob',r.apob,g);lipidRows.push(labRow('อะโพไลโปโปรตีน บี (ApoB)',r.apob,'mg/dL','< 65–80 mg/dL',apob.cls,apob.txt));}
@@ -2965,6 +2969,14 @@ function render(){
       (ldlGoalData.nonHdlIsCustom?' <span style="font-size:8.5px;color:var(--teal);">(แพทย์กำหนด)</span>':'')+'</span>'+
     (nhCur!==null?'<span style="color:'+(nhOk?'var(--ok)':'var(--bad)')+';">ปัจจุบัน: '+nhCur+(nhOk?' ✓':' ↑')+'</span>':'')+
   '</div>';
+  /* TC/HDL Ratio Goal */
+  var thCur=ldlGoalData.tcHdlCur;
+  var thOk=ldlGoalData.tcHdlAchieved;
+  O+='<div class="px-nonhdl" style="background:#F0FDFA;">'+
+    '<span>⚖️ TC/HDL Goal: <strong>'+ldlGoalData.tcHdlGoal+'</strong>'+
+      (ldlGoalData.tcHdlIsCustom?' <span style="font-size:8.5px;color:var(--teal);">(แพทย์กำหนด)</span>':'')+'</span>'+
+    (thCur!==null?'<span style="color:'+(thOk?'var(--ok)':'var(--bad)')+';">ปัจจุบัน: '+thCur.toFixed(1)+(thOk?' ✓':' ↑')+'</span>':'')+
+  '</div>';
   /* ApoB Goal */
   O+='<div class="px-nonhdl" style="background:#FEF3F2;">'+
     '<span>🧬 ApoB Goal: <strong>'+ldlGoalData.apobGoal+'</strong>'+
@@ -3128,10 +3140,12 @@ function render(){
   }
   O+='</div>'; /* end fu row */
 
-  /* Advice */
-  var hasDiet=r.dietAdvice||dietAdv;
-  var hasEx=r.exerciseAdvice||exAdv;
-  if(hasDiet||hasEx||r.vaxAdvice){
+  /* Advice — แสดงเฉพาะคำแนะนำที่แพทย์กรอก/ดึงข้อมูลมาจริง ๆ เท่านั้น
+     ไม่แสดงคำแนะนำที่ระบบสร้างอัตโนมัติ (auto-generated) */
+  var dietEntered=(r.dietAdvice||'').trim();
+  var exEntered=(r.exerciseAdvice||'').trim();
+  var vaxEntered=(r.vaxAdvice||'').trim();
+  if(dietEntered||exEntered||vaxEntered){
     O+='<div class="px-card" style="margin-top:8px">';
     O+='<div class="px-lab-head">LIFESTYLE PRESCRIPTION — คำแนะนำการดำเนินชีวิต</div>';
     O+='<div class="px-advice-grid">';
@@ -3162,9 +3176,9 @@ function render(){
       });
       return html;
     }
-    if(hasDiet) O+='<div class="px-adv-item"><div class="px-adv-ico">🥗</div><div class="adv-body"><div class="px-adv-head">โภชนาการ</div><div class="px-adv-text adv-fmt">'+fmtAdv(r.dietAdvice||dietAdv)+'</div></div></div>';
-    if(hasEx)   O+='<div class="px-adv-item"><div class="px-adv-ico">🏃</div><div class="adv-body"><div class="px-adv-head">การออกกำลังกาย</div><div class="px-adv-text adv-fmt">'+fmtAdv(r.exerciseAdvice||exAdv)+'</div></div></div>';
-    if(r.vaxAdvice) O+='<div class="px-adv-item"><div class="px-adv-ico">💉</div><div class="adv-body"><div class="px-adv-head">วัคซีน</div><div class="px-adv-text adv-fmt">'+fmtAdv(r.vaxAdvice)+'</div></div></div>';
+    if(dietEntered) O+='<div class="px-adv-item"><div class="px-adv-ico">🥗</div><div class="adv-body"><div class="px-adv-head">โภชนาการ</div><div class="px-adv-text adv-fmt">'+fmtAdv(dietEntered)+'</div></div></div>';
+    if(exEntered)   O+='<div class="px-adv-item"><div class="px-adv-ico">🏃</div><div class="adv-body"><div class="px-adv-head">การออกกำลังกาย</div><div class="px-adv-text adv-fmt">'+fmtAdv(exEntered)+'</div></div></div>';
+    if(vaxEntered)  O+='<div class="px-adv-item"><div class="px-adv-ico">💉</div><div class="adv-body"><div class="px-adv-head">วัคซีน</div><div class="px-adv-text adv-fmt">'+fmtAdv(vaxEntered)+'</div></div></div>';
     O+='</div></div>';
   }
 
