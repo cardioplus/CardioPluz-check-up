@@ -1404,10 +1404,13 @@ function cvRisk(r){
   var sbp=+r.sbp||0,tc=+r.tc||0,hdl=+r.hdl||0,ldl=+r.ldl||0,tg=+r.tg||0;
   var a1c=+r.a1c||0,fbs=+r.fbs||0,note=(r.note||'').toLowerCase();
   
-  var dm=note.indexOf('dm')>=0||a1c>=6.5||fbs>=126;
-  var ht=note.indexOf('ht')>=0||sbp>=140;
+  /* DM/HT/Dyslip — ต้องคำนวณให้ตรงกับ clinic_database.html (calcThaiCV)
+     ใช้ field ที่ถูกบันทึก (hasDMRisk, ckdStage, sbp, ค่าแล็บ) ไม่ใช่ note text
+     เพราะ field 'note' ไม่ถูก save ลง localStorage */
+  var dm=((r.hasDMRisk||'no')!=='no'&&(r.hasDMRisk||'no')!=='')||a1c>=6.5||fbs>=126||note.indexOf('dm')>=0;
+  var ht=sbp>=140||note.indexOf('ht')>=0;
   var smoker=r.smoker==='yes';
-  var dyslip=note.indexOf('dyslip')>=0||ldl>=160||tc>=240;
+  var dyslip=ldl>=160||tc>=240||note.indexOf('dyslip')>=0;
   
   /* เพิ่มตัวแปรเช็คการกินยาลดความดัน */
   var sbpTx = (r.sbpTreatedVal==='yes'||r.sbpTreated===true||r.sbpTreated==='yes');
@@ -1493,44 +1496,6 @@ function cvRisk(r){
   var bpGoal=age>80?'< 140/90 mmHg':(dm||lv==='HIGH'||lv==='VHIGH')?'< 130/80 mmHg':'< 140/90 mmHg';
   var hbpmGoal=age>80?'< 135/85 mmHg':(dm||lv==='HIGH'||lv==='VHIGH')?'< 125/75 mmHg':'< 135/85 mmHg';
   
-  return{pts:pts,risk:risk,lv:lv,lth:lth,icon:icon,cls:cls,bgcls:bgcls,age:age,dm:dm,ht:ht,smoker:smoker,dyslip:dyslip,tc:tcE,hdl:hdlE,usedTC:tc>0,bpGoal:bpGoal,hbpmGoal:hbpmGoal};
-}
-  var age=extractAge(r.dob),g=r.gender||'';
-  var sbp=+r.sbp||0,tc=+r.tc||0,hdl=+r.hdl||0,ldl=+r.ldl||0,tg=+r.tg||0;
-  var a1c=+r.a1c||0,fbs=+r.fbs||0,note=(r.note||'').toLowerCase();
-  var dm=note.indexOf('dm')>=0||a1c>=6.5||fbs>=126;
-  var ht=note.indexOf('ht')>=0||sbp>=140;
-  var smoker=r.smoker==='yes';
-  var dyslip=note.indexOf('dyslip')>=0||ldl>=160||tc>=240;
-  if(!age||!g)return null;
-  /* Check mandatory fields for valid CV risk score */
-  var missing=[];
-  if(!sbp) missing.push('ความดันโลหิต (SBP)');
-  if(!tc&&!ldl) missing.push('ไขมันรวม (TC) หรือ LDL');
-  if(!hdl) missing.push('ไขมันดี (HDL)');
-  if(missing.length>0){
-    return{incomplete:true,missing:missing,age:age,gender:g};
-  }
-  var tcE=tc>0?tc:(ldl>0?ldl+(hdl||40)+(tg>0?tg/5:30):0);
-  var hdlE=hdl>0?hdl:(g==='หญิง'?55:45);
-  var pts=0;
-  if(g==='ชาย'){if(age<40)pts=0;else if(age<45)pts=3;else if(age<50)pts=6;else if(age<55)pts=8;else if(age<60)pts=10;else if(age<65)pts=12;else if(age<70)pts=14;else pts=15;}
-  else{if(age<40)pts=-7;else if(age<45)pts=-4;else if(age<50)pts=-1;else if(age<55)pts=1;else if(age<60)pts=3;else if(age<65)pts=5;else if(age<70)pts=6;else pts=7;}
-  if(tcE<160)pts+=0;else if(tcE<200)pts+=1;else if(tcE<240)pts+=2;else if(tcE<280)pts+=3;else pts+=4;
-  if(hdlE>=60)pts-=1;else if(hdlE>=50)pts+=0;else if(hdlE>=45)pts+=1;else pts+=2;
-  if(sbp<130)pts+=0;else if(sbp<140)pts+=1;else if(sbp<160)pts+=2;else if(sbp<180)pts+=4;else pts+=5;
-  pts+=(dm?(g==='ชาย'?3:4):0)+(smoker?2:0);
-  var MAP={'-3':0.5,'-2':0.5,'-1':0.6,'0':0.7,'1':0.9,'2':1.1,'3':1.4,'4':1.8,'5':2.2,'6':2.8,'7':3.5,'8':4.4,'9':5.4,'10':6.8,'11':8.4,'12':10.4,'13':12.7,'14':15.6,'15':18.9,'16':22.9,'17':27.5,'18':33.0,'19':38.0,'20':44.0};
-  var cp=Math.max(-3,Math.min(20,pts)),risk=MAP[String(cp)]||(cp>20?49:0.5);
-  var lv,lth,icon,cls,bgcls;
-  var fu=dm&&ht&&dyslip;
-  if(risk<10&&!fu){lv='LOW';lth='ความเสี่ยงต่ำ';icon='🟢';cls='cv-LOW';bgcls='cvbg-LOW';}
-  else if(risk<20){lv='MOD';lth='ความเสี่ยงปานกลาง';icon='🟡';cls='cv-MOD';bgcls='cvbg-MOD';}
-  else if(risk<30){lv='HIGH';lth='ความเสี่ยงสูง';icon='🟠';cls='cv-HIGH';bgcls='cvbg-HIGH';}
-  else{lv='VHIGH';lth='ความเสี่ยงสูงมาก';icon='🔴';cls='cv-VHIGH';bgcls='cvbg-VHIGH';}
-  if(fu&&lv==='LOW'){lv='MOD';lth='ความเสี่ยงปานกลาง';icon='🟡';cls='cv-MOD';bgcls='cvbg-MOD';}
-  var bpGoal=age>80?'< 140/90 mmHg':(dm||lv==='HIGH'||lv==='VHIGH')?'< 130/80 mmHg':'< 140/90 mmHg';
-  var hbpmGoal=age>80?'< 135/85 mmHg':(dm||lv==='HIGH'||lv==='VHIGH')?'< 125/75 mmHg':'< 135/85 mmHg';
   return{pts:pts,risk:risk,lv:lv,lth:lth,icon:icon,cls:cls,bgcls:bgcls,age:age,dm:dm,ht:ht,smoker:smoker,dyslip:dyslip,tc:tcE,hdl:hdlE,usedTC:tc>0,bpGoal:bpGoal,hbpmGoal:hbpmGoal};
 }
 
@@ -3053,7 +3018,7 @@ function render(){
         (ekgRes==='Normal'?'✅ ปกติ':ekgRes==='Abnormal'?'❌ ผิดปกติ':'— N/A')+
       '</span>'+
     '</div>';
-    if(r.ekgComment) O+='<div class="px-comment">'+r.ekgComment+'</div>';
+    if(r.ekgComment&&r.ekgComment.trim()) O+='<div class="px-comment">'+r.ekgComment.trim()+'</div>';
     O+='</div>';
   }
 
@@ -3092,13 +3057,13 @@ function render(){
     if(valveData){
       O+='<div class="px-valve-grid">'+buildValveSection(valveData,'sten','ลิ้นหัวใจตีบ (Stenosis)')+buildValveSection(valveData,'reg','ลิ้นหัวใจรั่ว (Regurgitation)')+'</div>';
     }
-    if(r.echoComment) O+='<div class="px-comment">'+r.echoComment+'</div>';
+    if(r.echoComment&&r.echoComment.trim()) O+='<div class="px-comment">'+r.echoComment.trim()+'</div>';
 
     /* Heart anatomy image */
     O+='<div class="px-heart-wrap">'+heartAnatomySVG()+'</div>';
 
     /* Echo summary */
-    if(r.echoSummary){
+    if(r.echoSummary&&r.echoSummary.trim()){
       var eLines=r.echoSummary.split('\n').filter(function(l){return l.trim();});
       O+='<div class="px-echo-sum">'+eLines.map(function(l){
         var txt=l.replace(/^•\s*/,'');
@@ -3211,24 +3176,24 @@ function render(){
   O+='<div class="px-page px-p4b">';
   O+=secHead('📝','SUMMARY & NEXT STEPS','สรุปและขั้นตอนถัดไป');
 
-  /* Auto Summary */
+  /* Auto Summary — สรุปอัตโนมัติจากค่าตรวจ (สร้างเสมอ ไม่ใช่ความเห็นที่ load มา) */
   var autoSum=buildAutoSummary(r,cv,ldlGoalData);
-  if(autoSum||(r.customSummary&&r.customSummary.trim())){
+  if(autoSum){
     O+='<div class="px-card" style="margin-top:8px;border-left:4px solid var(--teal)">';
     O+='<div class="px-lab-head">สรุปผลการตรวจสุขภาพ</div>';
-    if(autoSum) O+='<div class="px-insight-text" style="font-size:12px;line-height:1.8;">'+autoSum.replace(/\n/g,'<br>')+'</div>';
-    if(r.customSummary&&r.customSummary.trim()&&r.customSummary!==autoSum){
-      O+='<div class="px-doctor-addendum" style="margin-top:8px;">'+r.customSummary.replace(/\n/g,'<br>')+'</div>';
-    }
+    O+='<div class="px-insight-text" style="font-size:12px;line-height:1.8;">'+autoSum.replace(/\n/g,'<br>')+'</div>';
     O+='</div>';
   }
 
-  /* Summary + Doctor note */
-  if(r.customSummary||r.doctorNote){
+  /* PHYSICIAN INSIGHT — แสดงเฉพาะเมื่อมีความเห็นแพทย์ที่ load มาจริง ๆ
+     ถ้า customSummary / doctorNote ว่างหรือมีแต่ช่องว่าง จะไม่แสดงส่วนนี้เลย */
+  var custSum=(r.customSummary||'').trim();
+  var docNote=(r.doctorNote||'').trim();
+  if(custSum||docNote){
     O+='<div class="px-card px-doctor-note" style="margin-top:8px">';
     O+='<div class="px-lab-head">PHYSICIAN INSIGHT</div>';
-    if(r.customSummary) O+='<div class="px-insight-text">'+r.customSummary.replace(/\n/g,'<br>')+'</div>';
-    if(r.doctorNote) O+='<div class="px-doctor-addendum">'+r.doctorNote.replace(/\n/g,'<br>')+'</div>';
+    if(custSum) O+='<div class="px-insight-text">'+custSum.replace(/\n/g,'<br>')+'</div>';
+    if(docNote) O+='<div class="px-doctor-addendum">'+docNote.replace(/\n/g,'<br>')+'</div>';
     O+='<div class="px-doctor-sig">'+
       '<div class="px-sig-line"></div>'+
       '<div class="px-sig-name">'+(r.doctor||'—')+'</div>'+

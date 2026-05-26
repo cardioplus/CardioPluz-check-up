@@ -1157,11 +1157,20 @@ function updateNonHdlDisplay(){
   if(!isNaN(custom)&&custom>0){
     if(disp)disp.textContent='< '+custom+' mg/dL';
   } else {
-    // auto: LDL goal + 30
-    var ldlText=ldlDisp?ldlDisp.textContent:'';
-    var m=ldlText.match(/(\d+)/);
-    if(m)disp.textContent='< '+(parseInt(m[1])+30)+' mg/dL';
-    else if(disp)disp.textContent='—';
+    /* auto: LDL goal + 30 — อ่านจาก dataset.goalNum ก่อน (แม่นยำ) แล้วค่อย fallback เป็น text */
+    var ldlNum=0;
+    if(ldlDisp){
+      if(ldlDisp.dataset&&ldlDisp.dataset.goalNum){
+        ldlNum=parseInt(ldlDisp.dataset.goalNum,10)||0;
+      } else {
+        var m=(ldlDisp.textContent||'').match(/(\d+)/);
+        if(m)ldlNum=parseInt(m[1],10)||0;
+      }
+    }
+    if(disp){
+      if(ldlNum>0) disp.textContent='< '+(ldlNum+30)+' mg/dL';
+      else disp.textContent='—';
+    }
   }
   var nonHdlCur=document.getElementById('nonHdlCurrent');
   if(nonHdlCur)nonHdlCur.textContent=(tc>0&&hdl>0)?(tc-hdl)+' mg/dL':'—';
@@ -1772,6 +1781,15 @@ function updateLdlGoal(){
   document.getElementById('ldlGoalBasis').textContent=
     custom?('แพทย์กำหนด '+custom+' mg/dL'):
     ('ESC: '+escGoal+' · ACC: '+ahaGoal+(finalGoal<Math.max(escNum,ahaNum)?' → ใช้ '+finalGoal+' (stricter)':''));
+
+  /* ── Update LDL goal display (มีค่าตัวเลขเสมอ เพื่อให้ Non-HDL auto คำนวณได้) ── */
+  var ldlInsuffEl=document.getElementById('ldlInsufficient');
+  var ldlDispEl=document.getElementById('ldlGoalDisplay');
+  if(ldlDispEl && !(ldlInsuffEl&&ldlInsuffEl.checked)){
+    ldlDispEl.textContent='< '+finalGoal+' mg/dL'+(custom?' (แพทย์กำหนด)':'');
+  }
+  /* เก็บค่า LDL goal ที่คำนวณได้ไว้เป็น dataset เพื่อให้ updateNonHdlDisplay อ่านได้แม่นยำ */
+  if(ldlDispEl) ldlDispEl.dataset.goalNum=finalGoal;
 
   /* Update Non-HDL */
   updateNonHdlDisplay();
