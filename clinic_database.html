@@ -857,7 +857,7 @@ var VACCINES = [
 ];
 
 /* ── FIREBASE ── */
-var db=null, cachedRecords=[], unsubscribeList=null;
+var db=null, cachedRecords=[], unsubscribeList=null, currentDocId=null;
 
 function initFirebase(){
   try{
