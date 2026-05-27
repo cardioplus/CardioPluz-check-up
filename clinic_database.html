@@ -210,7 +210,12 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
         <div class="field span2"><label>ชื่อ-นามสกุล</label><input type="text" id="fullName" placeholder="ชื่อและนามสกุล"></div>
         <div class="field">
           <label>วันเกิด</label>
-          <input type="date" id="dobDate" onchange="setTimeout(calcAllRiskScores,100);updateDobField()" style="margin-bottom:4px">
+          <div style="display:flex;gap:4px;margin-bottom:4px;">
+            <select id="dobDay" onchange="updateDobField()" style="flex:1;min-width:0;padding:6px 4px;border:1px solid var(--border,#CBD5E1);border-radius:7px;font-size:13px;"></select>
+            <select id="dobMonth" onchange="updateDobField()" style="flex:1.4;min-width:0;padding:6px 4px;border:1px solid var(--border,#CBD5E1);border-radius:7px;font-size:13px;"></select>
+            <select id="dobYear" onchange="updateDobField()" style="flex:1.2;min-width:0;padding:6px 4px;border:1px solid var(--border,#CBD5E1);border-radius:7px;font-size:13px;"></select>
+          </div>
+          <input type="date" id="dobDate" onchange="syncDobDropdownsFromDate();updateDobField()" style="margin-bottom:4px;width:100%;" title="หรือเลือกจากปฏิทิน">
           <div id="dobDisplay" style="font-size:12px;color:var(--teal-dark);font-weight:600;min-height:18px"></div>
           <input type="hidden" id="dob">
         </div>
@@ -1075,6 +1080,7 @@ function clearForm(){
   BASE_FIELDS.forEach(id=>setVal(id,''));
   var dd=document.getElementById('dobDate');if(dd)dd.value='';
   var ddisp=document.getElementById('dobDisplay');if(ddisp)ddisp.textContent='';
+  ['dobDay','dobMonth','dobYear'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   selectedDoctor=''; document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));
   VACCINES.forEach(v=>{setVal('vax_status_'+v.id,'');setVal('vax_date_'+v.id,'');});
   setRadio('ekgResult','NA'); setRadio('echoResult','NA');
@@ -1092,35 +1098,129 @@ function setRecorder(name){
   if(name==='พ.ณัฏฐา') document.getElementById('rec-btn-1').classList.add('active');
   if(name==='พ.พรอนงค์') document.getElementById('rec-btn-2').classList.add('active');
 }
+
+var DOB_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+/* สร้างตัวเลือก วัน/เดือน/ปี — ปีเป็น พ.ศ. ย้อนหลังได้ทันที (ไม่ต้องไล่ทีละเดือน) */
+function initDobDropdowns(){
+  var daySel=document.getElementById('dobDay');
+  var monSel=document.getElementById('dobMonth');
+  var yearSel=document.getElementById('dobYear');
+  if(!daySel||!monSel||!yearSel) return;
+  if(daySel.options.length) return; /* สร้างแล้ว ไม่ต้องสร้างซ้ำ */
+
+  daySel.innerHTML='<option value="">วัน</option>';
+  for(var d=1;d<=31;d++) daySel.innerHTML+='<option value="'+d+'">'+d+'</option>';
+
+  monSel.innerHTML='<option value="">เดือน</option>';
+  for(var m=0;m<12;m++) monSel.innerHTML+='<option value="'+(m+1)+'">'+DOB_MONTHS[m]+'</option>';
+
+  /* ปี: ตั้งแต่ปีปัจจุบัน ย้อนหลัง 120 ปี — แสดงเป็น พ.ศ. */
+  var nowY=new Date().getFullYear();
+  yearSel.innerHTML='<option value="">ปี พ.ศ.</option>';
+  for(var y=nowY;y>=nowY-120;y--){
+    yearSel.innerHTML+='<option value="'+y+'">'+(y+543)+'</option>';
+  }
+}
+
+/* ปรับจำนวนวันให้ตรงกับเดือน/ปีที่เลือก (กันเลือก 31 ก.พ.) */
+function adjustDobDayOptions(){
+  var daySel=document.getElementById('dobDay');
+  var monSel=document.getElementById('dobMonth');
+  var yearSel=document.getElementById('dobYear');
+  if(!daySel||!monSel||!yearSel) return;
+  var m=parseInt(monSel.value,10);
+  var y=parseInt(yearSel.value,10);
+  var maxDay=31;
+  if(m){
+    if([4,6,9,11].indexOf(m)>=0) maxDay=30;
+    else if(m===2){
+      var leap=y?((y%4===0&&y%100!==0)||y%400===0):true;
+      maxDay=leap?29:28;
+    }
+  }
+  var cur=parseInt(daySel.value,10);
+  /* สร้างใหม่เฉพาะเมื่อจำนวนวันเปลี่ยน */
+  if(daySel.options.length-1!==maxDay){
+    daySel.innerHTML='<option value="">วัน</option>';
+    for(var d=1;d<=maxDay;d++) daySel.innerHTML+='<option value="'+d+'">'+d+'</option>';
+    if(cur&&cur<=maxDay) daySel.value=cur;
+  }
+}
+
+/* ดึงค่า ค.ศ. (ISO) จาก dropdown — คืน '' ถ้ายังเลือกไม่ครบ */
+function dobDropdownsToISO(){
+  var d=parseInt(document.getElementById('dobDay').value,10);
+  var m=parseInt(document.getElementById('dobMonth').value,10);
+  var y=parseInt(document.getElementById('dobYear').value,10);
+  if(!d||!m||!y) return '';
+  return y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d;
+}
+
+/* ตั้งค่า dropdown จากวันที่ ISO (ค.ศ.) */
+function setDobDropdownsFromISO(iso){
+  if(!iso) return;
+  var p=iso.split('-');
+  if(p.length!==3) return;
+  var y=parseInt(p[0],10),m=parseInt(p[1],10),d=parseInt(p[2],10);
+  if(p[0]>2400){y=y-543;} /* เผื่อ พ.ศ. */
+  initDobDropdowns();
+  document.getElementById('dobYear').value=y;
+  document.getElementById('dobMonth').value=m;
+  adjustDobDayOptions();
+  document.getElementById('dobDay').value=d;
+}
+
+/* ปฏิทิน → dropdown */
+function syncDobDropdownsFromDate(){
+  var iso=document.getElementById('dobDate').value;
+  if(iso) setDobDropdownsFromISO(iso);
+}
+
 function updateDobField(){
-  var d=document.getElementById('dobDate').value;
-  if(!d){document.getElementById('dob').value='';document.getElementById('dobDisplay').textContent='';return;}
+  initDobDropdowns();
+  adjustDobDayOptions();
+  /* ให้ความสำคัญกับ dropdown ก่อน ถ้ายังไม่ครบค่อยใช้ปฏิทิน */
+  var d=dobDropdownsToISO();
+  if(d){
+    /* sync ปฏิทินให้ตรงกับ dropdown */
+    var dd=document.getElementById('dobDate');
+    if(dd&&dd.value!==d) dd.value=d;
+  } else {
+    d=document.getElementById('dobDate').value;
+    if(d) setDobDropdownsFromISO(d);
+  }
+  if(!d){
+    document.getElementById('dob').value='';
+    document.getElementById('dobDisplay').textContent='';
+    return;
+  }
   var parts=d.split('-');
   var year=parseInt(parts[0]),month=parseInt(parts[1]),day=parseInt(parts[2]);
   var thYear=year<2400?year+543:year;
-  var M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   var today=new Date();
   var age=today.getFullYear()-year;
   if(today.getMonth()+1<month||(today.getMonth()+1===month&&today.getDate()<day))age--;
-  var thaiStr=day+' '+M[month-1]+' '+thYear+' (อายุ '+age+' ปี)';
+  var thaiStr=day+' '+DOB_MONTHS[month-1]+' '+thYear+' (อายุ '+age+' ปี)';
   document.getElementById('dob').value=thaiStr;
   document.getElementById('dobDisplay').textContent='📅 '+thaiStr;
   calcIdeal(); updateLdlGoal();
+  setTimeout(calcAllRiskScores,100);
 }
+
 function setDobFromText(text){
   /* Try to parse stored Thai text back to date for the picker */
   if(!text)return;
   document.getElementById('dob').value=text;
-  /* Extract AD year and month/day for picker */
-  var mAge=text.match(/(\d+)\s*ม\.ค\.|(\d+)\s*ก\.พ\.|(\d+)\s*มี\.ค\.|(\d+)\s*เม\.ย\.|(\d+)\s*พ\.ค\.|(\d+)\s*มิ\.ย\.|(\d+)\s*ก\.ค\.|(\d+)\s*ส\.ค\.|(\d+)\s*ก\.ย\.|(\d+)\s*ต\.ค\.|(\d+)\s*พ\.ย\.|(\d+)\s*ธ\.ค\./);
-  var thMonths={'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
   var dayM=text.match(/^(\d+)/), yearM=text.match(/25\d\d|19\d\d|20\d\d/);
+  var thMonths={'ม.ค.':1,'ก.พ.':2,'มี.ค.':3,'เม.ย.':4,'พ.ค.':5,'มิ.ย.':6,'ก.ค.':7,'ส.ค.':8,'ก.ย.':9,'ต.ค.':10,'พ.ย.':11,'ธ.ค.':12};
   var monM=null;
   Object.keys(thMonths).forEach(function(k){if(text.indexOf(k)>=0)monM=thMonths[k];});
   if(dayM&&monM&&yearM){
     var adYear=parseInt(yearM[0])>2400?parseInt(yearM[0])-543:parseInt(yearM[0]);
     var isoDate=adYear+'-'+(monM<10?'0':'')+monM+'-'+(parseInt(dayM[0])<10?'0':'')+parseInt(dayM[0]);
     document.getElementById('dobDate').value=isoDate;
+    setDobDropdownsFromISO(isoDate);
     document.getElementById('dobDisplay').textContent='📅 '+text;
   }
 }
@@ -1498,35 +1598,43 @@ function calcThaiCV(age,gender,sbp,tc,hdl,smoker,dm,sbpTreated,waist,height){
 }
 
 /* ── HEART AGE / VASCULAR AGE (อายุหัวใจ) ──
-   นิยามมาตรฐาน (Cuende et al.; ESC 2021 CVD Prevention Guidelines):
-   อายุของบุคคลเพศเดียวกันที่มีปัจจัยเสี่ยงในอุดมคติ ซึ่งมีความเสี่ยง
-   CVD 10 ปี เท่ากับผู้ป่วย — ใช้โมเดล SCORE2/SCORE2-OP เป็นตัวคำนวณ
-   ปัจจัยอุดมคติ: SBP 120 · TC 155 mg/dL · HDL 62 mg/dL · ไม่สูบบุหรี่ */
+   วิธีคำนวณตาม vascular age ของ SCORE2 อย่างเป็นทางการ
+   อ้างอิง: Cuende JI et al. (2025); ESC 2021 CVD Prevention Guidelines
+   Baseline conditions ตาม paper: ไม่สูบบุหรี่ · SBP 110 mmHg ·
+   non-HDL cholesterol 3.45 mmol/L (≈133.4 mg/dL) */
+var HA_NONHDL_REF_MMOL=3.45;
+function score2BaselineRisk(age,gender){
+  var isOP=(age>=70);
+  var hdlMmolRef=isOP?1.4:1.3;                       /* HDL centering → พจน์ chdl = 0 */
+  var tcMmolRef=HA_NONHDL_REF_MMOL+hdlMmolRef;       /* ให้ non-HDL = 3.45 พอดี */
+  return calcScore2(age,gender,110,tcMmolRef*38.67,hdlMmolRef*38.67,false);
+}
 function calcHeartAge(age,gender,sbp,tc,hdl,smoker){
   if(!age||!gender||!sbp||!tc||!hdl) return null;
-  if(age<35||age>85) return null;
+  if(age<40||age>89) return null;                    /* โดเมน SCORE2/SCORE2-OP */
   var actualRisk=calcScore2(age,gender,sbp,tc,hdl,smoker);
   if(actualRisk===null) return null;
-  var idealSbp=120,idealTc=155,idealHdl=62;
-  var idealAtActualAge=calcScore2(age,gender,idealSbp,idealTc,idealHdl,false);
-  if(idealAtActualAge!==null && actualRisk<=idealAtActualAge) return age;
-  var heartAge=age, prevA=age, prevR=idealAtActualAge;
-  for(var a=age;a<=95;a+=0.1){
-    var rIdeal=calcScore2(a,gender,idealSbp,idealTc,idealHdl,false);
-    if(rIdeal===null){ heartAge=a; prevA=a; continue; }
-    if(rIdeal>=actualRisk){
-      if(rIdeal>prevR && prevR<actualRisk){
-        heartAge=prevA+(a-prevA)*((actualRisk-prevR)/(rIdeal-prevR));
-      } else { heartAge=a; }
+  var baseAtAge=score2BaselineRisk(age,gender);
+  if(baseAtAge===null) return null;
+  if(actualRisk<=baseAtAge) return age;
+  var prevA=age,prevR=baseAtAge,vAge=age;
+  for(var a=age;a<=89.0001;a+=0.05){
+    var aa=Math.min(a,89);
+    var rBase=score2BaselineRisk(aa,gender);
+    if(rBase===null){ vAge=aa; prevA=aa; continue; }
+    if(rBase>=actualRisk){
+      if(rBase>prevR){
+        vAge=prevA+(aa-prevA)*((actualRisk-prevR)/(rBase-prevR));
+      } else { vAge=aa; }
       break;
     }
-    heartAge=a; prevA=a; prevR=rIdeal;
+    vAge=aa; prevA=aa; prevR=rBase;
+    if(aa>=89) break;
   }
-  heartAge=Math.round(heartAge);
-  if(heartAge-age>20) heartAge=age+20;
-  if(heartAge>89) heartAge=89;
-  if(heartAge<age) heartAge=age;
-  return heartAge;
+  vAge=Math.round(vAge);
+  if(vAge>89) vAge=89;
+  if(vAge<age) vAge=age;
+  return vAge;
 }
 
 /* Format risk % for display */
@@ -1982,6 +2090,9 @@ function editRec(id){
   currentDocId=id; /* track for duplicate check */
   BASE_FIELDS.forEach(f=>setVal(f,rec[f]));
   if(rec.dob)setDobFromText(rec.dob);
+  /* sync dropdown ให้ตรงกับ dobDate เสมอ (เผื่อมีแต่ dobDate ไม่มี dob text) */
+  syncDobDropdownsFromDate();
+  if(rec.dob||document.getElementById('dobDate').value) updateDobField();
   selectedDoctor=rec.doctor||'';
   document.querySelectorAll('.doc-btn').forEach(btn=>{
     btn.classList.toggle('selected',btn.textContent.includes(selectedDoctor.split(' ')[0]?.replace('พญ.','')||'__'));
@@ -2187,6 +2298,7 @@ function showToast(msg,bg){
 /* ── INIT ── */
 renderVaxGrid();
 renderValveGrids();
+initDobDropdowns();
 initFirebase();
 calcIdeal();
 updateLdlGoal();
