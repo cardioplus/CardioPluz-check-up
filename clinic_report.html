@@ -70,14 +70,14 @@ body{
 .px-patient{
   background:linear-gradient(135deg,var(--navy),#1A9B8C);
   color:white;border-radius:10px;
-  padding:14px 20px;margin-bottom:16px;
+  padding:18px 24px;margin-bottom:16px;
 }
-.px-patient-name{font-size:23.6px;font-weight:800;margin-bottom:4px;}
-.px-patient-sub{font-size:13px;opacity:.8;margin-bottom:10px;}
-.px-patient-vitals{display:flex;gap:12px;flex-wrap:wrap;}
-.px-pv{display:flex;align-items:center;gap:6px;min-width:0;}
-.px-pv-val{font-size:21.2px;font-weight:800;}
-.px-pv-u{font-size:10.6px;opacity:.75;}
+.px-patient-name{font-size:30px;font-weight:800;margin-bottom:6px;}
+.px-patient-sub{font-size:16px;opacity:.92;margin-bottom:13px;}
+.px-patient-vitals{display:flex;gap:18px;flex-wrap:wrap;}
+.px-pv{display:flex;align-items:center;gap:7px;min-width:0;}
+.px-pv-val{font-size:27px;font-weight:800;}
+.px-pv-u{font-size:12.5px;opacity:.8;}
 
 /* ══ SECTION HEADER ══ */
 .px-sh{
@@ -112,36 +112,36 @@ body{
 .px-score-denom{font-size:13px;color:var(--text3);}
 .px-score-label{font-size:16.5px;font-weight:700;margin-top:6px;}
 .px-score-note{font-size:11.8px;color:var(--text2);margin-top:6px;text-align:center;padding:6px 10px;background:var(--cream);border-radius:6px;}
-.px-patient-note{font-size:13px;color:rgba(255,255,255,.9);margin-top:6px;padding:4px 8px;background:rgba(255,255,255,.15);border-radius:6px;font-weight:600;}
+.px-patient-note{font-size:15px;color:rgba(255,255,255,.95);margin-top:8px;padding:6px 11px;background:rgba(255,255,255,.18);border-radius:6px;font-weight:600;}
 
 /* ══ BODY METRICS ══ */
 
 
 /* ── Categorized Lab Groups ── */
-.lab-group{margin-bottom:12px;break-inside:avoid;}
-.lab-group-title{font-size:16.3px;font-weight:800;color:var(--navy);background:linear-gradient(90deg,var(--teal-lt),transparent);padding:5px 10px;border-left:3px solid var(--teal);border-radius:4px;margin-bottom:4px;}
-.lab-group-head{display:grid;grid-template-columns:1.7fr 1fr 1.1fr 1.1fr;gap:6px;padding:3px 10px;font-size:11.3px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border);}
+.lab-group{margin-bottom:8px;break-inside:avoid;}
+.lab-group-title{font-size:16.5px;font-weight:800;color:var(--navy);background:linear-gradient(90deg,var(--teal-lt),transparent);padding:4px 10px;border-left:3px solid var(--teal);border-radius:4px;margin-bottom:2px;line-height:1.25;}
+.lab-group-head{display:grid;grid-template-columns:1.7fr 1fr 1.1fr 1.1fr;gap:6px;padding:2px 10px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);}
 .lab-group-head span:nth-child(2),.lab-group-head span:nth-child(3){text-align:center;}
 .lab-group-head span:nth-child(4){text-align:center;}
-.lab-row{display:grid;grid-template-columns:1.7fr 1fr 1.1fr 1.1fr;gap:6px;align-items:center;padding:5px 10px;border-bottom:1px solid #F1F5F9;}
+.lab-row{display:grid;grid-template-columns:1.7fr 1fr 1.1fr 1.1fr;gap:6px;align-items:center;padding:2.5px 10px;border-bottom:1px solid #F1F5F9;}
 .lab-row:last-child{border-bottom:none;}
 .lab-row-na{background:#FAFAFA;}
-.lr-lbl{font-size:14.9px;color:var(--text2);line-height:1.3;}
-.lr-val{font-size:17px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--navy);text-align:center;}
-.lr-u{font-size:11.3px;font-weight:400;color:var(--text3);}
+.lr-lbl{font-size:15px;font-weight:600;color:var(--text);line-height:1.2;}
+.lr-val{font-size:17.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--navy);text-align:center;line-height:1.15;}
+.lr-u{font-size:11px;font-weight:400;color:var(--text3);}
 .lr-na{color:#9CA3AF;font-style:italic;font-family:inherit;}
-.lr-ref{font-size:12.7px;color:var(--text3);text-align:center;line-height:1.3;}
+.lr-ref{font-size:13px;color:var(--text2);text-align:center;line-height:1.2;}
 .lr-interp{text-align:center;}
-.lr-interp .chip{font-size:12px;padding:2px 7px;}
+.lr-interp .chip{font-size:12.5px;padding:1.5px 8px;font-weight:700;}
 @media print{
-  .lab-group{margin-bottom:9px!important;}
-  .lab-group-title{font-size:14.2px!important;padding:4px 8px!important;}
-  .lab-group-head{font-size:10.6px!important;}
-  .lab-row{padding:3.5px 8px!important;}
-  .lr-lbl{font-size:13.4px!important;}
-  .lr-val{font-size:14.9px!important;}
-  .lr-ref{font-size:11.3px!important;}
-  .lr-interp .chip{font-size:10.6px!important;}
+  .lab-group{margin-bottom:6px!important;}
+  .lab-group-title{font-size:15px!important;padding:3px 8px!important;margin-bottom:2px!important;}
+  .lab-group-head{font-size:10.5px!important;padding:2px 8px!important;}
+  .lab-row{padding:2px 8px!important;}
+  .lr-lbl{font-size:14px!important;}
+  .lr-val{font-size:15.5px!important;}
+  .lr-ref{font-size:12px!important;}
+  .lr-interp .chip{font-size:11px!important;}
 }
 
 /* ── InBody-style bar chart ── */
@@ -419,15 +419,42 @@ body{
 
 /* ══ CV RISK (preserved from old) ══ */
 .cv-card{background:white;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px;}
-.cv-main{display:flex;flex-direction:column;}
-.cv-gauge-side{padding:14px 16px 10px;display:flex;flex-direction:column;align-items:center;}
-.cv-goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:10px 16px;background:var(--cream);}
+.cv-main{display:flex;flex-direction:row;align-items:stretch;}
+.cv-gauge-side{padding:14px 16px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 44%;border-right:1px solid var(--bl);}
+.cv-risk-side{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 18px;gap:6px;}
+.cv-goals{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px 16px;background:var(--cream);}
 .cv-goal{background:white;border:1.5px solid var(--bl);border-radius:8px;padding:8px 10px;}
 .cv-gl{font-size:10.6px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
-.cv-gv{font-size:18.9px;font-weight:800;color:var(--navy);}
-.cv-gc{font-size:11.2px;color:var(--text2);margin-top:2px;}
-.cv-factors{padding:8px 16px;display:flex;flex-wrap:wrap;gap:4px;}
+.cv-gv{font-size:18.9px;font-weight:800;color:var(--navy);line-height:1.15;}
+.cv-gc{font-size:11.2px;color:var(--text2);margin-top:2px;line-height:1.3;}
+.cv-factors{padding:8px 16px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
 .cv-factor{font-size:11.2px;padding:2px 8px;border-radius:10px;background:var(--cream);color:var(--text2);}
+.cv-fac{background:var(--cream);border-radius:7px;padding:5px 8px;text-align:center;}
+.cv-fl{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;}
+.cv-fv{font-size:12.5px;font-weight:700;color:var(--navy);line-height:1.25;}
+.cv-lvl-row{display:flex;align-items:center;gap:8px;}
+.cv-lv-icon{font-size:26px;}
+.cv-lv-name{font-size:19px;font-weight:900;}
+.cv-lv-pct{font-size:13px;color:var(--text2);}
+.cv-cut{font-size:10.6px;color:var(--text3);}
+.cv-pts-badge{margin-top:6px;font-size:10px;font-weight:700;color:var(--text3);}
+.cv-note{font-size:10.6px;color:var(--warn);padding:6px 16px;background:var(--warn-bg);}
+/* CV risk-level colors */
+.cvbg-LOW{background:var(--ok-bg);}
+.cvbg-MOD{background:#FFFBEB;}
+.cvbg-HIGH{background:#FFF7ED;}
+.cvbg-VHIGH{background:var(--bad-bg);}
+.cv-LOW{color:var(--ok);}
+.cv-MOD{color:var(--warn);}
+.cv-HIGH{color:#EA580C;}
+.cv-VHIGH{color:var(--bad);}
+@media print{
+  .cv-goals{grid-template-columns:repeat(5,1fr)!important;gap:5px!important;padding:7px 12px!important;}
+  .cv-goal{padding:5px 7px!important;}
+  .cv-factors{grid-template-columns:repeat(6,1fr)!important;gap:4px!important;padding:6px 12px!important;}
+  .cv-gauge-side{flex:0 0 42%!important;padding:8px 12px!important;}
+  .cv-risk-side{padding:8px 14px!important;}
+}
 .bptgts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px;background:var(--teal-lt);}
 .bp-tgt-lbl{font-size:10.6px;color:var(--text3);}
 .bp-tgt-val{font-size:16.5px;font-weight:800;color:var(--teal-dk);}
@@ -449,11 +476,9 @@ body{
     page-break-after:auto!important;break-after:auto!important;
     page-break-before:auto!important;break-before:auto!important;
   }
-  /* Section headers start fresh sheets for the major report sections
-     so each section is a clean, balanced page */
-  .px-p1b,.px-p2,.px-p2b,.px-p3b{
-    page-break-before:always!important;break-before:page!important;
-  }
+  /* NOTE: ไม่บังคับ page-break ระหว่าง section ใด ๆ — ปล่อยให้เนื้อหา
+     ไหลต่อเนื่องเต็มทุกหน้า ไม่เหลือพื้นที่ว่าง การ์ดภายในมี
+     break-inside:avoid อยู่แล้ว จึงไม่ถูกตัดกลางองค์ประกอบ */
 
   /* Never split these mid-page */
   .px-card,.px-lab-section,.px-ldl-status,.px-lpa,.px-ib-goal,.px-cid,
@@ -478,11 +503,12 @@ body{
   .px-meta-row{font-size:10px!important;}
 
   /* PATIENT BANNER */
-  .px-patient{padding:6px 11px!important;margin-bottom:7px!important;}
-  .px-patient-name{font-size:15.3px!important;}
-  .px-patient-sub{font-size:9.4px!important;margin-bottom:5px!important;}
-  .px-pv-val{font-size:15.3px!important;}
-  .px-pv-u{font-size:8.8px!important;}
+  .px-patient{padding:11px 16px!important;margin-bottom:8px!important;}
+  .px-patient-name{font-size:22px!important;}
+  .px-patient-sub{font-size:12.5px!important;margin-bottom:7px!important;}
+  .px-pv-val{font-size:20px!important;}
+  .px-pv-u{font-size:10.5px!important;}
+  .px-patient-note{font-size:12px!important;}
 
   /* SECTION HEADER */
   .px-sh{margin:5px 0 5px!important;padding:3px 7px!important;}
@@ -538,14 +564,14 @@ body{
   .px-body-chart-title{font-size:10.6px!important;margin-bottom:2px!important;}
 
   /* LAB GROUPS — categorized */
-  .lab-group{margin-bottom:7px!important;}
-  .lab-group-title{font-size:14.2px!important;padding:4px 8px!important;}
-  .lab-group-head{font-size:10.6px!important;}
-  .lab-row{padding:3px 8px!important;}
-  .lr-lbl{font-size:13.4px!important;}
-  .lr-val{font-size:14.9px!important;}
-  .lr-ref{font-size:11.3px!important;}
-  .lr-interp .chip{font-size:10.6px!important;}
+  .lab-group{margin-bottom:6px!important;}
+  .lab-group-title{font-size:15px!important;padding:3px 8px!important;margin-bottom:2px!important;}
+  .lab-group-head{font-size:10.5px!important;padding:2px 8px!important;}
+  .lab-row{padding:2px 8px!important;}
+  .lr-lbl{font-size:14px!important;}
+  .lr-val{font-size:15.5px!important;}
+  .lr-ref{font-size:12px!important;}
+  .lr-interp .chip{font-size:11px!important;}
   .chip{font-size:8.8px!important;padding:1px 5px!important;}
 
   /* LDL STATUS */
@@ -678,6 +704,16 @@ body{
     font-family:'Sarabun',sans-serif;
   }
 }
+/* ── PRINT TOOLBAR (screen only) ── */
+.pc{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  max-width:968px;margin:10px auto 0;padding:10px 16px;
+  background:#F1F5F9;border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
+.pc .info strong{font-size:14px;color:var(--navy);}
+.pc .btn-bk,.pc .btn-pr{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;
+  font-size:13px;font-weight:700;font-family:inherit;}
+.pc .btn-bk{background:#E2E8F0;color:var(--text2);}
+.pc .btn-pr{background:var(--teal);color:white;}
+@media print{ .pc{display:none!important;} }
 </style>
 </head>
 <body>
@@ -685,10 +721,12 @@ body{
 <div class="pc">
   <div class="info">
     <strong>CardioPluz Clinic — รายงานผลสุขภาพ</strong><br>
-    <span style="font-size:14.2px">กด Ctrl+P (Windows) / Cmd+P (Mac) เพื่อพิมพ์ A4</span>
+    <span style="font-size:13px;color:var(--text3);">กด Ctrl+P (Windows) / Cmd+P (Mac) เพื่อพิมพ์ A4</span>
   </div>
-  <button class="btn-bk" onclick="window.close()">← กลับ</button>
-  <button class="btn-pr" onclick="window.print()">🖨 พิมพ์ / PDF</button>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-bk" onclick="window.close()">← กลับ</button>
+    <button class="btn-pr" onclick="window.print()">🖨 พิมพ์ / PDF</button>
+  </div>
 </div>
 
 <div id="rpt"></div>
@@ -2340,10 +2378,11 @@ function render(){
 
   if(cv&&cv.incomplete){
     /* Primary prevention + missing DOB/gender — scoreBoxHTML handles SBP/TC/HDL warning */
-    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score · SCORE2 · PREVENT (Total CVD)</p></div></div>'+
-    '<div class="cv-card">'+scoreBoxHTML+'</div></div>';
+    cvHTML='';
   } else if(cv){
-    cvHTML='<div class="sdiv"></div><div class="sec"><div class="sh"><div class="si si-o">❤️</div><div><h2>ความเสี่ยงโรคหัวใจและหลอดเลือด 10 ปี</h2><p>Thai CV Risk Score — RAMA (EGAT) official equation</p></div></div>'+
+    /* cvHTML = เกจวัด + ระดับความเสี่ยง + ปัจจัยเสี่ยง เท่านั้น
+       (กล่องเป้าหมายถูกย้ายไปไว้คอลัมน์ขวาที่เดียว ไม่ทำซ้ำ) */
+    cvHTML=
     '<div class="cv-card">'+
     '<div class="cv-main">'+
     (cv.isASCVD?
@@ -2365,47 +2404,6 @@ function render(){
       '<div class="cv-cut">ตัดระดับ: ต่ำ &lt;10% / ปานกลาง 10–19% / สูง 20–29% / สูงมาก ≥30%</div>'
     )+
     '</div></div>'+
-    '<div class="cv-goals">'+
-    /* LDL Goal — concise summary (full ESC/AHA detail on Page 3) */
-    '<div class="cv-goal" style="background:#F0FDF4;border-color:#86EFAC;">'+
-      '<div class="cv-gl" style="color:#16A34A;">🎯 LDL Goal</div>'+
-      (r.ldlInsufficient==='true'?
-        '<div class="cv-gv" style="color:var(--warn);font-size:15.3px;">ประเมินไม่ได้</div>'
-      :
-        '<div class="cv-gv" style="color:#16A34A;">'+ldlGoalData.goal+'</div>'+
-        '<div class="cv-gc">LDL ปัจจุบัน: '+(r.ldl||'—')+' มก./ดล. '+
-          (r.ldl&&ldlGoalData.finalNum?(+r.ldl<ldlGoalData.finalNum?'✅':'❌'):'')+
-        '</div>'+
-        '<div class="cv-gc" style="font-size:10.6px;color:var(--text3);">ESC: '+ldlGoalData.escGoal+' · AHA: '+ldlGoalData.ahaGoal+'</div>'
-      )+
-    '</div>'+
-    '<div class="cv-goal"><div class="cv-gl">💉 ความดันโลหิตเป้าหมาย</div><div class="cv-gv">'+(cv.bpGoal||'< 140/90')+'</div><div class="cv-gc">ปัจจุบัน: '+(r.sbp||'—')+'/'+(r.dbp||'—')+' มมปรอท</div></div>'+
-    '<div class="cv-goal"><div class="cv-gl">🩸 HbA1c เป้าหมาย</div><div class="cv-gv">'+(cv.dm?'< 7.0 %':'< 5.7 %')+'</div><div class="cv-gc">ปัจจุบัน: '+(r.a1c||'—')+' %</div></div>'+
-    (function(){
-      var nhGoal=ldlGoalData.nonHdlGoal;
-      var nhCurVal=ldlGoalData.nonHdlCur;
-      var nhOk=ldlGoalData.nonHdlAchieved;
-      var nhColor=nhCurVal===null?'var(--text3)':(nhOk?'var(--ok)':'var(--bad)');
-      var nhStatus=nhCurVal===null?'—':(nhCurVal+(nhOk?' ✓':' ↑'));
-      return '<div class="cv-goal" style="background:linear-gradient(135deg,var(--acc-bg),#EBF4FF);border-color:#B8CCE0;">'+
-        '<div class="cv-gl" style="color:#2C5F8A;">📊 เป้าหมาย Non-HDL</div>'+
-        '<div class="cv-gv" style="color:#2C5F8A;">'+nhGoal+'</div>'+
-        '<div class="cv-gc">ปัจจุบัน: <span style="color:'+nhColor+';font-weight:700;">'+nhStatus+'</span> มก./ดล.<br><span style="font-size:10.6px;color:var(--text3)">= TC − HDL | Goal = LDL+30</span></div>'+
-        '</div>';
-    })()+
-    (function(){
-      var thGoal=ldlGoalData.tcHdlGoal;
-      var thCurVal=ldlGoalData.tcHdlCur;
-      var thOk=ldlGoalData.tcHdlAchieved;
-      var thColor=thCurVal===null?'var(--text3)':(thOk?'var(--ok)':'var(--bad)');
-      var thStatus=thCurVal===null?'—':(thCurVal.toFixed(1)+(thOk?' ✓':' ↑'));
-      return '<div class="cv-goal" style="background:linear-gradient(135deg,#F0FDFA,#CCFBF1);border-color:#5EEAD4;">'+
-        '<div class="cv-gl" style="color:#0F766E;">⚖️ เป้าหมาย TC/HDL</div>'+
-        '<div class="cv-gv" style="color:#0F766E;">'+thGoal+'</div>'+
-        '<div class="cv-gc">ปัจจุบัน: <span style="color:'+thColor+';font-weight:700;">'+thStatus+'</span><br><span style="font-size:10.6px;color:var(--text3)">= TC ÷ HDL | '+ldlGoalData.tcHdlBasis+'</span></div>'+
-        '</div>';
-    })()+
-    '</div>'+
     '<div class="cv-factors">'+
     '<div class="cv-fac"><div class="cv-fl">อายุ/เพศ</div><div class="cv-fv">'+cv.age+' ปี<br>'+g+'</div></div>'+
     '<div class="cv-fac"><div class="cv-fl">TC/HDL</div><div class="cv-fv" style="font-size:14.2px">'+(cv.usedTC?r.tc:'≈'+cv.tc.toFixed(0))+'/'+(r.hdl||'≈'+cv.hdl.toFixed(0))+'</div></div>'+
@@ -2415,7 +2413,7 @@ function render(){
     '<div class="cv-fac"><div class="cv-fl">ไขมัน</div><div class="cv-fv" style="color:'+(cv.dyslip?'var(--bad)':'var(--ok)')+'">'+(cv.dyslip?'ผิดปกติ':'ปกติ')+'</div></div>'+
     '</div>'+
     (!cv.usedTC?'<div class="cv-note">⚠️ ไม่มีค่า Total Cholesterol — ประมาณจาก LDL+HDL+TG ผลอาจคลาดเคลื่อน</div>':'')+
-    '</div></div>';
+    '</div>';
   }
 
   /* BUILD */
@@ -2944,16 +2942,18 @@ function render(){
   }
 
 
-  /* CV Risk + LDL Goal */
+  /* ── แถวบน: กล่องคะแนนความเสี่ยง 3 เกณฑ์ + Heart Age (เต็มความกว้าง) ── */
+  O+='<div style="margin-top:10px">'+scoreBoxHTML+'</div>';
+
+  /* ── แถวล่าง: 2 คอลัมน์ — ซ้าย=เกจวัด+ปัจจัยเสี่ยง | ขวา=เป้าหมายทั้งหมด ── */
   O+='<div class="px-row gap-12" style="margin-top:10px">';
 
-  /* CV Risk section (gauge + scores only) */
+  /* คอลัมน์ซ้าย: เกจวัดความเสี่ยง + ปัจจัยเสี่ยง */
   O+='<div style="flex:1;min-width:0;">';
-  O+=scoreBoxHTML;
   O+=cvHTML;
   O+='</div>';
 
-  /* LDL Goal dual */
+  /* คอลัมน์ขวา: เป้าหมายทั้งหมด (ที่เดียว ไม่ซ้ำ) */
   O+='<div style="flex:1;min-width:0;">';
   O+='<div class="px-card">';
   O+='<div class="px-lab-head">LDL GOAL — ESC 2025 DLP &amp; ACC 2026 DLP</div>';
