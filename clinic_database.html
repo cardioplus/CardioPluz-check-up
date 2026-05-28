@@ -415,6 +415,18 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
           </select>
         </div>
 
+        <!-- ── Lung Disease ── -->
+        <div class="lrp-item">
+          <label>โรคปอดเรื้อรัง</label>
+          <select id="hasLungDisease">
+            <option value="no">ไม่มี</option>
+            <option value="asthma">หอบหืด (Asthma)</option>
+            <option value="copd">ถุงลมโป่งพอง (COPD)</option>
+            <option value="ild">พังผืดปอด (ILD/Fibrosis)</option>
+            <option value="other">โรคปอดเรื้อรังอื่นๆ</option>
+          </select>
+        </div>
+
         <!-- ── On Statin ── -->
         <div class="lrp-item">
           <label>On Statin / อยู่ระหว่างรักษา</label>
@@ -984,7 +996,7 @@ var BASE_FIELDS=[
   'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','tsh','albumin','psa','lpa','apob',
   'hb','hct','vitd','ferritin','tmNote',
   /* ── CV Risk / LDL Goal ── */
-  'hasASCVD','hasFH','hasDMRisk','ckdStage','onStatin','ldlGoalCustom',
+  'hasASCVD','hasFH','hasDMRisk','ckdStage','hasLungDisease','onStatin','ldlGoalCustom',
   'nonHdlGoalCustom','tcHdlGoalCustom','apobGoalCustom','bpGoalCustom','ldlInsufficient','lpaHigh','hasTG',
   'score2val','preventRisk','ascvdRisk',
   /* ── Vitals ── */
