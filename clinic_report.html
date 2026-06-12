@@ -1857,7 +1857,7 @@ function buildAutoSummary(r,cv,ldlGoalData,hasLVDys){
     lines.push('💉 ความดัน: '+r.sbp+'/'+(r.dbp||'—')+' มมปรอท — '+(bpOk?'อยู่ในเกณฑ์':'ยังสูง ควรวัดซ้ำและปรับยา'));
   }
   // CV Risk
-  if(cv&&!cv.isASCVD&&cv.risk!==null) lines.push('❤️ ความเสี่ยงโรคหัวใจ 10 ปี: '+cv.risk.toFixed(1)+'% ('+cv.lth+')');
+  if(cv&&!cv.incomplete&&!cv.isASCVD&&typeof cv.risk==='number') lines.push('❤️ ความเสี่ยงโรคหัวใจ 10 ปี: '+cv.risk.toFixed(1)+'% ('+cv.lth+')');
   if(cv&&cv.isASCVD) lines.push('🚨 มีโรคหลอดเลือดหัวใจอยู่แล้ว (Established ASCVD) — Very High Risk');
   // Echo
   if(hasLVDys&&r.lvef) lines.push('🔊 LVEF '+r.lvef+'% — มี LV Dysfunction ต้องติดตาม Echo ซ้ำ');
