@@ -1857,7 +1857,7 @@ function buildAutoSummary(r,cv,ldlGoalData,hasLVDys){
     lines.push('💉 ความดัน: '+r.sbp+'/'+(r.dbp||'—')+' มมปรอท — '+(bpOk?'อยู่ในเกณฑ์':'ยังสูง ควรวัดซ้ำและปรับยา'));
   }
   // CV Risk
-  if(cv&&!cv.incomplete&&!cv.isASCVD&&typeof cv.risk==='number') lines.push('❤️ ความเสี่ยงโรคหัวใจ 10 ปี: '+cv.risk.toFixed(1)+'% ('+cv.lth+')');
+  if(cv&&!cv.isASCVD&&cv.risk!==null) lines.push('❤️ ความเสี่ยงโรคหัวใจ 10 ปี: '+cv.risk.toFixed(1)+'% ('+cv.lth+')');
   if(cv&&cv.isASCVD) lines.push('🚨 มีโรคหลอดเลือดหัวใจอยู่แล้ว (Established ASCVD) — Very High Risk');
   // Echo
   if(hasLVDys&&r.lvef) lines.push('🔊 LVEF '+r.lvef+'% — มี LV Dysfunction ต้องติดตาม Echo ซ้ำ');
@@ -2919,6 +2919,111 @@ function render(){
     '</div>';
   }
   O+='</div>'; /* end page 2b */
+
+  /* ════════════════════════════════════
+     PAGE 2c — CUMULATIVE RESULTS (ผลตรวจสะสมย้อนหลัง ทุกค่า)
+     ════════════════════════════════════ */
+  O+='<div class="px-page px-p2c">';
+  O+=secHead('🧾','CUMULATIVE RESULTS','ผลตรวจสะสมย้อนหลัง (ทุกค่า)');
+  (function(){
+    var rec=r;
+    var hh=(hist||[]).slice();
+    var merged=hh.map(function(h){
+      if(h.visitDate===rec.visitDate){
+        var o={},k;
+        for(k in h)o[k]=h[k];
+        for(k in rec){ if(rec[k]!==''&&rec[k]!=null&&(o[k]==null||o[k]==='')) o[k]=rec[k]; }
+        return o;
+      }
+      return h;
+    });
+    if(!merged.some(function(h){return h.visitDate===rec.visitDate;})) merged.push(rec);
+    merged.sort(function(a,b){return(b.visitDate||'').localeCompare(a.visitDate||'');});
+    var cols=merged.slice(0,5);
+    var male=(g==='ชาย');
+    function v(h,k){ var x=h?h[k]:null; return (x===''||x==null)?null:x; }
+
+    var idealW='—';
+    var ht=parseFloat(rec.height);
+    if(ht){ idealW=(18.5*Math.pow(ht/100,2)).toFixed(1)+'–'+(22.9*Math.pow(ht/100,2)).toFixed(1); }
+
+    var bodyRows=[
+      {k:'weight',l:'น้ำหนัก',en:'Weight',u:'กก.',ref:idealW},
+      {k:'bmi',l:'ดัชนีมวลกาย',en:'BMI',u:'kg/m²',ref:'18.5–22.9'},
+      {k:'smm',l:'มวลกล้ามเนื้อ',en:'SMM',u:'กก.',ref:male?'24–33':'18–26'},
+      {k:'slm',l:'มวลไร้ไขมัน',en:'SLM',u:'กก.',ref:'—'},
+      {k:'bfm',l:'มวลไขมัน',en:'BFM',u:'กก.',ref:'—'},
+      {k:'pbf',l:'เปอร์เซ็นต์ไขมัน',en:'PBF',u:'%',ref:male?'10–20':'18–28'},
+      {k:'vfl',l:'ไขมันช่องท้อง',en:'VFL',u:'ระดับ',ref:'≤ 9'},
+      {k:'bmr',l:'อัตราเผาผลาญพื้นฐาน',en:'BMR',u:'kcal',ref:'—'},
+      {k:'whr',l:'รอบเอวต่อสะโพก',en:'WHR',u:'',ref:male?'< 0.90':'< 0.85'},
+      {k:'inbodyScore',l:'คะแนน InBody',en:'InBody Score',u:'คะแนน',ref:'≥ 70'}
+    ];
+    var labRows=[
+      {k:'fbs',l:'น้ำตาลในเลือด',en:'FBS',u:'มก./ดล.',ref:'70–99'},
+      {k:'a1c',l:'น้ำตาลสะสม',en:'HbA1c',u:'%',ref:'< 5.7'},
+      {k:'ldl',l:'ไขมันเลว',en:'LDL-C',u:'มก./ดล.',ref:'< 100'},
+      {k:'tc',l:'คอเลสเตอรอลรวม',en:'Total Chol.',u:'มก./ดล.',ref:'< 200'},
+      {k:'hdl',l:'ไขมันดี',en:'HDL-C',u:'มก./ดล.',ref:male?'≥ 40':'≥ 50'},
+      {k:'tg',l:'ไตรกลีเซอไรด์',en:'Triglyceride',u:'มก./ดล.',ref:'< 150'},
+      {k:'cr',l:'ครีอะตินิน',en:'Creatinine',u:'มก./ดล.',ref:male?'0.7–1.3':'0.6–1.1'},
+      {k:'upcr',l:'โปรตีนในปัสสาวะ',en:'UPCR',u:'มก./ก.',ref:'< 30'},
+      {k:'ast',l:'เอนไซม์ตับ',en:'AST',u:'ยูนิต/ลิตร',ref:'< 40'},
+      {k:'alt',l:'เอนไซม์ตับ',en:'ALT',u:'ยูนิต/ลิตร',ref:'< 40'},
+      {k:'tsh',l:'ไทรอยด์',en:'TSH',u:'มิลลิยูนิต/ลิตร',ref:'0.4–4.0'},
+      {k:'albumin',l:'อัลบูมิน',en:'Albumin',u:'ก./ดล.',ref:'3.5–5.0'},
+      {k:'psa',l:'มะเร็งต่อมลูกหมาก',en:'PSA',u:'นก./มล.',ref:'< 4.0'},
+      {k:'lpa',l:'ไลโปโปรตีน เอ',en:'Lp(a)',u:'มก./ดล.',ref:'< 30'},
+      {k:'apob',l:'อะโพลิโพโปรตีน บี',en:'ApoB',u:'มก./ดล.',ref:'< 90'}
+    ];
+
+    function visibleRows(rows){return rows.filter(function(row){return cols.some(function(c){return v(c,row.k)!=null;});});}
+    var bRows=visibleRows(bodyRows), lRows=visibleRows(labRows);
+
+    var thBase='font-weight:700;border-bottom:2px solid var(--teal-md);padding:5px 6px;background:var(--teal-lt);color:var(--teal-dk);';
+    var tdBase='padding:4px 6px;border-bottom:1px solid var(--bl);';
+
+    function headHTML(){
+      var h='<tr>'+
+        '<th style="'+thBase+'text-align:left;">ค่าตรวจ</th>'+
+        '<th style="'+thBase+'text-align:left;">หน่วย</th>'+
+        '<th style="'+thBase+'text-align:center;background:var(--cream);color:var(--text2);">ค่าอ้างอิง</th>';
+      cols.forEach(function(c,i){
+        h+='<th style="'+thBase+'text-align:center;'+(i===0?'background:var(--teal-md);color:#fff;':'')+'">'+thDateSh(c.visitDate)+(i===0?'<div style="font-size:9px;font-weight:600;">ล่าสุด</div>':'')+'</th>';
+      });
+      return h+'</tr>';
+    }
+    function groupRow(txt){
+      return '<tr><td colspan="'+(3+cols.length)+'" style="background:linear-gradient(90deg,var(--teal-lt),transparent);color:var(--teal-dk);font-weight:800;font-size:12.5px;padding:5px 8px;border-left:3px solid var(--teal);">'+txt+'</td></tr>';
+    }
+    function rowsHTML(rows){
+      return rows.map(function(row,ri){
+        var tr='<tr style="'+(ri%2?'background:var(--cream3);':'')+'">'+
+          '<td style="'+tdBase+'font-weight:600;color:var(--text);">'+row.l+' <span style="color:var(--text3);font-weight:400;font-size:10.5px;">'+row.en+'</span></td>'+
+          '<td style="'+tdBase+'color:var(--text3);font-size:11px;">'+(row.u||'—')+'</td>'+
+          '<td style="'+tdBase+'text-align:center;color:var(--text2);background:var(--cream);font-size:11.5px;white-space:nowrap;">'+row.ref+'</td>';
+        cols.forEach(function(c,i){
+          var val=v(c,row.k);
+          tr+='<td style="'+tdBase+'text-align:center;'+(i===0?'font-weight:700;color:var(--teal-dk);background:var(--teal-lt);':'color:var(--text2);')+'">'+(val==null?'<span style="color:var(--text3);">—</span>':val)+'</td>';
+        });
+        return tr+'</tr>';
+      }).join('');
+    }
+
+    if(!cols.length){
+      O+='<div class="px-empty-trends"><div style="font-size:37.8px;">🧾</div><div>ยังไม่มีข้อมูล</div></div>';
+    } else {
+      O+='<div class="px-card" style="padding:10px 12px;overflow:hidden;break-inside:avoid;">';
+      O+='<table style="width:100%;border-collapse:collapse;font-size:12.5px;">';
+      O+='<thead>'+headHTML()+'</thead><tbody>';
+      if(bRows.length){ O+=groupRow('🏋️ องค์ประกอบร่างกาย — Body Composition'); O+=rowsHTML(bRows); }
+      if(lRows.length){ O+=groupRow('🩸 ผลตรวจเลือด — Laboratory'); O+=rowsHTML(lRows); }
+      O+='</tbody></table>';
+      O+='<div style="margin-top:7px;font-size:10.5px;color:var(--text3);line-height:1.4;">* ค่าอ้างอิงเป็นช่วงทั่วไปสำหรับผู้ใหญ่ อาจต่างกันตามห้องปฏิบัติการ เพศ และอายุ โปรดให้แพทย์เป็นผู้แปลผล โดยเฉพาะ LDL ซึ่งเป้าหมายขึ้นกับระดับความเสี่ยงรายบุคคล — เซลล์ที่เป็น “—” คือยังไม่มีผลตรวจในครั้งนั้น</div>';
+      O+='</div>';
+    }
+  })();
+  O+='</div>'; /* end page 2c */
 
   /* ════════════════════════════════════
      PAGE 3 — CV RISK + CARDIOLOGY
