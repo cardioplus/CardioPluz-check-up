@@ -1364,7 +1364,7 @@ function cvArcSVG(risk,lv){
      Legend rendered as HTML outside SVG to avoid clipping. */
   var sw=22,R=95,cx=200,topM=50,VW=400,VH=200;
   var cy=topM+R; /* 145 */
-  var pct=Math.min(risk,50)/50;
+  var pct=Math.min((typeof risk==='number'&&isFinite(risk))?risk:0,50)/50;
   var nc=lv==='LOW'?'#1A7A4A':lv==='MOD'?'#B8860B':lv==='HIGH'?'#B05000':'#7B0000';
   var bg=lv==='LOW'?'#F2FBF6':lv==='MOD'?'#FFFBEF':lv==='HIGH'?'#FFF4EE':'#FFF2F2';
 
@@ -1427,7 +1427,7 @@ function cvArcSVG(risk,lv){
 
   /* % text below hub — VH=200, cy=145, text at 178,196 fits */
   s+='<text x="'+cx+'" y="'+(cy+33)+'" text-anchor="middle"'
-    +' font-size="32" font-weight="800" font-family="IBM Plex Mono,monospace" fill="'+nc+'">'+risk.toFixed(1)+'%</text>';
+    +' font-size="32" font-weight="800" font-family="IBM Plex Mono,monospace" fill="'+nc+'">'+((typeof risk==='number'&&isFinite(risk))?risk.toFixed(1):'—')+'%</text>';
   s+='<text x="'+cx+'" y="'+(cy+52)+'" text-anchor="middle"'
     +' font-size="12" font-family="Sarabun,sans-serif" fill="#7A7268">โอกาสเกิดโรคหัวใจและหลอดเลือดใน 10 ปี</text>';
   s+='</svg>';
@@ -1518,7 +1518,7 @@ function cvRisk(r){
   if(!tc&&!ldl) missing.push('ไขมันรวม (TC) หรือ LDL');
   if(!hdl) missing.push('ไขมันดี (HDL)');
   if(missing.length>0){
-    return{incomplete:true,missing:missing,age:age,gender:g};
+    return{incomplete:true,missing:missing,age:age,gender:g,risk:null};
   }
 
   var tcE=tc>0?tc:(ldl>0?ldl+(hdl||40)+(tg>0?tg/5:30):0);
@@ -2407,7 +2407,7 @@ function render(){
       '<div class="cv-lv-pct '+cv.cls+'">Very High Risk — มีโรคหลอดเลือดหัวใจ (ASCVD) อยู่แล้ว</div>'+
       '<div class="cv-cut">ไม่ต้องประเมิน Thai CV Risk Score — เป็น Very High Risk โดยอัตโนมัติ</div>'
     :
-      '<div class="cv-lv-pct '+cv.cls+'">โอกาสเกิดโรคหัวใจและหลอดเลือดใน 10 ปี ≈ <strong>'+cv.risk.toFixed(1)+'%</strong></div>'+
+      '<div class="cv-lv-pct '+cv.cls+'">โอกาสเกิดโรคหัวใจและหลอดเลือดใน 10 ปี ≈ <strong>'+((typeof cv.risk==='number'&&isFinite(cv.risk))?cv.risk.toFixed(1):'—')+'%</strong></div>'+
       '<div class="cv-cut">ตัดระดับ: ต่ำ &lt;10% / ปานกลาง 10–19% / สูง 20–29% / สูงมาก ≥30%</div>'
     )+
     '</div></div>'+
