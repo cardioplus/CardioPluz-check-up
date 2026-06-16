@@ -772,6 +772,7 @@ var DEMO={
   inbodyScore:'71',
   fbs:'118',a1c:'6.8',ldl:'145',tc:'210',hdl:'38',tg:'185',
   cr:'1.05',upcr:'120',ast:'32',alt:'38',tsh:'2.1',albumin:'4.2',psa:'2.1',
+  alp:'88',ggt:'45',tbili:'0.8',dbili:'0.2',wbc:'7.5',plt:'265',ft4:'1.2',t3:'120',
   lpa:'42',apob:'95',
   tmNote:'ติดตาม PSA ทุกปี',
   ascvdRisk:'high',hasASCVD:'no',
@@ -880,6 +881,24 @@ function labSt(t,v,g){
     /* ApoB: < 65 if very high/high risk, < 80 moderate, < 100 low */
     ok=n<65;warn=n<80;ref='< 65–80 mg/dL (ตามความเสี่ยง)';
     cls=ok?'ok':warn?'wn':'bd';txt=ok?'ดี':warn?'ยอมรับได้':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
+  else if(t==='alp'){ok=n>=30&&n<=120;warn=n<150;ref='30–120 U/L';
+    cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':n<30?'ต่ำ':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
+  else if(t==='ggt'){ok=n<=60;warn=n<=120;ref='< 60 U/L';}
+  else if(t==='tbili'){ok=n<1.2;warn=n<2.0;ref='< 1.2 mg/dL';}
+  else if(t==='dbili'){ok=n<0.3;warn=n<0.5;ref='< 0.3 mg/dL';}
+  else if(t==='wbc'){ok=n>=4&&n<=10;warn=(n>=3&&n<4)||(n>10&&n<=13);ref='4–10 ×10³/µL';
+    cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':n<4?'ต่ำ':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
+  else if(t==='plt'){ok=n>=150&&n<=400;warn=(n>=100&&n<150)||(n>400&&n<=500);ref='150–400 ×10³/µL';
+    cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':n<150?'ต่ำ':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
+  else if(t==='ft4'){ok=n>=0.8&&n<=1.8;warn=(n>=0.6&&n<0.8)||(n>1.8&&n<=2.2);ref='0.8–1.8 ng/dL';
+    cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':n<0.8?'ต่ำ':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
+  else if(t==='t3'){ok=n>=80&&n<=200;warn=(n>=60&&n<80)||(n>200&&n<=240);ref='80–200 ng/dL';
+    cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':n<80?'ต่ำ':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
     return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
   else return{chip:na,color:'#aaa',ref:'—'};
   cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
@@ -2816,34 +2835,49 @@ function render(){
     r.cr?labRow('ครีอะตินิน (Cr)',r.cr,'mg/dL',(g==='หญิง'?'0.5–1.1':'0.7–1.2')+' mg/dL',cr.cls,cr.txt):''
   ];
   if(_gfr2!==null&&r.cr){
-    var gfrcls=_gfr2>=60?'ok':_gfr2>=30?'wn':'bd';
-    kidneyRows.push(labRow('อัตราการกรองไต (eGFR)',_gfr2.toFixed(0),'mL/min','≥ 60',gfrcls,_gfr2>=60?'ปกติ':_gfr2>=30?'CKD G3':'CKD G4'));
+    var _st=ckdStageFromGFR(_gfr2);
+    kidneyRows.push(labRow('อัตราการกรองไต (eGFR · CKD-EPI)',_gfr2.toFixed(0),'mL/min/1.73m²','≥ 60',_st.chip,_st.stage+' · '+_st.label));
   }
   if(r.upcr)kidneyRows.push(labRow('โปรตีนในปัสสาวะ (UPCR)',r.upcr,'mg/g','< 30 mg/g',upcr.cls,upcr.txt));
   O+=labGroup('🫘','การทำงานของไต (Kidney)',kidneyRows);
 
   /* หมวด 4: ตับ */
+  var alpS=labSt('alp',r.alp,g),ggtS=labSt('ggt',r.ggt,g),tbiS=labSt('tbili',r.tbili,g),dbiS=labSt('dbili',r.dbili,g);
   O+=labGroup('🩺','การทำงานของตับ (Liver)',[
     r.ast?labRow('เอนไซม์ตับ AST',r.ast,'U/L','< 40 U/L',ast.cls,ast.txt):'',
     r.alt?labRow('เอนไซม์ตับ ALT',r.alt,'U/L','< 40 U/L',alt.cls,alt.txt):'',
+    r.alp?labRow('เอนไซม์ตับ ALP',r.alp,'U/L','30–120 U/L',alpS.cls,alpS.txt):'',
+    r.ggt?labRow('เอนไซม์ตับ GGT',r.ggt,'U/L','< 60 U/L',ggtS.cls,ggtS.txt):'',
+    r.tbili?labRow('บิลิรูบินรวม (Total Bili)',r.tbili,'mg/dL','< 1.2 mg/dL',tbiS.cls,tbiS.txt):'',
+    r.dbili?labRow('บิลิรูบินตรง (Direct Bili)',r.dbili,'mg/dL','< 0.3 mg/dL',dbiS.cls,dbiS.txt):'',
     r.albumin?labRow('อัลบูมิน (Albumin)',r.albumin,'g/dL','3.5–5.0 g/dL',alb.cls,alb.txt):''
   ]);
 
-  /* หมวด 5: เลือดและธาตุเหล็ก — แสดง NA เสมอ */
+  /* หมวด 5: ความสมบูรณ์เม็ดเลือด (CBC) — แสดง NA เสมอ */
   var hbS=labSt('hb',r.hb,g),hctS=labSt('hct',r.hct,g),ferrS=labSt('ferritin',r.ferritin,g);
-  O+=labGroup('🔴','ความสมบูรณ์ของเลือด (Hematology)',[
+  var wbcS=labSt('wbc',r.wbc,g),pltS=labSt('plt',r.plt,g);
+  O+=labGroup('🔴','ความสมบูรณ์ของเลือด (CBC)',[
     labRow('ฮีโมโกลบิน (Hb)',r.hb,'g/dL',(g==='หญิง'?'12.0–15.5':'13.0–17.0')+' g/dL',hbS.cls,hbS.txt),
     labRow('ฮีมาโตคริต (Hct)',r.hct,'%',(g==='หญิง'?'36–48':'40–52')+' %',hctS.cls,hctS.txt),
-    labRow('เฟอร์ริติน (Ferritin)',r.ferritin,'ng/mL',(g==='หญิง'?'15–150':'30–400')+' ng/mL',ferrS.cls,ferrS.txt)
+    r.wbc?labRow('เม็ดเลือดขาว (WBC)',r.wbc,'×10³/µL','4–10 ×10³/µL',wbcS.cls,wbcS.txt):'',
+    r.plt?labRow('เกล็ดเลือด (Platelet)',r.plt,'×10³/µL','150–400 ×10³/µL',pltS.cls,pltS.txt):''
   ]);
 
-  /* หมวด 6: ฮอร์โมน/วิตามิน/อื่นๆ */
+  /* หมวด 6: ฮอร์โมนไทรอยด์ (Thyroid) */
+  var ft4S=labSt('ft4',r.ft4,g),t3S=labSt('t3',r.t3,g);
+  var thyroidRows=[];
+  if(r.tsh)thyroidRows.push(labRow('ฮอร์โมนกระตุ้นไทรอยด์ (TSH)',r.tsh,'mIU/L','0.4–4.0 mIU/L',tsh.cls,tsh.txt));
+  if(r.ft4)thyroidRows.push(labRow('ฮอร์โมนไทรอยด์อิสระ (Free T4)',r.ft4,'ng/dL','0.8–1.8 ng/dL',ft4S.cls,ft4S.txt));
+  if(r.t3)thyroidRows.push(labRow('ไทรอยด์ฮอร์โมน (T3)',r.t3,'ng/dL','80–200 ng/dL',t3S.cls,t3S.txt));
+  if(thyroidRows.length)O+=labGroup('🦋','ฮอร์โมนไทรอยด์ (Thyroid)',thyroidRows);
+
+  /* หมวด 7: วิตามินและค่าตรวจอื่นๆ */
   var otherRows=[];
   var vitdS=labSt('vitd',r.vitd,g);
   otherRows.push(labRow('วิตามินดี (25-OH Vit D)',r.vitd,'ng/mL','≥ 30 ng/mL',vitdS.cls,vitdS.txt));
-  if(r.tsh)otherRows.push(labRow('ฮอร์โมนไทรอยด์ (TSH)',r.tsh,'mIU/L','0.4–4.0 mIU/L',tsh.cls,tsh.txt));
+  otherRows.push(labRow('เฟอร์ริติน (Ferritin)',r.ferritin,'ng/mL',(g==='หญิง'?'15–150':'30–400')+' ng/mL',ferrS.cls,ferrS.txt));
   if(psa&&r.psa)otherRows.push(labRow('ต่อมลูกหมาก (PSA)',r.psa,'ng/mL','< 4.0 ng/mL',psa.cls,psa.txt));
-  O+=labGroup('🧪','ฮอร์โมนและวิตามิน (Hormone & Vitamin)',otherRows);
+  O+=labGroup('🧪','วิตามินและค่าตรวจอื่นๆ (Vitamin & Other)',otherRows);
 
   O+='</div>'; /* end labs container */
   O+='</div>'; /* end page 2 */
@@ -2974,7 +3008,15 @@ function render(){
       {k:'albumin',l:'อัลบูมิน',en:'Albumin',u:'ก./ดล.',ref:'3.5–5.0'},
       {k:'psa',l:'มะเร็งต่อมลูกหมาก',en:'PSA',u:'นก./มล.',ref:'< 4.0'},
       {k:'lpa',l:'ไลโปโปรตีน เอ',en:'Lp(a)',u:'มก./ดล.',ref:'< 30'},
-      {k:'apob',l:'อะโพลิโพโปรตีน บี',en:'ApoB',u:'มก./ดล.',ref:'< 90'}
+      {k:'apob',l:'อะโพลิโพโปรตีน บี',en:'ApoB',u:'มก./ดล.',ref:'< 90'},
+      {k:'alp',l:'เอนไซม์ตับ',en:'ALP',u:'ยูนิต/ลิตร',ref:'30–120'},
+      {k:'ggt',l:'เอนไซม์ตับ',en:'GGT',u:'ยูนิต/ลิตร',ref:'< 60'},
+      {k:'tbili',l:'บิลิรูบินรวม',en:'Total Bili',u:'มก./ดล.',ref:'< 1.2'},
+      {k:'dbili',l:'บิลิรูบินตรง',en:'Direct Bili',u:'มก./ดล.',ref:'< 0.3'},
+      {k:'wbc',l:'เม็ดเลือดขาว',en:'WBC',u:'×10³/µL',ref:'4–10'},
+      {k:'plt',l:'เกล็ดเลือด',en:'Platelet',u:'×10³/µL',ref:'150–400'},
+      {k:'ft4',l:'ไทรอยด์อิสระ',en:'Free T4',u:'นก./ดล.',ref:'0.8–1.8'},
+      {k:'t3',l:'ไทรอยด์',en:'T3',u:'นก./ดล.',ref:'80–200'}
     ];
 
     function visibleRows(rows){return rows.filter(function(row){return cols.some(function(c){return v(c,row.k)!=null;});});}

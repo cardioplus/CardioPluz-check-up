@@ -86,6 +86,14 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
 .vax-row{display:flex;gap:8px;align-items:center;}
 .vax-row select,.vax-row input[type=date]{flex:1;border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;font-family:'Sarabun',sans-serif;font-size:12px;background:var(--cream);outline:none;}
 .vax-row select:focus,.vax-row input:focus{border-color:var(--teal);}
+.vax-doses{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.vax-doses .vd{display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--text2);font-weight:600;}
+.vax-doses .vd input[type=date]{border:1.5px solid var(--border);border-radius:6px;padding:5px 7px;font-family:'Sarabun',sans-serif;font-size:12px;background:var(--cream);outline:none;}
+.vax-doses .vd input:focus{border-color:var(--teal);}
+.vax-hint{margin-top:7px;font-size:11px;line-height:1.35;}
+.vax-hint .vh-info{color:var(--text2);}
+.vax-hint .vh-soon{color:#9a6a00;font-weight:600;}
+.vax-hint .vh-over{color:#c0392b;font-weight:700;}
 /* Doctor selector */
 .doctor-selector{display:flex;gap:10px;}
 .doc-btn{flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:var(--cream);color:var(--text2);text-align:center;transition:all .2s;}
@@ -220,7 +228,7 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
           <input type="hidden" id="dob">
         </div>
         <div class="field"><label>เพศ</label>
-          <select id="gender" onchange="calcAllRiskScores();calcIdeal();updateLdlGoal();">
+          <select id="gender" onchange="calcAllRiskScores();calcIdeal();updateLdlGoal();calcEgfr();">
             <option value="">-- เลือก --</option><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option>
           </select>
         </div>
@@ -277,38 +285,49 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
     <div class="card">
       <div class="card-title"><span class="tag tag-blue">LAB</span> ผลการตรวจเลือด</div>
       <div class="form-grid cols3">
+
+        <div class="sec-sep">🩸 น้ำตาล (Glucose)</div>
         <div class="field"><label>FBS <span class="unit">mg/dL</span></label><input type="number" id="fbs" placeholder="0" step="1"><span class="ref-hint">ปกติ 70–99</span></div>
         <div class="field"><label>HbA1c <span class="unit">%</span></label><input type="number" id="a1c" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;5.7</span></div>
+
+        <div class="sec-sep">🫀 ไขมันในเลือด (Lipids)</div>
         <div class="field"><label>LDL Cholesterol <span class="unit">mg/dL</span> <span style="color:var(--bad);font-size:10px;font-weight:700;">* TC หรือ LDL</span></label><input type="number" id="ldl" placeholder="0" step="1" oninput="updateLdlGoal()"><span class="ref-hint">ดู LDL Goal ด้านล่าง</span></div>
         <div class="field"><label>Total Cholesterol <span class="unit">mg/dL</span></label><input type="number" id="tc" placeholder="0" step="1" oninput="calcAllRiskScores();updateNonHdlDisplay()"></div>
         <div class="field"><label>HDL <span class="unit">mg/dL</span></label><input type="number" id="hdl" placeholder="0" step="1" oninput="calcAllRiskScores();updateNonHdlDisplay()"><span class="ref-hint">ชาย&gt;40 / หญิง&gt;50</span></div>
         <div class="field"><label>Triglyceride TG <span class="unit">mg/dL</span></label><input type="number" id="tg" placeholder="0" step="1" oninput="calcAllRiskScores()"><span class="ref-hint">ปกติ &lt;150</span></div>
-        <div class="field"><label>Creatinine Cr <span class="unit">mg/dL</span></label><input type="number" id="cr" placeholder="0.00" step=".01"><span class="ref-hint">ชาย 0.7–1.2 / หญิง 0.5–1.1</span></div>
+        <div class="field"><label>Lipoprotein(a) — Lp(a) <span class="unit">mg/dL</span></label><input type="number" id="lpa" placeholder="0" step="1" oninput="calcAllRiskScores()"><span class="ref-hint">ปกติ &lt;30 · เสี่ยงสูง ≥50</span></div>
+        <div class="field"><label>ApoB — Apolipoprotein B <span class="unit">mg/dL</span></label><input type="number" id="apob" placeholder="0" step="1"><span class="ref-hint">&lt;65–80 mg/dL (ตามความเสี่ยง)</span></div>
+
+        <div class="sec-sep">💧 การทำงานของไต (Renal)</div>
+        <div class="field"><label>Creatinine Cr <span class="unit">mg/dL</span></label><input type="number" id="cr" placeholder="0.00" step=".01" oninput="calcEgfr()"><span class="ref-hint">ชาย 0.7–1.2 / หญิง 0.5–1.1</span></div>
         <div class="field"><label>UPCr <span class="unit">mg/g</span></label><input type="number" id="upcr" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;150</span></div>
+        <div class="field span3" style="margin-top:2px"><div id="egfrBox" style="border:1px solid var(--border,#CBD5E1);border-radius:9px;padding:9px 12px;background:#F8FAFC;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="color:#64748B">eGFR (CKD-EPI 2021): กรอก Cr, เพศ และอายุ</span></div></div>
+
+        <div class="sec-sep">🫥 การทำงานของตับ (LFT)</div>
         <div class="field"><label>AST (SGOT) <span class="unit">U/L</span></label><input type="number" id="ast" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
         <div class="field"><label>ALT (SGPT) <span class="unit">U/L</span></label><input type="number" id="alt" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
-        <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step=".01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
+        <div class="field"><label>ALP <span class="unit">U/L</span></label><input type="number" id="alp" placeholder="0" step="1"><span class="ref-hint">ปกติ 30–120</span></div>
+        <div class="field"><label>GGT <span class="unit">U/L</span></label><input type="number" id="ggt" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;60</span></div>
+        <div class="field"><label>Bilirubin รวม (TB) <span class="unit">mg/dL</span></label><input type="number" id="tbili" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;1.2</span></div>
+        <div class="field"><label>Bilirubin ตรง (DB) <span class="unit">mg/dL</span></label><input type="number" id="dbili" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;0.3</span></div>
         <div class="field"><label>Albumin <span class="unit">g/dL</span></label><input type="number" id="albumin" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 3.5–5.0</span></div>
+
+        <div class="sec-sep">🩸 ความสมบูรณ์เม็ดเลือด (CBC)</div>
+        <div class="field"><label>Hb — ฮีโมโกลบิน <span class="unit">g/dL</span></label><input type="number" id="hb" placeholder="0.0" step=".1"><span class="ref-hint">♂ 13.0–17.0 · ♀ 12.0–15.5</span></div>
+        <div class="field"><label>Hct — ฮีมาโตคริต <span class="unit">%</span></label><input type="number" id="hct" placeholder="0" step=".1"><span class="ref-hint">♂ 40–52 · ♀ 36–48</span></div>
+        <div class="field"><label>WBC — เม็ดเลือดขาว <span class="unit">×10³/µL</span></label><input type="number" id="wbc" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 4.0–10.0</span></div>
+        <div class="field"><label>Platelet — เกล็ดเลือด <span class="unit">×10³/µL</span></label><input type="number" id="plt" placeholder="0" step="1"><span class="ref-hint">ปกติ 150–400</span></div>
+
+        <div class="sec-sep">🦋 ฮอร์โมนไทรอยด์ (Thyroid)</div>
+        <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step=".01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
+        <div class="field"><label>Free T4 (FT4) <span class="unit">ng/dL</span></label><input type="number" id="ft4" placeholder="0.0" step=".01"><span class="ref-hint">ปกติ 0.8–1.8</span></div>
+        <div class="field"><label>T3 <span class="unit">ng/dL</span></label><input type="number" id="t3" placeholder="0" step="1"><span class="ref-hint">ปกติ 80–200 (Total T3)</span></div>
+
+        <div class="sec-sep">🧪 วิตามิน / ค่าตรวจอื่นๆ</div>
+        <div class="field"><label>Vitamin D — 25-OH <span class="unit">ng/mL</span></label><input type="number" id="vitd" placeholder="0" step=".1"><span class="ref-hint">≥30 เพียงพอ · 20–29 ไม่พอ · &lt;20 ขาด</span></div>
+        <div class="field"><label>Ferritin — เฟอร์ริติน <span class="unit">ng/mL</span></label><input type="number" id="ferritin" placeholder="0" step="1"><span class="ref-hint">♂ 30–400 · ♀ 15–150</span></div>
         <div class="field" id="psa-field"><label>PSA <span class="unit">ng/mL</span> <span style="font-size:10px;color:var(--teal-dark)">(ชาย)</span></label><input type="number" id="psa" placeholder="0.0" step=".01"><span class="ref-hint">ปกติ &lt;4.0</span></div>
-        <div class="field"><label>Lipoprotein(a) — Lp(a) <span class="unit">mg/dL</span></label>
-          <input type="number" id="lpa" placeholder="0" step="1" oninput="calcAllRiskScores()">
-          <span class="ref-hint">ปกติ &lt;30 · เสี่ยงสูง ≥50</span></div>
-        <div class="field"><label>ApoB — Apolipoprotein B <span class="unit">mg/dL</span></label>
-          <input type="number" id="apob" placeholder="0" step="1">
-          <span class="ref-hint">&lt;65–80 mg/dL (ตามความเสี่ยง)</span></div>
-        <div class="field"><label>Hb — ฮีโมโกลบิน <span class="unit">g/dL</span></label>
-          <input type="number" id="hb" placeholder="0.0" step=".1">
-          <span class="ref-hint">♂ 13.0–17.0 · ♀ 12.0–15.5</span></div>
-        <div class="field"><label>Hct — ฮีมาโตคริต <span class="unit">%</span></label>
-          <input type="number" id="hct" placeholder="0" step=".1">
-          <span class="ref-hint">♂ 40–52 · ♀ 36–48</span></div>
-        <div class="field"><label>Vitamin D — 25-OH <span class="unit">ng/mL</span></label>
-          <input type="number" id="vitd" placeholder="0" step=".1">
-          <span class="ref-hint">≥30 เพียงพอ · 20–29 ไม่พอ · &lt;20 ขาด</span></div>
-        <div class="field"><label>Ferritin — เฟอร์ริติน <span class="unit">ng/mL</span></label>
-          <input type="number" id="ferritin" placeholder="0" step="1">
-          <span class="ref-hint">♂ 30–400 · ♀ 15–150</span></div>
-        <div class="field"><label>หมายเหตุ Lab</label><input type="text" id="tmNote" placeholder="เช่น ติดตาม PSA ทุกปี, Lp(a) สูง"></div>
+        <div class="field span3"><label>หมายเหตุ Lab</label><input type="text" id="tmNote" placeholder="เช่น ติดตาม PSA ทุกปี, Lp(a) สูง"></div>
       </div>
     </div>
 
@@ -881,12 +900,13 @@ var VALVES = ['Mitral','Aortic','Tricuspid','Pulmonary'];
 
 /* ── VACCINES (5 only, Thai guideline with age ranges) ── */
 var VACCINES = [
-  {id:'flu',     name:'ไข้หวัดใหญ่ (Influenza)', ageNote:'ทุกกลุ่มอายุ — ฉีดทุกปี', sub:'วัคซีนไข้หวัดใหญ่ — ฉีดทุกปี'},
-  {id:'pcv20',   name:'ปอดอักเสบ (PCV20)', ageNote:'≥65 ปี หรือมีโรคเรื้อรัง', sub:'Pneumococcal 20-valent — ฉีดครั้งเดียว'},
-  {id:'rsv',     name:'RSV',               ageNote:'≥75 ปี ทุกคน · 60–74 ปี ที่มีโรคหัวใจ/ปอด', sub:'วัคซีน RSV — ฉีดครั้งเดียว'},
-  {id:'shingles',name:'งูสวัด (Shingrix)', ageNote:'อายุ ≥50 ปี',               sub:'วัคซีนงูสวัด — ฉีด 2 เข็ม ห่างกัน 2–6 เดือน'},
-  {id:'tdap',    name:'บาดทะยัก-คอตีบ-ไอกรน (Tdap/Td)', ageNote:'ผู้ใหญ่ทุกคน — กระตุ้นทุก 10 ปี', sub:'ป้องกันบาดทะยัก คอตีบ ไอกรน'},
-  {id:'hpv',     name:'HPV',               ageNote:'9–26 ปี (ทุกเพศ) · 27–45 ปี รายบุคคล', sub:'วัคซีน HPV — ป้องกันมะเร็งจากเชื้อ HPV ทั้งชายและหญิง'},
+  {id:'flu',     name:'ไข้หวัดใหญ่ (Influenza)', ageNote:'ทุกกลุ่มอายุ — ฉีดทุกปี', sub:'วัคซีนไข้หวัดใหญ่ — ฉีดทุกปี', doses:1, repeat:12, repeatLabel:'ฉีดประจำปี', sched:'ฉีดซ้ำทุก 1 ปี'},
+  {id:'pcv20',   name:'ปอดอักเสบ (PCV20)', ageNote:'≥65 ปี หรือมีโรคเรื้อรัง', sub:'Pneumococcal 20-valent — ฉีดครั้งเดียว', doses:1, sched:'ฉีดครั้งเดียว'},
+  {id:'rsv',     name:'RSV',               ageNote:'≥75 ปี ทุกคน · 60–74 ปี ที่มีโรคหัวใจ/ปอด', sub:'วัคซีน RSV — ฉีดครั้งเดียว', doses:1, sched:'ฉีดครั้งเดียว'},
+  {id:'hepb',    name:'ไวรัสตับอักเสบ บี (Hepatitis B)', ageNote:'โรคตับ/เบาหวาน/ไตเรื้อรัง ที่ยังไม่มีภูมิ', sub:'ตรวจภูมิก่อน หากยังไม่มีให้ฉีด 3 เข็ม', doses:3, gap:[1,5], sched:'ตาราง 0–1–6 เดือน (3 เข็ม)'},
+  {id:'shingles',name:'งูสวัด (Shingrix)', ageNote:'อายุ ≥50 ปี',               sub:'วัคซีนงูสวัด — ฉีด 2 เข็ม ห่างกัน 2–6 เดือน', doses:2, gap:[2], sched:'เข็ม 2 ห่างเข็มแรก 2–6 เดือน'},
+  {id:'tdap',    name:'บาดทะยัก-คอตีบ-ไอกรน (Tdap/Td)', ageNote:'ผู้ใหญ่ทุกคน — กระตุ้นทุก 10 ปี', sub:'ป้องกันบาดทะยัก คอตีบ ไอกรน', doses:1, repeat:120, repeatLabel:'เข็มกระตุ้น', sched:'กระตุ้นทุก 10 ปี'},
+  {id:'hpv',     name:'HPV (9 สายพันธุ์)',  ageNote:'9–26 ปี (ทุกเพศ) · 27–45 ปี รายบุคคล', sub:'HPV ชนิด 9 สายพันธุ์ — ฉีด 3 เข็ม (0–2–6 เดือน)', doses:3, gap:[2,4], sched:'9 สายพันธุ์ · ตาราง 0–2–6 เดือน (3 เข็ม)'},
 ];
 
 /* ── FIREBASE ── */
@@ -922,26 +942,48 @@ function switchTab(name,btn){
   if(name==='list')renderList();
 }
 
+/* ── VACCINE schedule helpers (shared model: {status,doses:[],date}) ── */
+function vaxAddMonths(iso,m){var d=new Date(iso+'T00:00:00');if(isNaN(d))return null;d.setMonth(d.getMonth()+m);return d;}
+function vaxThai(d){var M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return d.getDate()+' '+M[d.getMonth()]+' '+String(d.getFullYear()+543).slice(-2);}
+function vaxNextDue(v,status,doses){
+  if(status==='na')return null;
+  var n=v.doses||1, filled=doses.filter(Boolean), fc=filled.length, today=new Date(); today.setHours(0,0,0,0);
+  if(fc===0)return null;
+  if(fc<n){var gap=(v.gap&&v.gap[fc-1])||1,due=vaxAddMonths(filled[fc-1],gap);if(!due)return null;return{due:due,days:Math.round((due-today)/864e5),doseNo:fc+1,kind:'series'};}
+  if(v.repeat){var d2=vaxAddMonths(filled[fc-1],v.repeat);if(!d2)return null;return{due:d2,days:Math.round((d2-today)/864e5),doseNo:null,kind:'repeat'};}
+  return null;
+}
+function vaxHintText(v){
+  var status=val('vax_status_'+v.id),n=v.doses||1,doses=[],i;
+  for(i=0;i<n;i++)doses.push(val('vax_date_'+v.id+'_'+i));
+  var due=vaxNextDue(v,status,doses);
+  if(!due)return v.sched?('<span class="vh-info">📅 '+v.sched+'</span>'):'';
+  var label=due.kind==='series'?('เข็มที่ '+due.doseNo):(v.repeatLabel||'เข็มถัดไป');
+  if(due.days<=0)return '<span class="vh-over">⏰ ถึงกำหนด'+label+'แล้ว · ครบกำหนด '+vaxThai(due.due)+'</span>';
+  if(due.days<=30)return '<span class="vh-soon">🔔 ใกล้กำหนด'+label+' — '+vaxThai(due.due)+' (อีก '+due.days+' วัน)</span>';
+  return '<span class="vh-info">📅 '+label+': '+vaxThai(due.due)+'</span>';
+}
+function refreshVaxHints(){VACCINES.forEach(function(v){var el=document.getElementById('vaxhint_'+v.id);if(el)el.innerHTML=vaxHintText(v);});}
+
 /* ── RENDER VAX GRID ── */
 function renderVaxGrid(){
   var g=document.getElementById('vaxGrid'); if(!g)return;
-  g.innerHTML=VACCINES.map(v=>`
-    <div class="vax-item">
-      <div class="vax-age">${v.ageNote}</div>
-      <div class="vax-name">${v.name}</div>
-      <div class="vax-sub">${v.sub}</div>
-      <div class="vax-row">
-        <select id="vax_status_${v.id}">
-          <option value="">ยังไม่ฉีด</option>
-          <option value="done">ฉีดแล้ว ✓</option>
-          <option value="partial">ฉีดบางส่วน</option>
-          <option value="plan">วางแผนฉีด</option>
-          <option value="na">ไม่จำเป็น</option>
-        </select>
-        <input type="date" id="vax_date_${v.id}" title="วันที่ฉีด">
-      </div>
-    </div>
-  `).join('');
+  g.innerHTML=VACCINES.map(function(v){
+    var n=v.doses||1,dates='',i;
+    for(i=0;i<n;i++){dates+='<label class="vd"><span>'+(n>1?('เข็ม '+(i+1)):'วันที่ฉีด')+'</span><input type="date" id="vax_date_'+v.id+'_'+i+'"></label>';}
+    return '<div class="vax-item">'
+      +'<div class="vax-age">'+v.ageNote+'</div>'
+      +'<div class="vax-name">'+v.name+'</div>'
+      +'<div class="vax-sub">'+v.sub+'</div>'
+      +'<div class="vax-row"><select id="vax_status_'+v.id+'">'
+        +'<option value="">ยังไม่ฉีด</option><option value="done">ฉีดแล้ว ✓</option><option value="partial">ฉีดบางส่วน</option><option value="plan">วางแผนฉีด</option><option value="na">ไม่จำเป็น</option>'
+      +'</select></div>'
+      +'<div class="vax-doses">'+dates+'</div>'
+      +'<div class="vax-hint" id="vaxhint_'+v.id+'"></div>'
+    +'</div>';
+  }).join('');
+  g.addEventListener('change',refreshVaxHints);
+  refreshVaxHints();
 }
 
 /* ── RENDER VALVE GRIDS ── */
@@ -992,8 +1034,8 @@ var BASE_FIELDS=[
   'height','weight','bmi','smm','slm','bfm','pbf','vfl','bmr','whr',
   'cid','bodyTypeGrid','bodyBalance','inbodyScore',
   /* ── Lab ── */
-  'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','tsh','albumin','psa','lpa','apob',
-  'hb','hct','vitd','ferritin','tmNote',
+  'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','alp','ggt','tbili','dbili','tsh','albumin','psa','lpa','apob',
+  'hb','hct','wbc','plt','ft4','t3','vitd','ferritin','tmNote',
   /* ── CV Risk / LDL Goal ── */
   'hasASCVD','hasFH','hasDMRisk','ckdStage','hasLungDisease','onStatin','ldlGoalCustom',
   'nonHdlGoalCustom','tcHdlGoalCustom','apobGoalCustom','bpGoalCustom','ldlInsufficient','lpaHigh','hasTG',
@@ -1093,7 +1135,8 @@ function clearForm(){
   var ddisp=document.getElementById('dobDisplay');if(ddisp)ddisp.textContent='';
   ['dobDay','dobMonth','dobYear'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   selectedDoctor=''; document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));
-  VACCINES.forEach(v=>{setVal('vax_status_'+v.id,'');setVal('vax_date_'+v.id,'');});
+  VACCINES.forEach(v=>{setVal('vax_status_'+v.id,'');var n=v.doses||1;for(var i=0;i<n;i++)setVal('vax_date_'+v.id+'_'+i,'');});
+  if(typeof refreshVaxHints==='function')refreshVaxHints();
   setRadio('ekgResult','NA'); setRadio('echoResult','NA');
   VALVES.forEach(v=>['sten','reg'].forEach(t=>['mild','mod','sev'].forEach(s=>{var el=document.getElementById(t+'_'+v+'_'+s);if(el)el.checked=false;})));
   setVal('ldlGoalDisplay','—'); setVal('ldlGoalBasis','');
@@ -1214,6 +1257,7 @@ function updateDobField(){
   if(today.getMonth()+1<month||(today.getMonth()+1===month&&today.getDate()<day))age--;
   var thaiStr=day+' '+DOB_MONTHS[month-1]+' '+thYear+' (อายุ '+age+' ปี)';
   document.getElementById('dob').value=thaiStr;
+  if(typeof calcEgfr==='function')calcEgfr();
   document.getElementById('dobDisplay').textContent='📅 '+thaiStr;
   calcIdeal(); updateLdlGoal();
   setTimeout(calcAllRiskScores,100);
@@ -1692,7 +1736,43 @@ function toggleScoreSection(){
   if(note) note.style.display=isASCVD?'block':'none';
 }
 
-function calcAllRiskScores(){
+/* ── eGFR (CKD-EPI 2021, race-free) + CKD staging ──
+   อ้างอิง: Inker LA et al. NEJM 2021 (CKD-EPI creatinine 2021)
+   eGFR = 142 × min(Scr/κ,1)^α × max(Scr/κ,1)^-1.200 × 0.9938^Age × (1.012 ถ้าหญิง)
+   κ = 0.7(ญ)/0.9(ช) · α = -0.241(ญ)/-0.302(ช) · Scr mg/dL */
+function ckdEpiVal(scr,age,sex){
+  scr=parseFloat(scr);age=parseFloat(age);
+  if(!scr||!age||!sex)return null;
+  var fem=(sex==='female'),k=fem?0.7:0.9,al=fem?-0.241:-0.302,r=scr/k;
+  var e=142*Math.pow(Math.min(r,1),al)*Math.pow(Math.max(r,1),-1.200)*Math.pow(0.9938,age);
+  if(fem)e*=1.012;
+  return Math.round(e);
+}
+function ckdStageTxt(e){
+  if(e==null)return null;
+  if(e>=90) return {g:'G1', txt:'ปกติ', cls:'ok'};
+  if(e>=60) return {g:'G2', txt:'ลดลงเล็กน้อย', cls:'ok'};
+  if(e>=45) return {g:'G3a',txt:'โรคไตเรื้อรัง ระยะ 3a (ปานกลาง)', cls:'warn'};
+  if(e>=30) return {g:'G3b',txt:'โรคไตเรื้อรัง ระยะ 3b (ปานกลาง-มาก)', cls:'bad'};
+  if(e>=15) return {g:'G4', txt:'โรคไตเรื้อรัง ระยะ 4 (รุนแรง)', cls:'bad'};
+  return {g:'G5', txt:'ไตวายระยะสุดท้าย (ระยะ 5)', cls:'bad'};
+}
+function calcEgfr(){
+  var box=document.getElementById('egfrBox'); if(!box)return;
+  var scr=parseFloat(val('cr'));
+  var age=parseFloat(val('age'))||extractAgeNum(val('dob'))||0;
+  var g=val('gender'), sex=(g==='หญิง')?'female':(g==='ชาย')?'male':'';
+  if(!scr||!age||!sex){ box.innerHTML='<span style="color:#64748B">eGFR (CKD-EPI 2021): กรอก Cr, เพศ และอายุ</span>'; return; }
+  var e=ckdEpiVal(scr,age,sex), st=ckdStageTxt(e);
+  var col = st.cls==='ok'?'#0E7A6D' : st.cls==='warn'?'#B45309' : '#B91C1C';
+  var bg  = st.cls==='ok'?'#ECFDF5' : st.cls==='warn'?'#FFFBEB' : '#FEF2F2';
+  box.style.background=bg;
+  var stageHtml = e<60
+    ? '<span style="background:'+col+';color:#fff;font-weight:700;padding:2px 9px;border-radius:999px;font-size:12px;">'+st.g+' · '+st.txt+'</span>'
+    : '<span style="color:'+col+';font-weight:600;">'+st.g+' · '+st.txt+'</span>';
+  box.innerHTML='<span style="font-weight:700;color:#0F172A;">eGFR <span style="font-size:18px;color:'+col+'">'+e+'</span> <span style="color:#64748B;font-weight:400;font-size:11px;">mL/min/1.73m²</span></span>'+stageHtml+'<span style="color:#94A3B8;font-size:11px;">CKD-EPI 2021</span>';
+}
+function calcAllRiskScores(){ if(typeof calcEgfr==="function")calcEgfr();
   var age=extractAge(val('dob'))||0;
   var gender=val('gender')||'';
   var sbp=parseFloat(val('sbp'))||0;
@@ -2078,7 +2158,7 @@ async function saveRecord(){
   rec.valveCBs=getCBs();
   /* Vaccines */
   rec.vaccines={};
-  VACCINES.forEach(v=>{ rec.vaccines[v.id]={status:val('vax_status_'+v.id),date:val('vax_date_'+v.id)}; });
+  VACCINES.forEach(v=>{ var n=v.doses||1, doses=[]; for(var i=0;i<n;i++)doses.push(val('vax_date_'+v.id+'_'+i)); rec.vaccines[v.id]={status:val('vax_status_'+v.id),doses:doses,date:doses[0]||''}; });
 
   try{
     var col=db.collection('visits');
@@ -2111,7 +2191,8 @@ function editRec(id){
   if(rec.ekgResult)setRadio('ekgResult',rec.ekgResult);
   if(rec.echoResult)setRadio('echoResult',rec.echoResult);
   if(rec.valveCBs)setCBs(rec.valveCBs);
-  if(rec.vaccines)VACCINES.forEach(v=>{setVal('vax_status_'+v.id,rec.vaccines[v.id]?.status||'');setVal('vax_date_'+v.id,rec.vaccines[v.id]?.date||'');});
+  if(rec.vaccines)VACCINES.forEach(v=>{var r=rec.vaccines[v.id]||{};setVal('vax_status_'+v.id,r.status||'');var doses=(r.doses&&r.doses.length)?r.doses:(r.date?[r.date]:[]);var n=v.doses||1;for(var i=0;i<n;i++)setVal('vax_date_'+v.id+'_'+i,doses[i]||'');});
+  refreshVaxHints();
   calcIdeal(); updateLdlGoal(); updateNonHdlDisplay();
   /* Restore recorder button highlight */
   if(rec.recorder) setRecorder(rec.recorder);
