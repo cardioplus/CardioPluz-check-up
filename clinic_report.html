@@ -773,6 +773,11 @@ var DEMO={
   fbs:'118',a1c:'6.8',ldl:'145',tc:'210',hdl:'38',tg:'185',
   cr:'1.05',upcr:'120',ast:'32',alt:'38',tsh:'2.1',albumin:'4.2',psa:'2.1',
   alp:'88',ggt:'45',tbili:'0.8',dbili:'0.2',wbc:'7.5',plt:'265',ft4:'1.2',t3:'120',
+  rbc:'4.7',hb:'13.5',hct:'40',mcv:'88',mch:'29.6',mchc:'33.5',rdw:'13.2',
+  neut:'58',lym:'33',mono:'6',eos:'2',baso:'1',
+  na:'139',k:'4.2',cl:'102',co2:'25',
+  ua_color:'Yellow',ua_appear:'Clear',ua_sg:'1.018',ua_ph:'6.0',ua_pro:'Negative',ua_glu:'Negative',ua_ket:'Negative',ua_blood:'Negative',ua_leu:'Negative',ua_nit:'Negative',ua_uro:'Normal',ua_bil:'Negative',ua_wbc:'0-2',ua_rbc:'0-1',ua_epi:'1-2',
+  hbsag:'Negative',antihbs:'Positive',
   lpa:'42',apob:'95',
   tmNote:'ติดตาม PSA ทุกปี',
   ascvdRisk:'high',hasASCVD:'no',
@@ -841,6 +846,22 @@ function thDateSh(d){
 }
 
 /* ── LAB STATUS ── */
+var LAB_RANGES={
+  na:function(){return[135,145,'135–145 mmol/L'];},
+  k:function(){return[3.5,5.5,'3.5–5.5 mmol/L'];},
+  cl:function(){return[98,108,'98–108 mmol/L'];},
+  co2:function(){return[21,31,'21–31 mmol/L'];},
+  rbc:function(g){return g==='หญิง'?[4.1,5.1,'4.1–5.1 ×10⁶/µL']:[4.5,5.9,'4.5–5.9 ×10⁶/µL'];},
+  mcv:function(){return[80,100,'80–100 fl'];},
+  mch:function(){return[26,34,'26–34 pg'];},
+  mchc:function(){return[31,37,'31–37 g/dL'];},
+  rdw:function(){return[11,16,'11–16 %'];},
+  neut:function(){return[50,70,'50–70 %'];},
+  lym:function(){return[18,42,'18–42 %'];},
+  mono:function(){return[2,11,'2–11 %'];},
+  eos:function(){return[1,10,'1–10 %'];},
+  baso:function(){return[0,2,'0–2 %'];}
+};
 function labSt(t,v,g){
   var na='<span class="chip na">—</span>';
   if(!v)return{chip:na,color:'#aaa',ref:'—'};
@@ -899,6 +920,9 @@ function labSt(t,v,g){
     return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
   else if(t==='t3'){ok=n>=80&&n<=200;warn=(n>=60&&n<80)||(n>200&&n<=240);ref='80–200 ng/dL';
     cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':n<80?'ต่ำ':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
+    return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
+  else if(LAB_RANGES[t]){var R=LAB_RANGES[t](g);ok=n>=R[0]&&n<=R[1];var wb=(R[1]-R[0])*0.15||1;warn=(n>=R[0]-wb&&n<R[0])||(n>R[1]&&n<=R[1]+wb);ref=R[2];
+    cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':(n<R[0]?'ต่ำ':'สูง');col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
     return{chip:'<span class="chip '+cls+'">'+txt+'</span>',color:col,ref:ref,cls:cls,txt:txt};}
   else return{chip:na,color:'#aaa',ref:'—'};
   cls=ok?'ok':warn?'wn':'bd';txt=ok?'ปกติ':warn?'สูงเล็กน้อย':'สูง';col=ok?'var(--ok)':warn?'var(--warn)':'var(--bad)';
@@ -2841,6 +2865,15 @@ function render(){
   if(r.upcr)kidneyRows.push(labRow('โปรตีนในปัสสาวะ (UPCR)',r.upcr,'mg/g','< 30 mg/g',upcr.cls,upcr.txt));
   O+=labGroup('🫘','การทำงานของไต (Kidney)',kidneyRows);
 
+  /* หมวด 3.5: เกลือแร่ (Electrolytes) */
+  var naS=labSt('na',r.na,g),kS=labSt('k',r.k,g),clS=labSt('cl',r.cl,g),co2S=labSt('co2',r.co2,g);
+  O+=labGroup('🧂','เกลือแร่ในเลือด (Electrolytes)',[
+    r.na?labRow('โซเดียม (Na)',r.na,'mmol/L','135–145 mmol/L',naS.cls,naS.txt):'',
+    r.k?labRow('โพแทสเซียม (K)',r.k,'mmol/L','3.5–5.5 mmol/L',kS.cls,kS.txt):'',
+    r.cl?labRow('คลอไรด์ (Cl)',r.cl,'mmol/L','98–108 mmol/L',clS.cls,clS.txt):'',
+    r.co2?labRow('ไบคาร์บอเนต (CO₂)',r.co2,'mmol/L','21–31 mmol/L',co2S.cls,co2S.txt):''
+  ]);
+
   /* หมวด 4: ตับ */
   var alpS=labSt('alp',r.alp,g),ggtS=labSt('ggt',r.ggt,g),tbiS=labSt('tbili',r.tbili,g),dbiS=labSt('dbili',r.dbili,g);
   O+=labGroup('🩺','การทำงานของตับ (Liver)',[
@@ -2856,11 +2889,23 @@ function render(){
   /* หมวด 5: ความสมบูรณ์เม็ดเลือด (CBC) — แสดง NA เสมอ */
   var hbS=labSt('hb',r.hb,g),hctS=labSt('hct',r.hct,g),ferrS=labSt('ferritin',r.ferritin,g);
   var wbcS=labSt('wbc',r.wbc,g),pltS=labSt('plt',r.plt,g);
+  var rbcS=labSt('rbc',r.rbc,g),mcvS=labSt('mcv',r.mcv,g),mchS=labSt('mch',r.mch,g),mchcS=labSt('mchc',r.mchc,g),rdwS=labSt('rdw',r.rdw,g);
+  var neutS=labSt('neut',r.neut,g),lymS=labSt('lym',r.lym,g),monoS=labSt('mono',r.mono,g),eosS=labSt('eos',r.eos,g),basoS=labSt('baso',r.baso,g);
   O+=labGroup('🔴','ความสมบูรณ์ของเลือด (CBC)',[
+    r.wbc?labRow('เม็ดเลือดขาว (WBC)',r.wbc,'×10³/µL','4–10 ×10³/µL',wbcS.cls,wbcS.txt):'',
+    r.rbc?labRow('เม็ดเลือดแดง (RBC)',r.rbc,'×10⁶/µL',(g==='หญิง'?'4.1–5.1':'4.5–5.9')+' ×10⁶/µL',rbcS.cls,rbcS.txt):'',
     labRow('ฮีโมโกลบิน (Hb)',r.hb,'g/dL',(g==='หญิง'?'12.0–15.5':'13.0–17.0')+' g/dL',hbS.cls,hbS.txt),
     labRow('ฮีมาโตคริต (Hct)',r.hct,'%',(g==='หญิง'?'36–48':'40–52')+' %',hctS.cls,hctS.txt),
-    r.wbc?labRow('เม็ดเลือดขาว (WBC)',r.wbc,'×10³/µL','4–10 ×10³/µL',wbcS.cls,wbcS.txt):'',
-    r.plt?labRow('เกล็ดเลือด (Platelet)',r.plt,'×10³/µL','150–400 ×10³/µL',pltS.cls,pltS.txt):''
+    r.mcv?labRow('ขนาดเม็ดเลือดแดง (MCV)',r.mcv,'fl','80–100 fl',mcvS.cls,mcvS.txt):'',
+    r.mch?labRow('ฮีโมโกลบินต่อเม็ด (MCH)',r.mch,'pg','26–34 pg',mchS.cls,mchS.txt):'',
+    r.mchc?labRow('ความเข้มข้น Hb (MCHC)',r.mchc,'g/dL','31–37 g/dL',mchcS.cls,mchcS.txt):'',
+    r.rdw?labRow('การกระจายขนาด (RDW)',r.rdw,'%','11–16 %',rdwS.cls,rdwS.txt):'',
+    r.plt?labRow('เกล็ดเลือด (Platelet)',r.plt,'×10³/µL','150–400 ×10³/µL',pltS.cls,pltS.txt):'',
+    r.neut?labRow('นิวโทรฟิล (Neutrophil)',r.neut,'%','50–70 %',neutS.cls,neutS.txt):'',
+    r.lym?labRow('ลิมโฟไซต์ (Lymphocyte)',r.lym,'%','18–42 %',lymS.cls,lymS.txt):'',
+    r.mono?labRow('โมโนไซต์ (Monocyte)',r.mono,'%','2–11 %',monoS.cls,monoS.txt):'',
+    r.eos?labRow('อีโอซิโนฟิล (Eosinophil)',r.eos,'%','1–10 %',eosS.cls,eosS.txt):'',
+    r.baso?labRow('เบโซฟิล (Basophil)',r.baso,'%','0–2 %',basoS.cls,basoS.txt):''
   ]);
 
   /* หมวด 6: ฮอร์โมนไทรอยด์ (Thyroid) */
@@ -2878,6 +2923,45 @@ function render(){
   otherRows.push(labRow('เฟอร์ริติน (Ferritin)',r.ferritin,'ng/mL',(g==='หญิง'?'15–150':'30–400')+' ng/mL',ferrS.cls,ferrS.txt));
   if(psa&&r.psa)otherRows.push(labRow('ต่อมลูกหมาก (PSA)',r.psa,'ng/mL','< 4.0 ng/mL',psa.cls,psa.txt));
   O+=labGroup('🧪','วิตามินและค่าตรวจอื่นๆ (Vitamin & Other)',otherRows);
+
+  /* หมวด 8: ผลตรวจปัสสาวะ (Urinalysis) */
+  function qualSt(val,kind){
+    if(val===undefined||val===null||val==='')return{cls:'',txt:''};
+    var s=String(val).toLowerCase().trim();
+    if(kind==='hbsag'){return /neg|non.?react/.test(s)?{cls:'ok',txt:'ไม่ติดเชื้อ'}:{cls:'bd',txt:'พบเชื้อ'};}
+    if(kind==='antihbs'){return (/(pos|react|detect|มีภูมิ)/.test(s)||parseFloat(s)>=10)?{cls:'ok',txt:'มีภูมิคุ้มกัน'}:{cls:'wn',txt:'ยังไม่มีภูมิ'};}
+    if(/pos|react|cloud|turbid|\bmany\b|3\+|4\+|large/.test(s))return{cls:'bd',txt:'ผิดปกติ'};
+    if(/neg|normal|clear|yellow|straw|colorless|nil|none|^0|^0\s*-\s*[0-5]\b|^1\s*-\s*[0-2]\b|few|trace/.test(s))return{cls:'ok',txt:'ปกติ'};
+    return{cls:'wn',txt:'เฝ้าระวัง'};
+  }
+  function uaRow(label,key,unit,ref,rng){var v=r[key];if(v===undefined||v===null||v==='')return'';var st;
+    if(rng&&/^\d*\.?\d+$/.test(String(v).trim())){var nv=parseFloat(v);var inR=nv>=rng[0]&&nv<=rng[1];st={cls:inR?'ok':'wn',txt:inR?'ปกติ':(nv<rng[0]?'ต่ำ':'สูง')};}
+    else st=qualSt(v);
+    return labRow(label,v,unit||'',ref,st.cls,st.txt);}
+  O+=labGroup('🧫','ผลตรวจปัสสาวะ (Urinalysis)',[
+    uaRow('สี (Color)','ua_color','','เหลือง'),
+    uaRow('ลักษณะ (Appearance)','ua_appear','','ใส'),
+    uaRow('ความถ่วงจำเพาะ (Sp.Gr)','ua_sg','','1.003–1.030',[1.003,1.030]),
+    uaRow('ความเป็นกรด-ด่าง (pH)','ua_ph','','5.0–8.0',[5.0,8.0]),
+    uaRow('โปรตีน (Protein)','ua_pro','','Negative'),
+    uaRow('น้ำตาล (Glucose)','ua_glu','','Negative'),
+    uaRow('คีโตน (Ketone)','ua_ket','','Negative'),
+    uaRow('เลือด (Blood)','ua_blood','','Negative'),
+    uaRow('เม็ดเลือดขาว (Leukocyte)','ua_leu','','Negative'),
+    uaRow('ไนไตรต์ (Nitrite)','ua_nit','','Negative'),
+    uaRow('ยูโรบิลิโนเจน (Urobilinogen)','ua_uro','','Normal'),
+    uaRow('บิลิรูบิน (Bilirubin)','ua_bil','','Negative'),
+    uaRow('เม็ดเลือดขาว (WBC)','ua_wbc','/HPF','0–5 /HPF'),
+    uaRow('เม็ดเลือดแดง (RBC)','ua_rbc','/HPF','0–3 /HPF'),
+    uaRow('เซลล์เยื่อบุ (Epithelial)','ua_epi','/HPF','0–5 /HPF')
+  ]);
+
+  /* หมวด 9: ไวรัสตับอักเสบ บี (Serology) */
+  var hbsagSt=qualSt(r.hbsag,'hbsag'),antihbsSt=qualSt(r.antihbs,'antihbs');
+  O+=labGroup('🛡️','ไวรัสตับอักเสบ บี (Serology)',[
+    r.hbsag?labRow('เชื้อไวรัส (HBsAg)',r.hbsag,'','Negative = ไม่ติดเชื้อ',hbsagSt.cls,hbsagSt.txt):'',
+    r.antihbs?labRow('ภูมิคุ้มกัน (Anti-HBs)',r.antihbs,'','≥ 10 = มีภูมิ',antihbsSt.cls,antihbsSt.txt):''
+  ]);
 
   O+='</div>'; /* end labs container */
   O+='</div>'; /* end page 2 */
