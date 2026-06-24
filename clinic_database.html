@@ -179,6 +179,21 @@ label,span,button,.card-title,.field label{
 
 
 input[type=radio],input[type=checkbox]{flex-shrink:0;}
+
+/* ===== AI scan autofill ===== */
+.ai-fill{grid-column:1/-1;border:1px dashed #94A3B8;border-radius:12px;padding:12px 14px;background:#F8FAFC;margin:6px 0 14px;box-sizing:border-box;}
+.ai-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+.ai-up{flex:1;min-width:200px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border:1px solid #CBD5E1;border-radius:9px;background:#fff;cursor:pointer;font-size:13px;color:#334155;}
+.ai-up:hover{border-color:var(--teal-dark,#0E7A6D);color:var(--teal-dark,#0E7A6D);}
+.ai-run{padding:9px 16px;border:none;border-radius:9px;background:var(--accent,#0E7A6D);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+.ai-run:disabled{opacity:.6;cursor:default;}
+.ai-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+.ai-chip{font-size:11px;background:#fff;border:1px solid #E2E8F0;border-radius:999px;padding:3px 10px;color:#475569;}
+.ai-status{margin-top:9px;font-size:12.5px;color:#64748B;min-height:1px;}
+.ai-status.ok{color:#0E7A6D;font-weight:700;}
+.ai-status.err{color:#B91C1C;font-weight:700;}
+.ai-note{font-size:11px;color:#94A3B8;margin-top:8px;line-height:1.45;}
+input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;transition:background .3s;}
 </style>
 </head>
 <body>
@@ -319,6 +334,19 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
     <!-- Lab -->
     <div class="card">
       <div class="card-title"><span class="tag tag-blue">LAB</span> ผลการตรวจเลือด</div>
+
+      <div class="ai-fill" id="aiFill">
+        <div class="ai-row">
+          <label class="ai-up" id="aiUpBtn">
+            <input type="file" id="aiFiles" accept="image/*,application/pdf" multiple hidden>
+            <span>📎 เลือกไฟล์ผลแล็บ — PDF หรือรูปถ่าย (เลือกพร้อมกันได้หลายไฟล์)</span>
+          </label>
+          <button type="button" class="ai-run" id="aiRunBtn">✨ อ่านค่าอัตโนมัติ</button>
+        </div>
+        <div class="ai-files" id="aiFileList"></div>
+        <div class="ai-status" id="aiStatus"></div>
+        <div class="ai-note">🔒 อ่านค่าในเครื่องนี้ทั้งหมด — ไม่มีค่าใช้จ่าย ไม่ต้องใช้ API key และข้อมูลคนไข้ไม่ถูกส่งออกไปที่ใด (ดีต่อ PDPA) · ไฟล์ PDF ตัวอักษรอ่านแม่นที่สุด รูปถ่ายใช้ OCR (ครั้งแรกโหลดตัวอ่าน ~10–15 MB) · กรุณาตรวจทานก่อนบันทึกทุกครั้ง</div>
+      </div>
       <div class="form-grid cols3">
 
         <div class="sec-sep">🩸 น้ำตาล (Glucose)</div>
@@ -338,6 +366,12 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
         <div class="field"><label>UPCr <span class="unit">mg/g</span></label><input type="number" id="upcr" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ &lt;150</span></div>
         <div class="field span3" style="margin-top:2px"><div id="egfrBox" style="border:1px solid var(--border,#CBD5E1);border-radius:9px;padding:9px 12px;background:#F8FAFC;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="color:#64748B">eGFR (CKD-EPI 2021): กรอก Cr, เพศ และอายุ</span></div></div>
 
+        <div class="sec-sep">🧂 เกลือแร่ (Electrolytes)</div>
+        <div class="field"><label>Sodium (Na) <span class="unit">mmol/L</span></label><input type="number" id="na" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 135–145</span></div>
+        <div class="field"><label>Potassium (K) <span class="unit">mmol/L</span></label><input type="number" id="k" placeholder="0.00" step=".01"><span class="ref-hint">ปกติ 3.5–5.5</span></div>
+        <div class="field"><label>Chloride (Cl) <span class="unit">mmol/L</span></label><input type="number" id="cl" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 98–108</span></div>
+        <div class="field"><label>Bicarbonate (CO₂) <span class="unit">mmol/L</span></label><input type="number" id="co2" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 21–31</span></div>
+
         <div class="sec-sep">🫥 การทำงานของตับ (LFT)</div>
         <div class="field"><label>AST (SGOT) <span class="unit">U/L</span></label><input type="number" id="ast" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
         <div class="field"><label>ALT (SGPT) <span class="unit">U/L</span></label><input type="number" id="alt" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt;40</span></div>
@@ -352,6 +386,16 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
         <div class="field"><label>Hct — ฮีมาโตคริต <span class="unit">%</span></label><input type="number" id="hct" placeholder="0" step=".1"><span class="ref-hint">♂ 40–52 · ♀ 36–48</span></div>
         <div class="field"><label>WBC — เม็ดเลือดขาว <span class="unit">×10³/µL</span></label><input type="number" id="wbc" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 4.0–10.0</span></div>
         <div class="field"><label>Platelet — เกล็ดเลือด <span class="unit">×10³/µL</span></label><input type="number" id="plt" placeholder="0" step="1"><span class="ref-hint">ปกติ 150–400</span></div>
+        <div class="field"><label>RBC — เม็ดเลือดแดง <span class="unit">×10⁶/µL</span></label><input type="number" id="rbc" placeholder="0.00" step=".01"><span class="ref-hint">♂ 4.5–5.9 · ♀ 4.1–5.1</span></div>
+        <div class="field"><label>MCV <span class="unit">fl</span></label><input type="number" id="mcv" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 80–100</span></div>
+        <div class="field"><label>MCH <span class="unit">pg</span></label><input type="number" id="mch" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 26–34</span></div>
+        <div class="field"><label>MCHC <span class="unit">g/dL</span></label><input type="number" id="mchc" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 31–37</span></div>
+        <div class="field"><label>RDW <span class="unit">%</span></label><input type="number" id="rdw" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 11–16</span></div>
+        <div class="field"><label>Neutrophil <span class="unit">%</span></label><input type="number" id="neut" placeholder="0" step=".1"><span class="ref-hint">ปกติ 50–70</span></div>
+        <div class="field"><label>Lymphocyte <span class="unit">%</span></label><input type="number" id="lym" placeholder="0" step=".1"><span class="ref-hint">ปกติ 18–42</span></div>
+        <div class="field"><label>Monocyte <span class="unit">%</span></label><input type="number" id="mono" placeholder="0" step=".1"><span class="ref-hint">ปกติ 2–11</span></div>
+        <div class="field"><label>Eosinophil <span class="unit">%</span></label><input type="number" id="eos" placeholder="0" step=".1"><span class="ref-hint">ปกติ 1–10</span></div>
+        <div class="field"><label>Basophil <span class="unit">%</span></label><input type="number" id="baso" placeholder="0" step=".1"><span class="ref-hint">ปกติ 0–2</span></div>
 
         <div class="sec-sep">🦋 ฮอร์โมนไทรอยด์ (Thyroid)</div>
         <div class="field"><label>TSH <span class="unit">mIU/L</span></label><input type="number" id="tsh" placeholder="0.00" step=".01"><span class="ref-hint">ปกติ 0.4–4.0</span></div>
@@ -362,6 +406,27 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
         <div class="field"><label>Vitamin D — 25-OH <span class="unit">ng/mL</span></label><input type="number" id="vitd" placeholder="0" step=".1"><span class="ref-hint">≥30 เพียงพอ · 20–29 ไม่พอ · &lt;20 ขาด</span></div>
         <div class="field"><label>Ferritin — เฟอร์ริติน <span class="unit">ng/mL</span></label><input type="number" id="ferritin" placeholder="0" step="1"><span class="ref-hint">♂ 30–400 · ♀ 15–150</span></div>
         <div class="field" id="psa-field"><label>PSA <span class="unit">ng/mL</span> <span style="font-size:10px;color:var(--teal-dark)">(ชาย)</span></label><input type="number" id="psa" placeholder="0.0" step=".01"><span class="ref-hint">ปกติ &lt;4.0</span></div>
+        <div class="sec-sep">🧫 ผลตรวจปัสสาวะ (Urinalysis)</div>
+        <div class="field"><label>สี (Color)</label><input type="text" id="ua_color" placeholder="–"><span class="ref-hint">เหลือง</span></div>
+        <div class="field"><label>ลักษณะ (Appearance)</label><input type="text" id="ua_appear" placeholder="–"><span class="ref-hint">ใส</span></div>
+        <div class="field"><label>ความถ่วงจำเพาะ (Sp.Gr)</label><input type="text" id="ua_sg" placeholder="–"><span class="ref-hint">1.003–1.030</span></div>
+        <div class="field"><label>ความเป็นกรด-ด่าง (pH)</label><input type="text" id="ua_ph" placeholder="–"><span class="ref-hint">5.0–8.0</span></div>
+        <div class="field"><label>โปรตีน (Protein)</label><input type="text" id="ua_pro" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>น้ำตาล (Glucose)</label><input type="text" id="ua_glu" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>คีโตน (Ketone)</label><input type="text" id="ua_ket" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>เลือด (Blood)</label><input type="text" id="ua_blood" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>Leukocyte</label><input type="text" id="ua_leu" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>Nitrite</label><input type="text" id="ua_nit" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>Urobilinogen</label><input type="text" id="ua_uro" placeholder="–"><span class="ref-hint">Normal</span></div>
+        <div class="field"><label>Bilirubin (ปัสสาวะ)</label><input type="text" id="ua_bil" placeholder="–"><span class="ref-hint">Negative</span></div>
+        <div class="field"><label>WBC (กล้องจุลทรรศน์)</label><input type="text" id="ua_wbc" placeholder="–"><span class="ref-hint">0–5 /HPF</span></div>
+        <div class="field"><label>RBC (กล้องจุลทรรศน์)</label><input type="text" id="ua_rbc" placeholder="–"><span class="ref-hint">0–3 /HPF</span></div>
+        <div class="field"><label>Epithelial</label><input type="text" id="ua_epi" placeholder="–"><span class="ref-hint">0–5 /HPF</span></div>
+
+        <div class="sec-sep">🛡️ ผลการติดเชื้อ — ไวรัสตับอักเสบ บี (Serology)</div>
+        <div class="field"><label>HBsAg <span class="unit">เชื้อไวรัส</span></label><input type="text" id="hbsag" placeholder="–"><span class="ref-hint">Negative = ไม่ติดเชื้อ</span></div>
+        <div class="field"><label>Anti-HBs <span class="unit">ภูมิคุ้มกัน</span></label><input type="text" id="antihbs" placeholder="–"><span class="ref-hint">≥ 10 = มีภูมิ</span></div>
+
         <div class="field span3"><label>หมายเหตุ Lab</label><input type="text" id="tmNote" placeholder="เช่น ติดตาม PSA ทุกปี, Lp(a) สูง"></div>
       </div>
     </div>
@@ -1118,7 +1183,11 @@ var BASE_FIELDS=[
   'cid','bodyTypeGrid','bodyBalance','inbodyScore',
   /* ── Lab ── */
   'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','alp','ggt','tbili','dbili','tsh','albumin','psa','lpa','apob',
-  'hb','hct','wbc','plt','ft4','t3','vitd','ferritin','tmNote',
+  'hb','hct','wbc','plt','rbc','mcv','mch','mchc','rdw','neut','lym','mono','eos','baso',
+  'na','k','cl','co2',
+  'ua_color','ua_appear','ua_sg','ua_ph','ua_pro','ua_glu','ua_ket','ua_blood','ua_leu','ua_nit','ua_uro','ua_bil','ua_wbc','ua_rbc','ua_epi',
+  'hbsag','antihbs',
+  'ft4','t3','vitd','ferritin','tmNote',
   /* ── CV Risk / LDL Goal ── */
   'hasASCVD','hasFH','hasDMRisk','ckdStage','hasLungDisease','onStatin','ldlGoalCustom',
   'nonHdlGoalCustom','tcHdlGoalCustom','apobGoalCustom','bpGoalCustom','ldlInsufficient','lpaHigh','hasTG',
@@ -2477,6 +2546,130 @@ initDobDropdowns();
 initFirebase();
 calcIdeal();
 updateLdlGoal();
+
+/* ===== สแกนผลแล็บจากไฟล์ภาพ/PDF — ทำงานในเครื่อง ฟรี ไม่ต้องใช้ API key ===== */
+(function(){
+  var g=function(id){return document.getElementById(id);};
+  var filesEl=g('aiFiles'),runBtn=g('aiRunBtn'),statusEl=g('aiStatus'),listEl=g('aiFileList');
+  if(!filesEl||!runBtn) return;
+  var PDFJS_URL='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+  var PDFJS_WORKER='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  var TESS_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  var picked=[];
+  filesEl.addEventListener('change',function(){ picked=Array.prototype.slice.call(filesEl.files||[]); renderList(); if(picked.length) setStatus(picked.length+' ไฟล์พร้อมอ่าน — กดปุ่ม ✨ อ่านค่าอัตโนมัติ',''); });
+  function renderList(){ listEl.innerHTML=picked.map(function(f){return '<span class="ai-chip">'+((f.type||'').indexOf('pdf')>=0?'📄':'🖼️')+' '+f.name+'</span>';}).join(''); }
+  function setStatus(m,k){ statusEl.textContent=m; statusEl.className='ai-status'+(k?(' '+k):''); }
+  function loadScript(src){ return new Promise(function(res,rej){ var found=false; var sc=document.scripts; for(var i=0;i<sc.length;i++){if(sc[i].src===src){found=true;}} if(found)return res(); var s=document.createElement('script'); s.src=src; s.onload=function(){res();}; s.onerror=function(){rej(new Error('โหลดไลบรารีไม่สำเร็จ'));}; document.head.appendChild(s); }); }
+  function ensurePdf(){ return (window.pdfjsLib?Promise.resolve():loadScript(PDFJS_URL)).then(function(){ if(window.pdfjsLib&&window.pdfjsLib.GlobalWorkerOptions) window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER; }); }
+  function ensureTess(){ if(window.Tesseract)return Promise.resolve(); setStatus('กำลังโหลดตัวอ่านรูป (ครั้งแรกอาจช้า)...',''); return loadScript(TESS_URL); }
+  function readArrayBuffer(f){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){res(r.result);}; r.onerror=function(){rej(new Error('อ่านไฟล์ไม่สำเร็จ'));}; r.readAsArrayBuffer(f); }); }
+  function fileToImage(f){ return new Promise(function(res,rej){ var img=new Image(); img.onload=function(){res(img);}; img.onerror=function(){rej(new Error('โหลดรูปไม่สำเร็จ'));}; img.src=URL.createObjectURL(f); }); }
+  function upscale(img){ var maxSide=2200,scale=Math.min(3,Math.max(1,maxSide/Math.max(img.width,img.height)));
+    var cv=document.createElement('canvas'); cv.width=Math.round(img.width*scale); cv.height=Math.round(img.height*scale);
+    var ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high'; ctx.drawImage(img,0,0,cv.width,cv.height);
+    try{ var d=ctx.getImageData(0,0,cv.width,cv.height),p=d.data,i; for(i=0;i<p.length;i+=4){ var v=0.299*p[i]+0.587*p[i+1]+0.114*p[i+2]; p[i]=p[i+1]=p[i+2]=v; } ctx.putImageData(d,0,0); }catch(e){}
+    return cv; }
+  function pdfText(arrbuf){ return ensurePdf().then(function(){ return window.pdfjsLib.getDocument({data:arrbuf}).promise; }).then(function(pdf){
+      var lines=[],total=0,pages=[]; var chain=Promise.resolve();
+      for(var p=1;p<=pdf.numPages;p++){ (function(pn){ chain=chain.then(function(){ return pdf.getPage(pn); }).then(function(page){ pages.push(page); return page.getTextContent(); }).then(function(tc){
+        var rows={}; tc.items.forEach(function(it){ var s=it.str||''; if(!s.trim())return; var y=Math.round(it.transform[5]); (rows[y]=rows[y]||[]).push([it.transform[4],s]); total+=s.length; });
+        Object.keys(rows).map(Number).sort(function(a,b){return b-a;}).forEach(function(y){ var ln=rows[y].sort(function(a,b){return a[0]-b[0];}).map(function(x){return x[1];}).join(' ').replace(/\s+/g,' ').trim(); if(ln)lines.push(ln); });
+      }); })(p); }
+      return chain.then(function(){
+        if(total>=40) return lines.join('\n');
+        return ensureTess().then(function(){ return window.Tesseract.createWorker('eng'); }).then(function(worker){
+          var c2=Promise.resolve();
+          pages.forEach(function(page){ c2=c2.then(function(){ var vp=page.getViewport({scale:2}); var cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height; return page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise.then(function(){ return worker.recognize(cv); }).then(function(r){ (r.data.text||'').split(/\r?\n/).forEach(function(l){ if(l.trim())lines.push(l.trim()); }); }); }); });
+          return c2.then(function(){ return worker.terminate(); }).then(function(){ return lines.join('\n'); });
+        });
+      });
+    }); }
+  function imgText(file){ return ensureTess().then(function(){ return window.Tesseract.createWorker('eng'); }).then(function(worker){
+      return worker.setParameters({tessedit_pageseg_mode:'6'}).catch(function(){}).then(function(){ return fileToImage(file).then(function(img){return upscale(img);}).catch(function(){return file;}); }).then(function(srcImg){ return worker.recognize(srcImg); }).then(function(r){ return worker.terminate().then(function(){ return r.data.text||''; }); });
+    }); }
+  function run(){
+    if(!picked.length){ setStatus('ยังไม่ได้เลือกไฟล์ผลแล็บ','err'); return; }
+    runBtn.disabled=true; var ob=runBtn.textContent; runBtn.textContent='⏳ กำลังอ่าน...';
+    var allText=''; var chain=Promise.resolve();
+    picked.forEach(function(f){ chain=chain.then(function(){ setStatus('กำลังอ่าน: '+f.name+' ...',''); var isPdf=(f.type||'').indexOf('pdf')>=0||/\.pdf$/i.test(f.name);
+      return (isPdf?readArrayBuffer(f).then(pdfText):imgText(f)).then(function(t){ allText+='\n'+t; }); }); });
+    chain.then(function(){ fillFromObj(parseLabText(allText)); })
+      .catch(function(e){ console.error(e); setStatus('อ่านไม่สำเร็จ: '+(e.message||e)+' — ลองไฟล์ที่ชัดขึ้นหรือกรอกเอง','err'); })
+      .then(function(){ runBtn.disabled=false; runBtn.textContent=ob; });
+  }
+  /* key (จาก parser) -> field id ในฟอร์มนี้ */
+  var KEY2ID={tbil:'tbili',dbil:'dbili',alb:'albumin'};
+  var SKIP={egfr:1,nonhdl:1};
+  function fillFromObj(obj){
+    var n=0,k;
+    if(obj.visitDate && /^\d{4}-\d{2}-\d{2}$/.test(obj.visitDate)){ var v=g('visitDate'); if(v){ v.value=obj.visitDate; n++; } }
+    for(k in obj){ if(k==='visitDate'||SKIP[k])continue; if(obj[k]==null||String(obj[k]).trim()==='')continue;
+      var id=KEY2ID[k]||k; var el=g(id);
+      if(el){ el.value=String(obj[k]).trim(); el.classList.add('ai-filled'); n++; (function(e){setTimeout(function(){e.classList.remove('ai-filled');},2600);})(el); }
+    }
+    if(g('cr')&&obj.cr!=null&&typeof calcEgfr==='function'){ try{calcEgfr();}catch(e){} }
+    if(typeof updateNonHdlDisplay==='function'){ try{updateNonHdlDisplay();}catch(e){} }
+    if(typeof updateLdlGoal==='function'){ try{updateLdlGoal();}catch(e){} }
+    setStatus(n?('✓ กรอกให้แล้ว '+n+' ค่า — โปรดตรวจทานความถูกต้องก่อนบันทึก'):'ไม่พบค่าที่อ่านได้ — ลองไฟล์ที่ชัดขึ้น หรือกรอกเอง','ok');
+  }
+  runBtn.addEventListener('click',run);
+
+  /* ---- parseLabText : แกะค่าจากข้อความ (รองรับใบแล็บหลายร้าน) ---- */
+  function parseLabText(raw){
+    var out={}, lines=String(raw||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean), i;
+    for(i=0;i<lines.length;i++){ var dm=lines[i].match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(dm){ var y=+dm[3]; if(y>2400)y-=543; out.visitDate=y+'-'+('0'+dm[2]).slice(-2)+'-'+('0'+dm[1]).slice(-2); break; } }
+    var N='num',T='txt';
+    var defs=[
+      ['a1c',['%hba1c','hba1c'],N,'any'],['fbs',['glucose','fbs','fasting blood sugar'],N,'pre'],
+      ['tc',['cholesterol'],N,'any'],['tg',['triglycerides','triglyceride'],N,'any'],
+      ['hdl',['hdl-cholesterol','hdl-c','hdl'],N,'any'],['ldl',['ldl-c cal','ldl cholesterol','ldl-c','ldl'],N,'any'],
+      ['nonhdl',['non-hdl-c','non-hdl','non hdl','nonhdl'],N,'any'],
+      ['lpa',['lp(a)','lipoprotein(a)','lipoprotein (a)','lpa'],N,'any'],['apob',['apolipoprotein b','apo b','apob'],N,'any'],
+      ['cr',['creatinine'],N,'any'],['egfr',['egfr','gfr'],N,'any'],['upcr',['upcr','urine protein creatinine','protein creatinine ratio','upc ratio'],N,'any'],
+      ['na',['sodium','na+'],N,'any'],['k',['potassium','k+'],N,'any'],['cl',['chloride','cl-'],N,'any'],['co2',['co2','cco2','coz','hco3','bicarbonate','total co2','tco2'],N,'any'],
+      ['ast',['sgot/ast','ast (sgot)','ast/sgot','ast','sgot'],N,'any'],['alt',['sgpt/alt','alt (sgpt)','alt/sgpt','alt','sgpt'],N,'any'],
+      ['alp',['alp','alkaline phosphatase'],N,'any'],['ggt',['ggt','gamma-gt','gamma gt','ggtp'],N,'any'],
+      ['tbil',['total bilirubin','bilirubin total','bilirubin (total)','bilirubin รวม','tbil','t.bilirubin'],N,'any'],
+      ['dbil',['direct bilirubin','bilirubin direct','bilirubin (direct)','bilirubin ตรง','dbil','d.bilirubin'],N,'any'],
+      ['alb',['albumin'],N,'any'],
+      ['wbc',['wbc'],N,'pre'],['rbc',['rbc'],N,'pre'],['hb',['hb','hgb','hemoglobin','haemoglobin'],N,'pre'],['hct',['hct','hematocrit','haematocrit'],N,'pre'],
+      ['mcv',['mcv'],N,'pre'],['mchc',['mchc'],N,'pre'],['mch',['mch'],N,'pre'],['rdw',['rdw'],N,'pre'],['plt',['platelet count','platelet','plt'],N,'pre'],
+      ['neut',['%neutrophil','neutrophil','neut'],N,'pre'],['lym',['%lymphocyte','lymphocyte','lymph'],N,'pre'],['mono',['%monocyte','monocyte'],N,'pre'],['eos',['%eosinophil','eosinophil'],N,'pre'],['baso',['%basophil','basophil'],N,'pre'],
+      ['tsh',['tsh'],N,'any'],['ft4',['ft4','free t4','free thyroxine'],N,'any'],['t3',['t3','triiodothyronine'],N,'any'],
+      ['vitd',['25-oh','25-hydroxy','vitamin d','vit d'],N,'any'],['ferritin',['ferritin'],N,'any'],['psa',['psa','prostate specific antigen'],N,'any'],
+      ['ua_color',['color','colour'],T,'ua'],['ua_appear',['appearance'],T,'ua'],['ua_sg',['sp.gr','specific gravity'],T,'ua'],['ua_ph',['ph'],T,'ua'],
+      ['ua_pro',['protein'],T,'ua'],['ua_glu',['glucose'],T,'ua'],['ua_ket',['ketone'],T,'ua'],['ua_blood',['blood'],T,'ua'],
+      ['ua_leu',['leukocyte','leucocyte'],T,'ua'],['ua_nit',['nitrite'],T,'ua'],['ua_uro',['urobilinogen','urobilirubin','urobil'],T,'ua'],['ua_bil',['bilirubin'],T,'ua'],
+      ['ua_wbc',['wbc'],T,'ua'],['ua_rbc',['rbc'],T,'ua'],['ua_epi',['epithelial'],T,'ua'],
+      ['hbsag',['hbsag','hbs ag'],T,'any'],['antihbs',['anti-hbs','anti hbs','antihbs','hbsab'],T,'any']
+    ];
+    var inUA=false;
+    function titleCase(s){return /[a-z]/i.test(s)?(s.charAt(0).toUpperCase()+s.slice(1).toLowerCase()):s;}
+    lines.forEach(function(ln){
+      var low=ln.toLowerCase();
+      if(/urine analysis|urinalysis|ผลตรวจป|ปัสสาวะ/.test(low)) inUA=true;
+      var cleaned=low.replace(/^[\s%*•·\-–—]+/,'');
+      var best=null;
+      defs.forEach(function(def){ var key=def[0],aliases=def[1],type=def[2],sec=def[3];
+        if(sec==='pre'&&inUA)return; if(sec==='ua'&&!inUA)return;
+        aliases.forEach(function(a){ if(cleaned.indexOf(a)===0 && (!best||a.length>best.alen)) best={key:key,type:type,alen:a.length}; });
+      });
+      if(!best||out[best.key]!==undefined)return;
+      var rest=cleaned.slice(best.alen).replace(/\([^)]*\)/g,' ').trim();
+      if(best.type==='num'){
+        var val,toks=rest.split(/\s+/),j;
+        for(j=0;j<toks.length;j++){ if(/^-?\d+(?:\.\d+)?$/.test(toks[j])){ val=toks[j]; break; } }
+        if(val===undefined){ var m=rest.match(/(?:^|[^a-z\d])(-?\d+(?:\.\d+)?)(?![a-z])/i); if(m)val=m[1]; }
+        if(val!==undefined)out[best.key]=val;
+      } else {
+        var tok=(rest.split(/\s+/)[0]||'').replace(/[,;]+$/,'');
+        if(tok&&tok!=='-')out[best.key]=titleCase(tok);
+      }
+    });
+    if(out.nonhdl===undefined&&out.tc&&out.hdl){ var nv=parseFloat(out.tc)-parseFloat(out.hdl); if(!isNaN(nv))out.nonhdl=String(Math.round(nv)); }
+    return out;
+  }
+})();
 </script>
 </body>
 </html>
