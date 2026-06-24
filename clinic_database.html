@@ -21,7 +21,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 label,span,p,div{word-break:keep-all;overflow-wrap:break-word;}
-body{font-family:'Sarabun',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden;word-break:break-word;}
+body{font-family:'Sarabun',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;font-size:14px;overflow-x:clip;word-break:break-word;}
 header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:white;padding:0 20px;display:flex;align-items:center;gap:16px;min-height:68px;box-shadow:0 3px 16px rgba(26,155,140,.3);}
 .hdr-logo{display:flex;align-items:center;gap:12px;}
 .hdr-clinic .name{font-size:19px;font-weight:700;}
@@ -29,7 +29,7 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
 .hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;font-family:'IBM Plex Mono',monospace;}
 .hdr-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:18px;}
 #dbStatus{font-size:11px;}
-.container{max-width:1020px;margin:0 auto;padding:20px 20px;overflow-x:hidden;box-sizing:border-box;}
+.container{max-width:1020px;margin:0 auto;padding:20px 20px;overflow-x:clip;box-sizing:border-box;}
 .tabs{display:flex;border-bottom:2px solid var(--border);overflow-x:auto;}
 .tab-btn{padding:11px 22px;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
 .tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
@@ -194,6 +194,41 @@ input[type=radio],input[type=checkbox]{flex-shrink:0;}
 .ai-status.err{color:#B91C1C;font-weight:700;}
 .ai-note{font-size:11px;color:#94A3B8;margin-top:8px;line-height:1.45;}
 input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;transition:background .3s;}
+
+/* ── Section side navigation (entry tab) ── */
+.entry-layout{display:flex;gap:18px;align-items:flex-start;}
+.entry-content{flex:1;min-width:0;}
+.section-nav{position:sticky;top:14px;width:198px;flex-shrink:0;align-self:flex-start;
+  background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 10px;
+  box-shadow:0 4px 16px rgba(20,122,110,.06);max-height:calc(100vh - 28px);overflow:auto;}
+.snav-head{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;
+  padding:2px 8px 10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border-light);margin-bottom:8px;}
+.snav-head b{color:var(--teal-dark);font-size:13px;}
+.snav-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:9px;cursor:pointer;
+  text-decoration:none;border-left:3px solid transparent;margin-bottom:2px;transition:background .15s,border-color .15s;}
+.snav-item:hover{background:var(--cream);}
+.snav-num{flex-shrink:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#fff;background:var(--c,#94a3b8);}
+.snav-label{font-size:13px;font-weight:600;color:var(--text2);line-height:1.25;}
+.snav-item.active{background:var(--teal-light);border-left-color:var(--c,var(--teal));}
+.snav-item.active .snav-label{color:var(--teal-dark);font-weight:700;}
+.entry-content .card{scroll-margin-top:16px;}
+
+@media screen and (max-width:860px){
+  .entry-layout{flex-direction:column;gap:0;}
+  .section-nav{position:sticky;top:0;z-index:40;width:100%;max-height:none;overflow:visible;
+    border-radius:0 0 12px 12px;padding:8px 10px;margin-bottom:4px;
+    box-shadow:0 4px 12px rgba(0,0,0,.07);}
+  .snav-head{display:none;}
+  .snav-list{display:flex;flex-direction:row;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .snav-item{flex-direction:column;gap:3px;flex-shrink:0;border-left:none;border-bottom:3px solid transparent;
+    padding:5px 8px;min-width:54px;text-align:center;}
+  .snav-item:hover{background:transparent;}
+  .snav-label{font-size:10.5px;}
+  .snav-item.active{background:var(--teal-light);border-left:none;border-bottom-color:var(--c,var(--teal));}
+  .entry-content .card{scroll-margin-top:76px;}
+}
+@media print{.section-nav{display:none!important;}}
 </style>
 </head>
 <body>
@@ -259,8 +294,28 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
   <!-- ══ ENTRY TAB ══ -->
   <div class="tab-panel active" id="tab-entry">
 
+   <div class="entry-layout">
+    <!-- Section navigator -->
+    <aside class="section-nav" id="sectionNav" aria-label="เมนูส่วนต่างๆ">
+      <div class="snav-head">📑 ทั้งหมด <b>10</b> ส่วน</div>
+      <nav class="snav-list">
+        <a class="snav-item" data-target="sec-patient"  style="--c:#147A6E"><span class="snav-num">1</span><span class="snav-label">ข้อมูลผู้ป่วย</span></a>
+        <a class="snav-item" data-target="sec-inbody"   style="--c:#1A9B8C"><span class="snav-num">2</span><span class="snav-label">InBody</span></a>
+        <a class="snav-item" data-target="sec-lab"      style="--c:#2C5F8A"><span class="snav-num">3</span><span class="snav-label">Lab</span></a>
+        <a class="snav-item" data-target="sec-ldl"      style="--c:#7A4A00"><span class="snav-num">4</span><span class="snav-label">LDL Goal</span></a>
+        <a class="snav-item" data-target="sec-cvrisk"   style="--c:#B05000"><span class="snav-num">5</span><span class="snav-label">Thai CV Risk</span></a>
+        <a class="snav-item" data-target="sec-ekg"      style="--c:#1A6B8A"><span class="snav-num">6</span><span class="snav-label">EKG</span></a>
+        <a class="snav-item" data-target="sec-echo"     style="--c:#3A5A8A"><span class="snav-num">7</span><span class="snav-label">Echo</span></a>
+        <a class="snav-item" data-target="sec-vaccine"  style="--c:#3D7A5F"><span class="snav-num">8</span><span class="snav-label">วัคซีน</span></a>
+        <a class="snav-item" data-target="sec-followup" style="--c:#1A9B8C"><span class="snav-num">9</span><span class="snav-label">Follow-up</span></a>
+        <a class="snav-item" data-target="sec-advice"   style="--c:#4A3A8A"><span class="snav-num">10</span><span class="snav-label">คำแนะนำ</span></a>
+      </nav>
+    </aside>
+
+    <div class="entry-content">
+
     <!-- Patient Info -->
-    <div class="card">
+    <div class="card" id="sec-patient">
       <div class="card-title">👤 ข้อมูลผู้ป่วย</div>
       <div class="form-grid cols4">
         <div class="field"><label>รหัสประจำตัวคลินิก</label><input type="text" id="hn" placeholder="เช่น CP-001"></div>
@@ -294,7 +349,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- InBody -->
-    <div class="card">
+    <div class="card" id="sec-inbody">
       <div class="card-title"><span class="tag tag-teal">INBODY</span> ผลการวัดองค์ประกอบร่างกาย</div>
       <div class="form-grid cols3">
         <div class="field"><label>ส่วนสูง <span class="unit">cm</span></label><input type="number" id="height" placeholder="168" step=".1" oninput="calcIdeal();autoBMI()"></div>
@@ -332,7 +387,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- Lab -->
-    <div class="card">
+    <div class="card" id="sec-lab">
       <div class="card-title"><span class="tag tag-blue">LAB</span> ผลการตรวจเลือด</div>
 
       <div class="ai-fill" id="aiFill">
@@ -432,7 +487,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- LDL Goal Dual (ESC 2025 DLP + ACC 2026 DLP) -->
-    <div class="card">
+    <div class="card" id="sec-ldl">
       <div class="card-title"><span class="tag tag-cv">LDL Goal</span> เป้าหมาย LDL — ESC 2025 DLP &amp; ACC 2026 DLP</div>
       <div class="form-grid cols3">
 
@@ -686,7 +741,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
       </div>
     </div>
 
-<div class="card">
+<div class="card" id="sec-cvrisk">
       <div class="card-title"><span class="tag tag-cv">Thai CV Risk</span> ความเสี่ยงหัวใจและความดัน <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">ต้องการ: SBP + (TC หรือ LDL) + HDL</span></div>
       <div class="form-grid cols2">
         <div class="field"><label>SBP ความดันตัวบน <span class="unit">mmHg</span> <span style="color:var(--bad);font-size:10px;font-weight:700;">* จำเป็นสำหรับ Thai CV Risk</span></label><input type="number" id="sbp" placeholder="120" step="1" oninput="calcAllRiskScores()"><span class="ref-hint">ปกติ &lt;120</span></div>
@@ -752,7 +807,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- EKG -->
-    <div class="card">
+    <div class="card" id="sec-ekg">
       <div class="card-title"><span class="tag tag-ekg">EKG</span> ผลคลื่นไฟฟ้าหัวใจ</div>
       <div class="form-grid">
         <div class="field">
@@ -775,7 +830,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- Echo -->
-    <div class="card">
+    <div class="card" id="sec-echo">
       <div class="card-title"><span class="tag tag-echo"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;">
   <!-- Monitor -->
   <rect x="3" y="6" width="26" height="22" rx="3" fill="#546E7A" stroke="#263238" stroke-width="2.5"/>
@@ -862,13 +917,13 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- Vaccines -->
-    <div class="card">
+    <div class="card" id="sec-vaccine">
       <div class="card-title"><span class="tag tag-vax">วัคซีน</span> วัคซีนที่แนะนำ (Thai Guideline)</div>
       <div class="vax-grid" id="vaxGrid"></div>
     </div>
 
     <!-- Follow-up -->
-    <div class="card">
+    <div class="card" id="sec-followup">
       <div class="card-title">📅 Follow-up & Recommendations</div>
       <div class="form-grid cols3">
         <div class="field"><label>นัดครั้งถัดไป</label><input type="date" id="nextVisit"></div>
@@ -920,7 +975,7 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     </div>
 
     <!-- Advice -->
-    <div class="card">
+    <div class="card" id="sec-advice">
       <div class="card-title">💡 คำแนะนำจากแพทย์</div>
       <button class="advice-gen-btn" onclick="generateAdvice()">✨ สร้างคำแนะนำเบื้องต้นอัตโนมัติ</button>
       <div class="advice-preview" id="advicePreview">
@@ -973,6 +1028,8 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
       <button class="btn btn-secondary" onclick="clearForm()">🗑 ล้างข้อมูล</button>
       <button class="btn btn-primary" onclick="saveRecord()">💾 บันทึกลง Firebase</button>
     </div>
+    </div><!-- /entry-content -->
+   </div><!-- /entry-layout -->
   </div>
 
   <!-- ══ LIST TAB ══ -->
@@ -2669,6 +2726,59 @@ updateLdlGoal();
     if(out.nonhdl===undefined&&out.tc&&out.hdl){ var nv=parseFloat(out.tc)-parseFloat(out.hdl); if(!isNaN(nv))out.nonhdl=String(Math.round(nv)); }
     return out;
   }
+})();
+</script>
+
+<!-- ── Section navigator: click-to-scroll + scrollspy ── -->
+<script>
+(function(){
+  var navItems = Array.prototype.slice.call(document.querySelectorAll('.snav-item'));
+  if(!navItems.length) return;
+  var sections = navItems
+    .map(function(it){ return document.getElementById(it.dataset.target); })
+    .filter(Boolean);
+
+  function setActive(id){
+    navItems.forEach(function(it){
+      it.classList.toggle('active', it.dataset.target === id);
+    });
+  }
+
+  // Click → smooth scroll to the matching card
+  navItems.forEach(function(it){
+    it.addEventListener('click', function(e){
+      e.preventDefault();
+      var el = document.getElementById(it.dataset.target);
+      if(!el) return;
+      el.scrollIntoView({behavior:'smooth', block:'start'});
+      setActive(it.dataset.target);
+      // keep active pill in view on the mobile horizontal bar
+      if(window.matchMedia('(max-width:860px)').matches){
+        it.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+      }
+    });
+  });
+
+  // Scrollspy → highlight the section currently nearest the top
+  if('IntersectionObserver' in window){
+    var visible = {};
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        visible[en.target.id] = en.isIntersecting ? en.intersectionRatio : 0;
+      });
+      var topId=null, topY=Infinity;
+      sections.forEach(function(s){
+        if(visible[s.id]>0){
+          var y = s.getBoundingClientRect().top;
+          if(y < topY){ topY = y; topId = s.id; }
+        }
+      });
+      if(topId) setActive(topId);
+    }, {rootMargin:'-15% 0px -70% 0px', threshold:[0,0.01,0.25,0.5,1]});
+    sections.forEach(function(s){ obs.observe(s); });
+  }
+
+  setActive('sec-patient');
 })();
 </script>
 </body>
