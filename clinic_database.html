@@ -10,32 +10,46 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 :root{
-  --teal:#1A9B8C;--teal-dark:#147A6E;--teal-light:#E6F6F4;--teal-mid:#A8DDD8;
-  --cream:#F7F4EE;--cream2:#EDE9E0;--border:#D4CFC4;--border-light:#EAE6DE;
-  --text:#2C2820;--text2:#6B6057;
-  --ok:#1A7A4A;--ok-bg:#EDF7F2;
-  --warn:#C67B00;--warn-bg:#FFF8EC;
-  --high:#B05000;--high-bg:#FFF2E8;
-  --bad:#B01D1D;--bad-bg:#FFF2F2;
-  --accent:#2C5F8A;
+  --teal:#159A8B;--teal-dark:#0E6F63;--teal-deep:#0A544B;--teal-light:#E4F5F2;--teal-mid:#A2DAD3;
+  --cream:#F5F2EC;--cream2:#EBE7DE;--border:#D9D3C7;--border-light:#EBE7DF;
+  --text:#242019;--text2:#6B6157;
+  --ok:#177A48;--ok-bg:#EBF6F0;
+  --warn:#C07400;--warn-bg:#FFF7E9;
+  --high:#AE4C00;--high-bg:#FFF1E6;
+  --bad:#AF1B1B;--bad-bg:#FFF1F1;
+  --accent:#28587F;--accent-deep:#1D4260;
+  --shadow-sm:0 1px 2px rgba(24,20,15,.04),0 1px 3px rgba(24,20,15,.06);
+  --shadow-md:0 2px 6px rgba(24,20,15,.05),0 6px 18px rgba(24,20,15,.07);
+  --shadow-card:0 1px 2px rgba(20,111,99,.04),0 4px 16px rgba(20,111,99,.06);
+  --r-sm:8px;--r-md:12px;--r-lg:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 label,span,p,div{word-break:keep-all;overflow-wrap:break-word;}
-body{font-family:'Sarabun',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;font-size:14px;overflow-x:clip;word-break:break-word;}
-header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:white;padding:0 20px;display:flex;align-items:center;gap:16px;min-height:68px;box-shadow:0 3px 16px rgba(26,155,140,.3);}
-.hdr-logo{display:flex;align-items:center;gap:12px;}
-.hdr-clinic .name{font-size:19px;font-weight:700;}
-.hdr-clinic .sub{font-size:12px;opacity:.8;margin-top:2px;}
+body{font-family:'Sarabun',sans-serif;background:
+  radial-gradient(1200px 400px at 100% -5%,rgba(21,154,139,.06),transparent 60%),
+  var(--cream);color:var(--text);min-height:100vh;font-size:14px;overflow-x:clip;word-break:break-word;-webkit-font-smoothing:antialiased;}
+/* ECG pulse trace echoed faintly across the header — the clinic's signature motif */
+header{position:relative;background:linear-gradient(120deg,var(--teal-deep),var(--teal-dark) 55%,var(--teal));color:white;padding:0 22px;display:flex;align-items:center;gap:16px;min-height:72px;box-shadow:0 6px 22px rgba(10,84,75,.26);overflow:hidden;}
+header::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='72' viewBox='0 0 240 72'><path d='M0 40 H70 l6 -22 l7 40 l7 -30 l6 12 H240' fill='none' stroke='white' stroke-opacity='0.16' stroke-width='2'/></svg>");
+  background-repeat:repeat-x;background-position:right center;}
+header>*{position:relative;z-index:1;}
+.hdr-logo{display:flex;align-items:center;gap:13px;}
+.hdr-clinic .name{font-size:19px;font-weight:800;letter-spacing:.2px;}
+.hdr-clinic .sub{font-size:12px;opacity:.82;margin-top:2px;font-weight:500;}
 .hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;font-family:'IBM Plex Mono',monospace;}
-.hdr-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:5px 14px;border-radius:18px;}
+.hdr-badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.34);padding:5px 14px;border-radius:18px;font-weight:600;backdrop-filter:blur(2px);}
 #dbStatus{font-size:11px;}
 .container{max-width:1020px;margin:0 auto;padding:20px 20px;overflow-x:clip;box-sizing:border-box;}
-.tabs{display:flex;border-bottom:2px solid var(--border);overflow-x:auto;}
-.tab-btn{padding:11px 22px;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;}
-.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal);}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);overflow-x:auto;padding-bottom:0;}
+.tab-btn{padding:10px 20px;border:none;background:transparent;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;color:var(--text2);cursor:pointer;border-radius:10px 10px 0 0;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .18s;}
+.tab-btn:hover{color:var(--teal-dark);background:rgba(21,154,139,.06);}
+.tab-btn.active{color:var(--teal-dark);border-bottom-color:var(--teal);background:rgba(21,154,139,.09);}
 .tab-panel{display:none;} .tab-panel.active{display:block;}
-.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-top:16px;overflow:visible;}
-.card-title{font-size:15px;font-weight:700;color:var(--teal-dark);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.card{background:#fff;border:1px solid var(--border-light);border-radius:var(--r-md);padding:18px 20px;margin-top:16px;overflow:visible;box-shadow:var(--shadow-card);transition:box-shadow .2s;}
+.card:hover{box-shadow:var(--shadow-md);}
+.card-title{font-size:15px;font-weight:800;color:var(--teal-deep);margin-bottom:16px;padding-bottom:11px;padding-left:11px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;letter-spacing:.1px;}
+.card-title::before{content:"";position:absolute;left:0;top:1px;bottom:11px;width:3.5px;border-radius:3px;background:linear-gradient(var(--teal),var(--teal-dark));}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .cols2{grid-template-columns:repeat(2,minmax(0,1fr));}
 .cols3{grid-template-columns:repeat(3,minmax(0,1fr));}
@@ -44,8 +58,9 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
 .field{display:flex;flex-direction:column;gap:5px;;min-width:0;}
 .field label{font-size:10.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;line-height:1.4;display:block;margin-bottom:4px;}
 .field label .unit{font-weight:400;text-transform:none;font-size:10px;margin-left:3px;opacity:.7;}
-.field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--text);background:var(--cream);outline:none;transition:border-color .2s;}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);background:white;}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;font-family:'Sarabun',sans-serif;font-size:14px;color:var(--text);background:#FCFBF8;outline:none;transition:border-color .18s,box-shadow .18s,background .18s;}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:var(--teal-mid);}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 3px rgba(21,154,139,.14);}
 .field input[type="number"]{font-family:'IBM Plex Mono',monospace;}
 .ref-hint{font-size:10px;color:var(--text2);opacity:.7;font-family:'IBM Plex Mono',monospace;}
 .sec-sep{grid-column:1/-1;border-top:1px dashed var(--border);padding:10px 0 4px 2px;margin-top:2px;font-size:11px;font-weight:700;color:var(--teal-dark);text-transform:uppercase;letter-spacing:.8px;}
@@ -101,10 +116,12 @@ header{background:linear-gradient(135deg,var(--teal-dark),var(--teal));color:whi
 .doc-btn.selected{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark);}
 /* Buttons */
 .btn-row{display:flex;gap:12px;margin-top:20px;justify-content:flex-end;padding:0 2px;}
-.btn{padding:11px 24px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
-.btn-primary{background:var(--teal);color:white;}
-.btn-primary:hover{background:var(--teal-dark);}
-.btn-secondary{background:var(--cream2);color:var(--text);border:1.5px solid var(--border);}
+.btn{padding:11px 24px;border-radius:var(--r-sm);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .18s;}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:white;box-shadow:0 2px 8px rgba(14,111,99,.28);}
+.btn-primary:hover{background:linear-gradient(135deg,var(--teal-dark),var(--teal-deep));box-shadow:0 4px 14px rgba(14,111,99,.34);transform:translateY(-1px);}
+.btn-primary:active{transform:translateY(0);box-shadow:0 1px 4px rgba(14,111,99,.28);}
+.btn-secondary{background:#fff;color:var(--text);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--teal-mid);background:var(--teal-light);}
 /* List */
 .pt-table{width:100%;border-collapse:collapse;font-size:13px;}
 .pt-table th{background:var(--cream);padding:9px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);}
@@ -352,10 +369,9 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
     <div class="card" id="sec-inbody">
       <div class="card-title"><span class="tag tag-teal">INBODY</span> ผลการวัดองค์ประกอบร่างกาย</div>
       <div class="form-grid cols3">
+        <div class="sec-sep">ค่าวัดเอง (สายวัด · ส่วนสูง)</div>
         <div class="field"><label>ส่วนสูง <span class="unit">cm</span></label><input type="number" id="height" placeholder="168" step=".1" oninput="calcIdeal();autoBMI()"></div>
-        <div class="field"><label>น้ำหนัก <span class="unit">kg</span></label><input type="number" id="weight" placeholder="0.0" step=".1" oninput="autoBMI()"></div>
-        <div class="field"><label>BMI <span class="unit">(อัตโนมัติ)</span></label><input type="number" id="bmi" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 18.5–22.9</span></div>
-        <div class="field"><label>% ไขมัน <span class="unit">%</span></label><input type="number" id="pbf" placeholder="0.0" step=".1"><span class="ref-hint">ชาย&lt;25 / หญิง&lt;35</span></div>
+        <div class="field"><label>รอบเอว Waist <span class="unit">cm</span></label><input type="number" id="waist" placeholder="0.0" step=".1"><span class="ref-hint">วัดเอง · ชาย&lt;90 / หญิง&lt;80</span></div>
         <div class="ideal-panel">
           <div class="ip-title">📐 ค่าเป้าหมาย (คำนวณจากส่วนสูง & เพศ)</div>
           <div class="ideal-grid">
@@ -365,24 +381,30 @@ input.ai-filled{background:#ECFDF5!important;border-color:#34D399!important;tran
             <div class="ideal-item"><div class="il-label">🔥 % ไขมันเป้าหมาย</div><div class="il-val" id="idealFatVal">—</div><div class="il-sub" id="idealFatRange">กรอกเพศก่อน</div></div>
           </div>
         </div>
-        <div class="sec-sep">ส่วนประกอบร่างกาย</div>
+        <div class="sec-sep">InBody — เรียงตามลำดับแอป (H30)</div>
+        <div class="field"><label>InBody Score <span class="unit">0–100</span></label><input type="number" id="inbodyScore" placeholder="0–100" step="1" min="0" max="100"><span class="ref-hint">ดี ≥80</span></div>
+        <div class="field"><label>น้ำหนัก <span class="unit">kg</span></label><input type="number" id="weight" placeholder="0.0" step=".1" oninput="autoBMI()"></div>
         <div class="field"><label>SMM Skeletal Muscle <span class="unit">kg</span></label><input type="number" id="smm" placeholder="0.0" step=".1"></div>
-        <div class="field"><label>Soft Lean Mass <span class="unit">kg</span></label><input type="number" id="slm" placeholder="0.0" step=".1"></div>
+        <div class="field"><label>SMM ปกติ–ต่ำ <span class="unit">kg</span></label><input type="number" id="smmRefLo" placeholder="—" step=".1"><span class="ref-hint">เว้นว่าง = ใช้สูตรโปรแกรม</span></div>
+        <div class="field"><label>SMM ปกติ–สูง <span class="unit">kg</span></label><input type="number" id="smmRefHi" placeholder="—" step=".1"></div>
         <div class="field"><label>มวลไขมัน BFM <span class="unit">kg</span></label><input type="number" id="bfm" placeholder="0.0" step=".1"></div>
-        <div class="field"><label>VFL ไขมันช่องท้อง <span class="unit">level</span></label><input type="number" id="vfl" placeholder="0" step="1"><span class="ref-hint">ปกติ ≤10</span></div>
-        <div class="field"><label>BMR เผาผลาญ <span class="unit">kcal</span></label><input type="number" id="bmr" placeholder="0" step="1"></div>
-        <div class="field"><label>WHR เอว/สะโพก</label><input type="number" id="whr" placeholder="0.00" step=".01"><span class="ref-hint">ชาย&lt;0.90 / หญิง&lt;0.85</span></div>
-        <div class="sec-sep">InBody Analysis</div>
+        <div class="field"><label>BFM ปกติ–ต่ำ <span class="unit">kg</span></label><input type="number" id="bfmRefLo" placeholder="—" step=".1"><span class="ref-hint">เว้นว่าง = ใช้สูตรโปรแกรม</span></div>
+        <div class="field"><label>BFM ปกติ–สูง <span class="unit">kg</span></label><input type="number" id="bfmRefHi" placeholder="—" step=".1"></div>
         <div class="field"><label>CID ประเภทร่างกาย</label>
           <select id="cid"><option value="">-- เลือก --</option><option value="I-Type">I-Type (สมดุล)</option><option value="C-Type Weak">C-Type Weak</option><option value="Above Avg Weak C-Type">Above Avg Weak C-Type</option><option value="D-Type">D-Type (กล้ามเนื้อสูง)</option><option value="Slim">Slim (ผอม)</option><option value="Sarcopenic Obesity">Sarcopenic Obesity</option></select>
         </div>
+        <div class="field"><label>BMI <span class="unit">(อัตโนมัติ)</span></label><input type="number" id="bmi" placeholder="0.0" step=".1"><span class="ref-hint">ปกติ 18.5–22.9</span></div>
+        <div class="field"><label>% ไขมัน <span class="unit">%</span></label><input type="number" id="pbf" placeholder="0.0" step=".1"><span class="ref-hint">ชาย 10–20 / หญิง 18–28</span></div>
+        <div class="field"><label>WHR เอว/สะโพก</label><input type="number" id="whr" placeholder="0.00" step=".01"><span class="ref-hint">ชาย&lt;0.90 / หญิง&lt;0.85</span></div>
+        <div class="field"><label>VFL ไขมันช่องท้อง <span class="unit">level</span></label><input type="number" id="vfl" placeholder="0" step="1"><span class="ref-hint">ปกติ &lt; 10</span></div>
+        <div class="field"><label>BMR เผาผลาญ <span class="unit">kcal</span></label><input type="number" id="bmr" placeholder="0" step="1"></div>
         <div class="field"><label>Body Type (Grid)</label>
           <select id="bodyTypeGrid"><option value="">-- เลือก --</option><option>Athletic</option><option>Overweight</option><option>Obesity</option><option>Muscular</option><option>Average</option><option>Mild Obesity</option><option>Slim Muscular</option><option>Slim</option><option>Sarcopenic Obesity</option><option>Thin</option><option>Slightly Thin</option></select>
         </div>
         <div class="field"><label>Body Balance</label>
-          <select id="bodyBalance"><option value="">-- เลือก --</option><option value="Balanced">Balanced</option><option value="Upper Heavy">Upper Heavy</option><option value="Lower Heavy">Lower Heavy</option></select>
+          <select id="bodyBalance"><option value="">-- เลือก --</option><option value="Balanced">Balanced</option><option value="Upper Heavy">Upper Heavy</option><option value="Lower Heavy">Lower Heavy</option><option value="Unbalanced">Unbalanced</option></select>
         </div>
-        <div class="field"><label>InBody Score <span class="unit">0–100</span></label><input type="number" id="inbodyScore" placeholder="0–100" step="1" min="0" max="100"><span class="ref-hint">ดี ≥70</span></div>
+        <div class="field"><label>Soft Lean Mass <span class="unit">kg</span></label><input type="number" id="slm" placeholder="0.0" step=".1"></div>
       </div>
     </div>
 
@@ -1236,7 +1258,7 @@ var BASE_FIELDS=[
   /* ── Patient info ── */
   'hn','visitDate','fullName','dob','dobDate','gender','doctor','note',
   /* ── InBody ── */
-  'height','weight','bmi','smm','slm','bfm','pbf','vfl','bmr','whr',
+  'height','weight','bmi','smm','slm','bfm','pbf','vfl','bmr','whr','waist','smmRefLo','smmRefHi','bfmRefLo','bfmRefHi',
   'cid','bodyTypeGrid','bodyBalance','inbodyScore',
   /* ── Lab ── */
   'fbs','a1c','ldl','tc','hdl','tg','cr','upcr','ast','alt','alp','ggt','tbili','dbili','tsh','albumin','psa','lpa','apob',
@@ -1510,9 +1532,10 @@ function calcIdeal(){
     document.getElementById('idealWeightRange').textContent='กรอกส่วนสูงก่อน';
   }
   if(h>0&&g){
-    var iBW=20.7*hm*hm;
-    var pL=g==='หญิง'?.28:.38,pH=g==='หญิง'?.39:.54;
-    var mL=(iBW*pL).toFixed(1),mH=(iBW*pH).toFixed(1),mM=((+mL+ +mH)/2).toFixed(1);
+    var wStd=22*hm*hm;
+    var smmFrac=g==='หญิง'?0.42:0.50;
+    var smmStd=wStd*smmFrac;
+    var mL=(smmStd*0.90).toFixed(1),mH=(smmStd*1.10).toFixed(1),mM=smmStd.toFixed(1);
     document.getElementById('idealMuscleVal').textContent=mM+' kg';
     document.getElementById('idealMuscleRange').textContent='ช่วง '+mL+'–'+mH+' kg';
   } else {
@@ -1699,7 +1722,7 @@ function genAutoSummary(){
   var age=extractAge(val('dob'))||50;
   var g=val('gender')||'';
 
-  if(sc){var n=+sc; lines.push('⚖️ InBody Score: '+n+'/100 — '+(n>=70?'องค์ประกอบร่างกายอยู่ในเกณฑ์ดี':n>=50?'องค์ประกอบร่างกายพอใช้ ควรปรับพฤติกรรม':'องค์ประกอบร่างกายต่ำ ควรปรับปรุงเร่งด่วน'));}
+  if(sc){var n=+sc; lines.push('⚖️ InBody Score: '+n+'/100 — '+(n>=80?'องค์ประกอบร่างกายอยู่ในเกณฑ์ดี':n>=70?'องค์ประกอบร่างกายพอใช้ ควรปรับพฤติกรรม':'องค์ประกอบร่างกายต่ำ ควรปรับปรุงเร่งด่วน'));}
   if(bmi){lines.push('📏 BMI: '+bmi+' กก./ม.² — '+(bmi<18.5?'น้ำหนักน้อยเกิน':bmi<23?'ปกติ':bmi<27.5?'น้ำหนักเกิน':'อ้วน'));}
   if(fbs||a1c){var ok=(+fbs<=125||!fbs)&&(+a1c<7.0||!a1c);lines.push('🩸 น้ำตาล: '+(fbs?'FBS '+fbs+' มก./ดล. ':'')+(a1c?'HbA1c '+a1c+'% ':'')+' — '+(ok?'อยู่ในเกณฑ์ดี':'ยังสูงกว่าเป้าหมาย ควรปรับยาและอาหาร'));}
   if(ldl&&ldlGoalTxt){
@@ -2031,9 +2054,9 @@ function calcAllRiskScores(){ if(typeof calcEgfr==="function")calcEgfr();
     var s2Sel=document.getElementById('score2val');
     if(s2Sel){
       var s2v;
-      if(age>=70){ s2v = s2>=15?'gte20' : s2>=7.5?'gte10' : s2>=7.5?'2to10':'lt2'; if(s2>=7.5&&s2<15)s2v='gte10'; if(s2<7.5)s2v='lt2'; }
-      else if(age>=50){ s2v = s2>=10?'gte10' : s2>=5?'2to10' : 'lt2'; }
-      else { s2v = s2>=7.5?'gte10' : s2>=2.5?'2to10' : 'lt2'; }
+      if(age>=70){ s2v = s2>=15?'gte10' : s2>=7.5?'2to10' : 'lt2'; }   /* SCORE2-OP: สูง≥15 · ปานกลาง 7.5–15 · ต่ำ<7.5 */
+      else if(age>=50){ s2v = s2>=10?'gte10' : s2>=5?'2to10' : 'lt2'; } /* SCORE2 50–69: สูง≥10 · ปานกลาง 5–10 */
+      else { s2v = s2>=7.5?'gte10' : s2>=2.5?'2to10' : 'lt2'; }         /* SCORE2 <50: สูง≥7.5 · ปานกลาง 2.5–7.5 */
       /* Note: 'gte20' reserved for clinically-determined very-high; SCORE2 high band maps to gte10 */
       s2Sel.value=s2v;
     }
@@ -2099,6 +2122,10 @@ function calcAllRiskScores(){ if(typeof calcEgfr==="function")calcEgfr();
     '✅ คำนวณจาก: อายุ '+age+'ปี, '+gender+', SBP '+sbp+', TC '+tc+', HDL '+hdl+(smk?' สูบบุหรี่':'')+(dm?' DM':'');
 }
 
+/* เกณฑ์ Severe Hypercholesterolemia (LDL สูงมาก → จัดเป็นความเสี่ยงสูง เป้าหมาย < 70)
+   ค่ามาตรฐานตาม ESC/ACC = 190 mg/dL (4.9 mmol/L)
+   ★ ถ้าคลินิกต้องการใช้ >180 ให้เปลี่ยนเลขบรรทัดนี้เป็น 180 ★ */
+var SEVERE_HC_LDL = 190;
 function updateLdlGoal(){
   var ldl=parseFloat(val('ldl'))||0;
   var tc=parseFloat(val('tc'))||0;
@@ -2141,7 +2168,7 @@ function updateLdlGoal(){
     else if(ascvdYes&&hasFH) escBasis='ASCVD + FH';
     else escBasis='Very High Risk';
   } else if(ascvdYes || hasFH ||
-            ldl>=190 || tc>=310 || sbp>=180 ||
+            ldl>=SEVERE_HC_LDL || tc>=310 || sbp>=180 ||
             dmRisk==='dm-rf' ||
             ckd==='ckd3' || ckd==='ckd4' ||
             score2==='gte10' || lpaHigh){
@@ -2150,7 +2177,7 @@ function updateLdlGoal(){
     var escParts=[];
     if(ascvdYes) escParts.push('ASCVD');
     if(hasFH) escParts.push('HeFH');
-    if(ldl>=190) escParts.push('LDL ≥190 mg/dL');
+    if(ldl>=SEVERE_HC_LDL) escParts.push('LDL ≥'+SEVERE_HC_LDL+' mg/dL');
     if(tc>=310) escParts.push('TC ≥310 mg/dL');
     if(sbp>=180) escParts.push('BP ≥180 mmHg');
     if(dmRisk==='dm-rf') escParts.push('DM + RF');
@@ -2184,21 +2211,18 @@ function updateLdlGoal(){
     ahaLevel='Clinical ASCVD'; ahaColor='#DC2626';
     ahaGoal='< 70 mg/dL'; ahaPct='≥50% LDL reduction';
     ahaBasis='High-intensity statin · Non-HDL <100';
-  } else if(ldl>=190&&ascvdYes){
-    /* Severe HC + ASCVD */
-    ahaLevel='Severe HC + ASCVD'; ahaColor='#B91C1C';
-    ahaGoal='< 55 mg/dL'; ahaPct='≥50% reduction';
-    ahaBasis='Severe hypercholesterolemia + clinical ASCVD';
-  } else if(ldl>=190&&(hasFH||lpaHigh||tgHigh||smk)){
-    /* Severe HC + risk factors */
-    ahaLevel='Severe HC + Risk Factors'; ahaColor='#DC2626';
-    ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
-    ahaBasis='LDL ≥190 mg/dL + FH / Lp(a) / RF · ezetimibe + PCSK9i';
-  } else if(ldl>=190){
-    /* Severe HC without ASCVD or RF */
-    ahaLevel='Severe Hypercholesterolemia'; ahaColor='#EA580C';
-    ahaGoal='< 100 mg/dL'; ahaPct='Max tolerated statin';
-    ahaBasis='LDL ≥190 mg/dL · rule out secondary causes + cascade screen';
+  } else if(ldl>=SEVERE_HC_LDL){
+    /* Severe hypercholesterolemia (LDL ≥190) — จัดเป็นความเสี่ยงสูง → เป้าหมาย < 70
+       (เริ่ม high-intensity statin ทันทีโดยไม่ต้องคำนวณ risk score) */
+    if(hasFH||lpaHigh||tgHigh||smk){
+      ahaLevel='Severe HC + Risk Factors'; ahaColor='#B91C1C';
+      ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
+      ahaBasis='LDL ≥'+SEVERE_HC_LDL+' mg/dL + FH / Lp(a) / RF · high-intensity statin + ezetimibe/PCSK9i';
+    } else {
+      ahaLevel='Severe Hypercholesterolemia'; ahaColor='#DC2626';
+      ahaGoal='< 70 mg/dL'; ahaPct='≥50% reduction';
+      ahaBasis='LDL ≥'+SEVERE_HC_LDL+' mg/dL · high-intensity statin (จัดเป็นความเสี่ยงสูง) · หา secondary cause + cascade screen';
+    }
   } else if(dmRisk==='dm-organ'||(dmRisk!=='no'&&(prevent==='gte10'||lpaHigh||tgHigh))){
     /* DM with ASCVD RF or modifiers */
     ahaLevel='DM + Risk Factors'; ahaColor='#C2410C';
@@ -2295,7 +2319,7 @@ function renderList(){
       <td><strong>${r.fullName||'-'}</strong><br><small style="color:var(--text2)">${r.note||''}</small></td>
       <td>${r.visitDate||'-'}</td>
       <td style="font-family:monospace">${r.weight?r.weight+' kg':'-'}</td>
-      <td style="font-family:monospace;font-weight:700;color:${+r.inbodyScore>=70?'var(--ok)':+r.inbodyScore>=50?'var(--warn)':'var(--bad)'}">${r.inbodyScore||'-'}</td>
+      <td style="font-family:monospace;font-weight:700;color:${+r.inbodyScore>=80?'var(--ok)':+r.inbodyScore>=70?'var(--warn)':'var(--bad)'}">${r.inbodyScore||'-'}</td>
       <td style="font-family:monospace">${r.fbs||'-'}</td>
       <td style="font-family:monospace">${r.a1c||'-'}</td>
       <td style="font-size:12px">${(r.doctor||'').replace('พญ.','').split(' ')[0]||'-'}</td>
@@ -2514,7 +2538,7 @@ function generateAdvice(){
   }
 
   var ex=[];
-  if(bmi>=27.5||vfl>10){
+  if(bmi>=27.5||vfl>=10){
     ex.push('🚶 เดินเร็ว 45–60 นาที ≥5 วัน/สัปดาห์ (~'+Math.round(w*.065*50)+' แคลอรี/ครั้ง)');
     ex.push('🚴 ว่ายน้ำหรือปั่นจักรยาน 30 นาที/ครั้ง (~'+Math.round(w*.08*30)+' แคลอรี/ครั้ง)');
   } else {

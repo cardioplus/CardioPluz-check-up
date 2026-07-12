@@ -13,9 +13,9 @@
 
 /* ══ TOKENS ══ */
 :root{
-  --teal:#1A9B8C;--teal-dk:#147A6E;--teal-lt:#E8F5F3;--teal-md:#A8DDD8;
+  --teal:#159A8B;--teal-dk:#0E6F63;--teal-deep:#0A544B;--teal-lt:#E4F5F2;--teal-md:#A2DAD3;
   --navy:#1B3A5C;--navy-lt:#EBF0F7;
-  --cream:#F8F5F0;--cream2:#F0EDE8;--cream3:#FAF8F5;
+  --cream:#F6F3EE;--cream2:#EFEBE4;--cream3:#FAF8F5;
   --border:#DDD8D0;--bl:#EAE6DE;--shadow:0 2px 8px rgba(0,0,0,.07);
   --text:#1E1A16;--text2:#5A524A;--text3:#9A9088;
   --ok:#16A34A;--ok-bg:#F0FDF4;--ok-md:#86EFAC;
@@ -40,24 +40,24 @@ body{
 /* ══ PAGE ══ */
 .px-page{
   background:white;
-  border-radius:12px;
+  border-radius:16px;
   padding:28px 32px;
   margin-bottom:20px;
-  box-shadow:0 2px 16px rgba(0,0,0,.08);
-  border:1px solid var(--border);
+  box-shadow:0 1px 3px rgba(20,111,99,.05),0 10px 30px rgba(20,111,99,.08);
+  border:1px solid var(--bl);
 }
 
 /* ══ HEADER ══ */
 .px-header{
   display:flex;align-items:center;gap:16px;
   padding-bottom:16px;
-  border-bottom:3px solid var(--teal);
+  border-bottom:2.5px solid var(--teal);
   margin-bottom:16px;
 }
-.px-header-brand{display:flex;align-items:center;gap:10px;flex:1;}
-.px-logo-wrap svg,.px-logo-wrap img{width:44px;height:44px;}
-.px-clinic-name{font-size:23.5px;font-weight:800;color:var(--teal);letter-spacing:.2px;}
-.px-clinic-sub{font-size:14.5px;color:var(--text2);}
+.px-header-brand{display:flex;align-items:center;gap:11px;flex:1;}
+.px-logo-wrap svg,.px-logo-wrap img{width:46px;height:46px;}
+.px-clinic-name{font-size:23.5px;font-weight:900;color:var(--teal-dk);letter-spacing:.2px;}
+.px-clinic-sub{font-size:13px;color:var(--text2);font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
 .px-header-title{flex:1;text-align:center;}
 .px-report-label{font-size:26px;font-weight:900;color:var(--navy);letter-spacing:1px;}
 .px-report-sub{font-size:14.5px;color:var(--text2);margin-top:2px;}
@@ -767,7 +767,7 @@ var DEMO={
   doctor:'พญ.ณัฏฐา อานนทวีศิลป์',note:'DM, HT, Dyslipidemia',
   height:'158',weight:'60.9',bmi:'24.4',
   smm:'21.4',slm:'37.5',muscle:'39.5',bfm:'21.0',
-  pbf:'34.5',vfl:'9',bmr:'1232',whr:'0.85',
+  pbf:'34.5',vfl:'9',bmr:'1232',whr:'0.85',waist:'86',
   cid:'Above Avg Weak C-Type',bodyTypeGrid:'Obesity',bodyBalance:'Balanced',
   inbodyScore:'71',
   fbs:'118',a1c:'6.8',ldl:'145',tc:'210',hdl:'38',tg:'185',
@@ -821,11 +821,11 @@ var DEMO={
   }
 };
 var DEMO_HIST=[
-  {visitDate:'2567-05-10',weight:'64.0',bmi:'25.7',pbf:'36.0',vfl:'11',smm:'20.5',inbodyScore:'62',fbs:'135',a1c:'7.5',ldl:'162',ast:'45',alt:'52'},
-  {visitDate:'2567-08-12',weight:'63.5',bmi:'25.5',pbf:'35.5',vfl:'10',smm:'20.8',inbodyScore:'64',fbs:'128',a1c:'7.2',ldl:'155',ast:'40',alt:'46'},
-  {visitDate:'2567-11-15',weight:'62.8',bmi:'25.2',pbf:'35.0',vfl:'10',smm:'21.0',inbodyScore:'66',fbs:'122',a1c:'7.0',ldl:'150',ast:'36',alt:'42'},
-  {visitDate:'2568-02-10',weight:'61.5',bmi:'24.6',pbf:'34.8',vfl:'9',smm:'21.2',inbodyScore:'68',fbs:'120',a1c:'6.9',ldl:'148',ast:'34',alt:'40'},
-  {visitDate:'2568-05-10',weight:'60.9',bmi:'24.4',pbf:'34.5',vfl:'9',smm:'21.4',inbodyScore:'71',fbs:'118',a1c:'6.8',ldl:'145',ast:'32',alt:'38'}
+  {visitDate:'2567-05-10',weight:'64.0',bmi:'25.7',pbf:'36.0',vfl:'11',smm:'20.5',waist:'92',inbodyScore:'62',fbs:'135',a1c:'7.5',ldl:'162',ast:'45',alt:'52'},
+  {visitDate:'2567-08-12',weight:'63.5',bmi:'25.5',pbf:'35.5',vfl:'10',smm:'20.8',waist:'91',inbodyScore:'64',fbs:'128',a1c:'7.2',ldl:'155',ast:'40',alt:'46'},
+  {visitDate:'2567-11-15',weight:'62.8',bmi:'25.2',pbf:'35.0',vfl:'10',smm:'21.0',waist:'90',inbodyScore:'66',fbs:'122',a1c:'7.0',ldl:'150',ast:'36',alt:'42'},
+  {visitDate:'2568-02-10',weight:'61.5',bmi:'24.6',pbf:'34.8',vfl:'9',smm:'21.2',waist:'88',inbodyScore:'68',fbs:'120',a1c:'6.9',ldl:'148',ast:'34',alt:'40'},
+  {visitDate:'2568-05-10',weight:'60.9',bmi:'24.4',pbf:'34.5',vfl:'9',smm:'21.4',waist:'86',inbodyScore:'71',fbs:'118',a1c:'6.8',ldl:'145',ast:'32',alt:'38'}
 ];
 
 function getRec(){try{var s=localStorage.getItem('cardio_print_rec');if(s)return JSON.parse(s);}catch(e){}return DEMO;}
@@ -943,7 +943,9 @@ function calcLdlGoal(r){
   var prevent=r.preventRisk||'';
   var lpaHigh=(r.lpaHigh==='yes')||(lpa>=50);
   var tgHigh=(r.hasTG==='yes')||(tg>=150);
-  var ldlOver190=ldlVal>=190;
+  /* เกณฑ์ Severe Hypercholesterolemia = 190 mg/dL (ESC/ACC) — เปลี่ยนเป็น 180 ได้ถ้าต้องการ */
+  var SEVERE_HC_LDL=190;
+  var ldlOver190=ldlVal>=SEVERE_HC_LDL;
 
   /* ESC 2025 DLP */
   var escGoal='',escLevel='',escPct='',escBasis='';
@@ -1301,9 +1303,9 @@ function scoreSVG(score){
      Score 0-100 fills 0-270° of the arc.
      All text is INSIDE the circle, nothing overlaps the arc tip. */
   var sc=parseInt(score)||0;
-  var hex=sc>=70?'#1A7A4A':sc>=50?'#C67B00':'#B01D1D';
-  var bgFill=sc>=70?'#EDF7F2':sc>=50?'#FFF8EC':'#FFF2F2';
-  var desc=sc>=70?'ดี':sc>=50?'พอใช้':'ควรปรับปรุง';
+  var hex=sc>=80?'#1A7A4A':sc>=70?'#C67B00':'#B01D1D';
+  var bgFill=sc>=80?'#EDF7F2':sc>=70?'#FFF8EC':'#FFF2F2';
+  var desc=sc>=80?'ดี':sc>=70?'พอใช้':'ควรปรับปรุง';
 
   var W=148,H=140,cx=74,cy=80,R=54,sw=11;
   /* start=225°, sweep=270° CW (SVG sweep-flag=1) */
@@ -1494,24 +1496,49 @@ function cvLegendHTML(){
 }
 
 /* ── IDEAL CALC ── */
-function calcIdeal(h,g){
-  var hm=+h/100; if(!hm)return{wRange:'—',wMid:null,mRange:'—',mMid:null,fat:'—'};
-  var female=(g==='หญิง');
-  /* Weight: healthy BMI 18.5-22.9 (Asian) */
-  var wLo=18.5*hm*hm, wHi=22.9*hm*hm;
-  var wL=wLo.toFixed(1),wH=wHi.toFixed(1),wM=((wLo+wHi)/2).toFixed(1);
-  /* Skeletal Muscle Mass: % of healthy body weight (M 38-44%, F 30-35%) */
-  var smF1=female?0.30:0.38, smF2=female?0.35:0.44;
-  var smmLo=wLo*smF1, smmHi=wHi*smF2;
-  var mL=smmLo.toFixed(1),mH=smmHi.toFixed(1),mM=((smmLo+smmHi)/2).toFixed(1);
-  /* Body Fat Mass: healthy body weight × normal fat% (M 10-20%, F 18-28%) */
-  var bfF1=female?0.18:0.10, bfF2=female?0.28:0.20;
-  var bfmLo=wLo*bfF1, bfmHi=wHi*bfF2;
-  return{wRange:wL+'–'+wH,wLo:+wL,wHi:+wH,wMid:+wM,
-    mRange:mL+'–'+mH,mLo:+mL,mHi:+mH,mMid:+mM,
-    smmLo:+(smmLo.toFixed(1)),smmHi:+(smmHi.toFixed(1)),
-    bfmLo:+(bfmLo.toFixed(1)),bfmHi:+(bfmHi.toFixed(1)),
-    fat:female?'18–28':'10–20'};
+function calcIdeal(h,g,r){
+  var hm=+h/100, female=(g==='หญิง');
+  /* PBF normal band by sex (InBody: M 10-20%, F 18-28%) */
+  var pbfLo=female?18:10, pbfHi=female?28:20;
+  var out;
+  if(!hm){
+    out={wRange:'—',wMid:null,mRange:'—',mMid:null,fat:'—',pbfLo:pbfLo,pbfHi:pbfHi};
+  } else {
+    /* Weight: healthy BMI 18.5-22.9 (Asian) */
+    var wLo=18.5*hm*hm, wHi=22.9*hm*hm;
+    var wL=wLo.toFixed(1),wH=wHi.toFixed(1),wM=((wLo+wHi)/2).toFixed(1);
+    /* Standard weight (InBody-style, BMI 22 Standard Weight Index) as the
+       single height/sex reference for SMM & BFM — no compounding of ranges */
+    var wStd=22*hm*hm;
+    /* Skeletal Muscle Mass: standard SMM = standard weight × SMM/Weight ratio;
+       normal band = 90–110% of standard (InBody convention) */
+    var smmFrac=female?0.42:0.50;
+    var smmStd=wStd*smmFrac;
+    var smmLo=smmStd*0.90, smmHi=smmStd*1.10;
+    var mL=smmLo.toFixed(1),mH=smmHi.toFixed(1),mM=smmStd.toFixed(1);
+    /* Body Fat Mass: standard weight × normal body-fat% (M 10-20%, F 18-28%) */
+    var bfF1=female?0.18:0.10, bfF2=female?0.28:0.20;
+    var bfmLo=wStd*bfF1, bfmHi=wStd*bfF2;
+    out={wRange:wL+'–'+wH,wLo:+wL,wHi:+wH,wMid:+wM,
+      mRange:mL+'–'+mH,mLo:+(smmLo.toFixed(1)),mHi:+(smmHi.toFixed(1)),mMid:+mM,
+      smmLo:+(smmLo.toFixed(1)),smmHi:+(smmHi.toFixed(1)),
+      bfmLo:+(bfmLo.toFixed(1)),bfmHi:+(bfmHi.toFixed(1)),
+      fat:female?'18–28':'10–20',pbfLo:pbfLo,pbfHi:pbfHi};
+  }
+  /* Override with normal range read off the InBody machine/app when provided
+     (H30 shows the value + zone in-app; no printed sheet). Falls back to formula. */
+  if(r){
+    var sLo=parseFloat(r.smmRefLo), sHi=parseFloat(r.smmRefHi);
+    if(!isNaN(sLo)&&!isNaN(sHi)&&sHi>sLo){
+      out.smmLo=sLo; out.smmHi=sHi; out.mLo=sLo; out.mHi=sHi;
+      out.mMid=+(((sLo+sHi)/2).toFixed(1)); out.mRange=sLo+'–'+sHi; out.smmManual=true;
+    }
+    var bLo=parseFloat(r.bfmRefLo), bHi=parseFloat(r.bfmRefHi);
+    if(!isNaN(bLo)&&!isNaN(bHi)&&bHi>bLo){
+      out.bfmLo=bLo; out.bfmHi=bHi; out.bfmManual=true;
+    }
+  }
+  return out;
 }
 function diffChip(a,t){
   if(!a||!t)return'';
@@ -1743,7 +1770,7 @@ function buildExAdvice(r,bmr){
   var hasDM=(r.note||'').toLowerCase().indexOf('dm')>=0||+r.a1c>=6.5;
   var tdee=bmr?Math.round(bmr*1.3):1500;
   var L=[];
-  if(bmi>=27.5||vfl>10){
+  if(bmi>=27.5||vfl>=10){
     L.push('🚶 เดินเร็ว 5–6 กม./ชม. 45–60 นาที อย่างน้อย 5 วัน/สัปดาห์');
     L.push('   → เผาผลาญประมาณ '+Math.round(weight*0.065*50)+' แคลอรี/ครั้ง (50 นาที)');
     L.push('🚴 ปั่นจักรยานระดับปานกลาง 30–45 นาที หรือว่ายน้ำ 30 นาที');
@@ -1790,12 +1817,12 @@ function buildLabTable(hist,ldlG){
 function buildIbTable(hist,ideal){
   if(!hist||!hist.length)return'';
   var rows=[
-    {k:'weight',l:'น้ำหนัก (กก.)',ok:[0,70],goal:ideal.wMid?'~'+ideal.wMid+' กก.':'ตาม BMI'},
+    {k:'weight',l:'น้ำหนัก (กก.)',ok:[ideal.wLo,ideal.wHi],goal:ideal.wMid?'~'+ideal.wMid+' กก.':'ตาม BMI'},
     {k:'bmi',l:'BMI',ok:[18.5,22.9],goal:'18.5–22.9'},
-    {k:'smm',l:'SMM (กก.)',ok:[22,32],goal:ideal.mMid?'≥'+ideal.mMid+' กก.':'ตามเกณฑ์'},
-    {k:'pbf',l:'% ไขมัน',ok:[10,28],goal:ideal.fat+'%'},
-    {k:'vfl',l:'ไขมันช่องท้อง (VFL)',ok:[0,10],goal:'≤ 10'},
-    {k:'inbodyScore',l:'InBody Score',ok:[70,100],goal:'≥ 70'}
+    {k:'smm',l:'SMM (กก.)',ok:[ideal.smmLo,ideal.smmHi],goal:ideal.mMid?'≥'+ideal.mMid+' กก.':'ตามเกณฑ์'},
+    {k:'pbf',l:'% ไขมัน',ok:[ideal.pbfLo,ideal.pbfHi],goal:ideal.fat+'%'},
+    {k:'vfl',l:'ไขมันช่องท้อง (VFL)',ok:[0,9],goal:'< 10'},
+    {k:'inbodyScore',l:'InBody Score',ok:[80,100],goal:'≥ 80'}
   ];
   var cols=hist.map(function(h){return thDateSh(h.visitDate);});
   var html='<table class="dt"><thead><tr><th class="rh">ค่า</th>';
@@ -1877,7 +1904,7 @@ function buildAutoSummary(r,cv,ldlGoalData,hasLVDys){
   // InBody
   if(r.inbodyScore){
     var sc=+r.inbodyScore;
-    lines.push('⚖️ InBody Score: '+sc+'/100 — '+(sc>=70?'องค์ประกอบร่างกายอยู่ในเกณฑ์ดี':sc>=50?'องค์ประกอบร่างกายพอใช้ ควรปรับพฤติกรรม':'องค์ประกอบร่างกายต่ำ ควรปรับปรุงเร่งด่วน'));
+    lines.push('⚖️ InBody Score: '+sc+'/100 — '+(sc>=80?'องค์ประกอบร่างกายอยู่ในเกณฑ์ดี':sc>=70?'องค์ประกอบร่างกายพอใช้ ควรปรับพฤติกรรม':'องค์ประกอบร่างกายต่ำ ควรปรับปรุงเร่งด่วน'));
   }
   if(r.bmi){
     var bmi=+r.bmi;
@@ -2111,7 +2138,7 @@ function qrSVG(text){
 
 function render(){
   var r=getRec(),hist=getHist(),g=r.gender||'';
-  var ideal=calcIdeal(r.height,g);
+  var ideal=calcIdeal(r.height,g,r);
   var cv=cvRisk(r);
   var D=computeDeltas(r,hist);
   /* Compute risk scores */
@@ -2121,7 +2148,9 @@ function render(){
   var ckd4s=(r.ckdStage==='ckd3'||r.ckdStage==='ckd4'||r.ckdStage==='ckd5');
   var isOP=(age4s>=70);
   var s2Raw=calcScore2Report(age4s,g,+r.sbp||0,+r.tc||0,+r.hdl||0,smk4s);
-  var s2Score=s2Raw!==null?s2Raw*(isOP?1.15:1):null;
+  /* calcScore2Report ใช้สมการ SCORE2-OP ให้อยู่แล้วเมื่ออายุ≥70 จึงไม่ต้องคูณเพิ่ม
+     (เดิมคูณ 1.15 ทำให้ค่าของผู้สูงอายุสูงเกินจริงและไม่ตรงกับหน้า database) */
+  var s2Score=s2Raw;
   var onStatinR=(r.onStatin||'no');
   var isOnStatinR=(onStatinR!=='no'&&onStatinR!==''&&onStatinR!=='ไม่ได้รับ Statin'&&onStatinR.indexOf('ไม่ได้รับ')<0);
   var prevScore=calcPreventReport(age4s,g,+r.tc||0,+r.hdl||0,+r.sbp||0,(r.sbpTreatedVal==='yes'||r.sbpTreated===true||r.sbpTreated==='yes'),dm4s,smk4s,ckd4s,calcGFR(r.cr,age4s,g),isOnStatinR);
@@ -2150,8 +2179,8 @@ function render(){
 
   /* InBody score */
   var sc=+r.inbodyScore||0;
-  var scCol=sc>=70?'var(--ok)':sc>=50?'var(--warn)':'var(--bad)';
-  var scBg=sc>=70?'var(--ok-bg)':sc>=50?'var(--warn-bg)':'var(--bad-bg)';
+  var scCol=sc>=80?'var(--ok)':sc>=70?'var(--warn)':'var(--bad)';
+  var scBg=sc>=80?'var(--ok-bg)':sc>=70?'var(--warn-bg)':'var(--bad-bg)';
   var scDelta=null;
   if(hist&&hist.length>=2){
     var sorted2=hist.slice().sort(function(a,b){return(a.visitDate||'').localeCompare(b.visitDate||'');});
@@ -2378,13 +2407,30 @@ function render(){
     }
 
     /* ── Patient-facing Thai summary ── */
-    /* Pick worst score to explain */
-    var worstScore=Math.max(thaiR||0, s2R||0, prevR||0);
-    var riskColor=worstScore<10?'#16A34A':worstScore<20?'#D97706':'#DC2626';
-    var riskIcon=worstScore<10?'🟢':worstScore<20?'🟡':'🔴';
-    var riskThai=worstScore<10?'ความเสี่ยงต่ำ — ดูแลสุขภาพต่อไปได้เลย':
-                 worstScore<20?'ความเสี่ยงปานกลาง — ควรปรับพฤติกรรมและติดตามใกล้ชิด':
-                               'ความเสี่ยงสูง — แนะนำปรึกษาแพทย์เพื่อพิจารณายา';
+    /* เลือก "ระดับความเสี่ยงสูงสุด" จาก 3 เกณฑ์
+       ⚠️ ห้ามเทียบ % ดิบข้ามเกณฑ์ เพราะสเกลต่างกัน
+          (Thai CV Risk: สูง≥20% · SCORE2/PREVENT: สูง≥10%)
+       จึงแปลงแต่ละเกณฑ์เป็น "ระดับ" (0=ต่ำ 1=ปานกลาง 2=สูง 3=สูงมาก) ก่อน แล้วค่อยหาค่าสูงสุด */
+    function thaiOrd(v){ return v===null?-1 : v<10?0 : v<20?1 : v<30?2 : 3; }
+    function s2Ord(v){ if(v===null)return -1;
+      if(isOP)        return v<7.5?0 : v<15?1 : 2;   /* SCORE2-OP อายุ≥70 */
+      if(age4s<50)    return v<2.5?0 : v<7.5?1 : 2;  /* SCORE2 อายุ<50 */
+      return v<5?0 : v<10?1 : 2;                      /* SCORE2 อายุ 50–69 */
+    }
+    function prevOrd(v){ return v===null?-1 : v<5?0 : v<10?1 : v<20?2 : 3; }
+    var oThai=thaiOrd(thaiR), oS2=s2Ord(s2R), oPrev=prevOrd(prevR);
+    var worstOrd=Math.max(oThai,oS2,oPrev); if(worstOrd<0) worstOrd=0;
+    /* ระบุว่าเกณฑ์ไหนเป็นตัวกำหนดระดับสูงสุด (ไว้แสดงประกอบ) */
+    var driverTxt='';
+    if(oThai===worstOrd&&thaiR!==null)      driverTxt='Thai CV Risk '+thaiR+'%';
+    else if(oS2===worstOrd&&s2R!==null)     driverTxt=(isOP?'SCORE2-OP ':'SCORE2 ')+s2R.toFixed(1)+'%';
+    else if(oPrev===worstOrd&&prevR!==null) driverTxt='PREVENT '+prevR.toFixed(1)+'%';
+    var riskColor=worstOrd===0?'#16A34A':worstOrd===1?'#D97706':'#DC2626';
+    var riskIcon =worstOrd===0?'🟢':worstOrd===1?'🟡':'🔴';
+    var riskThai =worstOrd===0?'ความเสี่ยงต่ำ — ดูแลสุขภาพต่อไปได้เลย':
+                  worstOrd===1?'ความเสี่ยงปานกลาง — ควรปรับพฤติกรรมและติดตามใกล้ชิด':
+                  worstOrd===2?'ความเสี่ยงสูง — แนะนำปรึกษาแพทย์เพื่อพิจารณายา':
+                               'ความเสี่ยงสูงมาก — ควรพบแพทย์เพื่อวางแผนการรักษา';
 
     /* Build explanation per score */
     var explainParts=[];
@@ -2417,7 +2463,7 @@ function render(){
         '<span style="font-size:28.3px;">'+riskIcon+'</span>'+
         '<div>'+
           '<div style="font-size:16.5px;font-weight:800;color:'+riskColor+';">'+riskThai+'</div>'+
-          '<div style="font-size:13px;color:#64748B;">ประเมินจาก 3 เกณฑ์สากล — คะแนนสูงสุด '+worstScore.toFixed(1)+'%</div>'+
+          '<div style="font-size:13px;color:#64748B;">ประเมินจาก 3 เกณฑ์สากล — ใช้ระดับสูงสุด'+(driverTxt?' ('+driverTxt+')':'')+'</div>'+
         '</div>'+
       '</div>'+
       '<div style="margin-top:10px;padding:8px 12px;background:white;border-radius:8px;border:1px solid #E2E8F0;font-size:13px;color:#64748B;line-height:1.6;">'+
@@ -2529,7 +2575,7 @@ function render(){
       '<div class="px-logo-wrap">'+LOGO+'</div>'+
       '<div>'+
         '<div class="px-clinic-name">CardioPluz Clinic</div>'+
-        '<div class="px-clinic-sub">Cardiovascular &amp; Preventive Medicine</div>'+
+        '<div class="px-clinic-sub">Cardiology &amp; Internal Medicine</div>'+
       '</div>'+
     '</div>'+
     '<div class="px-header-title">'+
@@ -2565,11 +2611,11 @@ function render(){
 
   /* Left: InBody Score */
   if(sc>0){
-    var scLabel=sc>=80?'Excellent':sc>=70?'Good':sc>=60?'Fair':'Needs Improvement';
+    var scLabel=sc>=90?'Excellent':sc>=80?'Good':sc>=70?'Fair':'Needs Improvement';
     O+='<div class="px-card" style="flex:0 0 200px;">'+
       secHead('🏋️','คะแนนองค์ประกอบร่างกาย','InBody Score (Body Composition)')+
       '<div class="px-score-wrap">'+
-        '<div class="px-score-ring" style="--sc:'+sc+';--sc-color:'+(sc>=80?'#16A34A':sc>=70?'#2563EB':sc>=50?'#D97706':'#DC2626')+'">'+
+        '<div class="px-score-ring" style="--sc:'+sc+';--sc-color:'+(sc>=90?'#16A34A':sc>=80?'#2563EB':sc>=70?'#D97706':'#DC2626')+'">'+
           '<svg viewBox="0 0 100 100" width="120" height="120">'+
             '<circle cx="50" cy="50" r="42" fill="none" stroke="#E5E7EB" stroke-width="8"/>'+
             '<circle cx="50" cy="50" r="42" fill="none" stroke="var(--sc-color,#16A34A)" stroke-width="8" stroke-linecap="round"'+
@@ -2577,7 +2623,7 @@ function render(){
           '</svg>'+
           '<div class="px-score-inner"><div class="px-score-num">'+sc+'</div><div class="px-score-denom">/100</div></div>'+
         '</div>'+
-        '<div class="px-score-label" style="color:'+(sc>=80?'#16A34A':sc>=70?'#2563EB':sc>=50?'#D97706':'#DC2626')+'">'+scLabel+'</div>'+
+        '<div class="px-score-label" style="color:'+(sc>=90?'#16A34A':sc>=80?'#2563EB':sc>=70?'#D97706':'#DC2626')+'">'+scLabel+'</div>'+
         '<div class="px-score-range">'+
           '<div class="px-sr-row px-sr-e">80–100<span>Excellent</span></div>'+
           '<div class="px-sr-row px-sr-g">70–79<span>Good</span></div>'+
@@ -2683,12 +2729,14 @@ function render(){
   }
   if(r.vfl)  O+=bodyMetricK('vfl','ไขมันช่องท้อง (Visceral Fat)',r.vfl,'level','1–9');
   if(r.whr)  O+=bodyMetricK('whr','สัดส่วนเอว/สะโพก (WHR)',r.whr,'',g==='หญิง'?'0.7–0.85':'0.7–0.90');
+  if(r.waist)O+=bodyMetricK('waist','รอบเอว (Waist · วัดเอง)',r.waist,'cm',g==='หญิง'?'< 80':'< 90');
   if(r.bmr)  O+=bodyMetricK('bmr','อัตราเผาผลาญพื้นฐาน (BMR)',r.bmr,'kcal','');
   O+='</div>';
 
   
     if(r.bodyBalance){
-    O+='<div class="px-balance"><span style="color:#16A34A;">✅</span> Upper-Lower Balance: '+r.bodyBalance+'</div>';
+    var _bal=(r.bodyBalance==='Balanced');
+    O+='<div class="px-balance"><span style="color:'+(_bal?'#16A34A':'#D97706')+';">'+(_bal?'✅':'⚠️')+'</span> Body Balance: '+r.bodyBalance+'</div>';
   }
 
   /* CID bars */
@@ -2806,7 +2854,7 @@ function render(){
   if(r.a1c)        O+='<div class="px-sumchip '+(+r.a1c<5.7?'g':+r.a1c<6.5?'y':'r')+'"><div class="px-sc-val">'+r.a1c+'%</div><div class="px-sc-lbl">HbA1c | น้ำตาลสะสม</div><div class="px-sc-status">'+a1c.txt+'</div></div>';
   if(r.ldl)        O+='<div class="px-sumchip '+(ldl.cls==='ok'?'g':ldl.cls==='wn'?'y':'r')+'"><div class="px-sc-val">'+r.ldl+'</div><div class="px-sc-lbl">mg/dL | LDL-C</div><div class="px-sc-status">'+ldl.txt+'</div></div>';
   if(r.cr){var gfv=calcGFR(r.cr,age4s,g);O+='<div class="px-sumchip '+(gfv>=60?'g':gfv>=30?'y':'r')+'"><div class="px-sc-val">'+(gfv?gfv.toFixed(0):'—')+'</div><div class="px-sc-lbl">eGFR | ไต</div><div class="px-sc-status">'+(gfv>=60?'Normal':gfv>=30?'CKD G3':'CKD G4–5')+'</div></div>';}
-  if(r.inbodyScore)O+='<div class="px-sumchip '+(sc>=70?'g':sc>=50?'y':'r')+'"><div class="px-sc-val">'+sc+'</div><div class="px-sc-lbl">/100 | InBody Score</div><div class="px-sc-status">'+(sc>=80?'Excellent':sc>=70?'Good':sc>=60?'Fair':'Needs Improvement')+'</div></div>';
+  if(r.inbodyScore)O+='<div class="px-sumchip '+(sc>=80?'g':sc>=70?'y':'r')+'"><div class="px-sc-val">'+sc+'</div><div class="px-sc-lbl">/100 | InBody Score</div><div class="px-sc-status">'+(sc>=90?'Excellent':sc>=80?'Good':sc>=70?'Fair':'Needs Improvement')+'</div></div>';
   O+='</div></div>';
 
   O+='</div>'; /* end page 1b */
@@ -2981,6 +3029,7 @@ function render(){
       {k:'weight',l:'น้ำหนัก (กก.)'},
       {k:'pbf',l:'ไขมันในร่างกาย (%)'},
       {k:'smm',l:'มวลกล้ามเนื้อ (กก.)',cls:'ok'},
+      {k:'waist',l:'รอบเอว (ซม.)'},
       {k:'sbp',l:'ความดันตัวบน (mmHg)',cls:bpCls},
       {k:'dbp',l:'ความดันตัวล่าง (mmHg)'},
       {k:'hb',l:'ฮีโมโกลบิน Hb (g/dL)'},
@@ -3061,6 +3110,7 @@ function render(){
     var male=(g==='ชาย');
     function v(h,k){ var x=h?h[k]:null; return (x===''||x==null)?null:x; }
 
+    var idl=calcIdeal(rec.height,g,rec);
     var idealW='—';
     var ht=parseFloat(rec.height);
     if(ht){ idealW=(18.5*Math.pow(ht/100,2)).toFixed(1)+'–'+(22.9*Math.pow(ht/100,2)).toFixed(1); }
@@ -3068,14 +3118,14 @@ function render(){
     var bodyRows=[
       {k:'weight',l:'น้ำหนัก',en:'Weight',u:'กก.',ref:idealW},
       {k:'bmi',l:'ดัชนีมวลกาย',en:'BMI',u:'kg/m²',ref:'18.5–22.9'},
-      {k:'smm',l:'มวลกล้ามเนื้อ',en:'SMM',u:'กก.',ref:male?'24–33':'18–26'},
+      {k:'smm',l:'มวลกล้ามเนื้อ',en:'SMM',u:'กก.',ref:idl.mRange||'—'},
       {k:'slm',l:'มวลไร้ไขมัน',en:'SLM',u:'กก.',ref:'—'},
-      {k:'bfm',l:'มวลไขมัน',en:'BFM',u:'กก.',ref:'—'},
+      {k:'bfm',l:'มวลไขมัน',en:'BFM',u:'กก.',ref:(idl.bfmLo!=null?idl.bfmLo+'–'+idl.bfmHi:'—')},
       {k:'pbf',l:'เปอร์เซ็นต์ไขมัน',en:'PBF',u:'%',ref:male?'10–20':'18–28'},
       {k:'vfl',l:'ไขมันช่องท้อง',en:'VFL',u:'ระดับ',ref:'≤ 9'},
       {k:'bmr',l:'อัตราเผาผลาญพื้นฐาน',en:'BMR',u:'kcal',ref:'—'},
       {k:'whr',l:'รอบเอวต่อสะโพก',en:'WHR',u:'',ref:male?'< 0.90':'< 0.85'},
-      {k:'inbodyScore',l:'คะแนน InBody',en:'InBody Score',u:'คะแนน',ref:'≥ 70'}
+      {k:'inbodyScore',l:'คะแนน InBody',en:'InBody Score',u:'คะแนน',ref:'≥ 80'}
     ];
     var labRows=[
       {k:'fbs',l:'น้ำตาลในเลือด',en:'FBS',u:'มก./ดล.',ref:'70–99'},
@@ -3527,8 +3577,8 @@ function render(){
       '<div class="px-sig-name">'+(r.doctor||'—')+'</div>'+
       '<div class="px-sig-title">'+(
         r.doctor&&r.doctor.indexOf('ณัฏฐา')>=0?'แพทย์หัวใจและหลอดเลือด · Cardiologist':
-        r.doctor&&r.doctor.indexOf('พรอนงค์')>=0?'แพทย์เวชศาสตร์ป้องกัน · Preventive Medicine Specialist':
-        'Cardiologist &amp; Preventive Medicine Specialist'
+        r.doctor&&r.doctor.indexOf('พรอนงค์')>=0?'แพทย์หัวใจและหลอดเลือด · Cardiologist':
+        'แพทย์หัวใจและหลอดเลือด · Cardiologist'
       )+'</div>'+
     '</div>';
     O+='</div>';
